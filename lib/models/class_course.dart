@@ -3,34 +3,134 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 
-/// 一个段位组曲（3 首固定曲目）。
+/// 段位组曲里一个槽的类型。
+///
+/// 来自 `Course.xml` 的 `CourseMusicDataInfo/type`：
+/// - `fixed`（type=0）       固定曲目，有 `linkId` 与 `difficulty`
+/// - `randomRange`（type=1） 按**等级**随机。只有 `levelFrom`，没有曲目。
+///   实测「范围」就是这个等级本身（数据里没有 toLevel），
+///   例如 CLASS Ⅰ 的三个槽是 Lv10 / Lv10+ / Lv11。
+/// - `randomPool`（type=2）  按**指定曲池**随机。只有池大小，不列具体曲目。
+enum ClassSlotKind {
+  fixed,
+  randomRange,
+  randomPool;
+
+  static ClassSlotKind parse(String? raw) {
+    switch (raw) {
+      case 'randomRange':
+        return ClassSlotKind.randomRange;
+      case 'randomPool':
+        return ClassSlotKind.randomPool;
+      default:
+        return ClassSlotKind.fixed;
+    }
+  }
+}
+
+/// 段位组曲里的一个槽。
+class ClassSlot {
+  const ClassSlot({
+    required this.order,
+    required this.kind,
+    this.linkId,
+    this.difficulty,
+    this.levelFrom,
+    this.levelTo,
+    this.poolSize,
+    this.display,
+    this.image,
+  });
+
+  final int order;
+  final ClassSlotKind kind;
+
+  /// kind == fixed 时才有：指向 meta.json 的 linkId
+  final String? linkId;
+
+  /// kind == fixed 时才有：要打哪个难度（MASTER / ULTIMA / EXPERT / ADVANCED / WORLD'S END）
+  final String? difficulty;
+
+  /// kind == randomRange 时才有
+  final String? levelFrom;
+  final String? levelTo;
+
+  /// kind == randomPool 时才有
+  final int? poolSize;
+
+  /// 随机槽的显示文字（例：`11+` / `13+ ~ 14` / `范围内随机选择`）
+  final String? display;
+
+  /// 随机槽的封面（例：assets/img/class/range_cover.png）
+  final String? image;
+
+  bool get isFixed => kind == ClassSlotKind.fixed;
+
+  /// 这张随机卡上要写的大字。
+  ///
+  /// - 等级随机 → 直接写游戏内等级（用户明确要求：「真正的等级是 Lv10」，
+  ///   也就是 `11+` 这种，不要写内部 id 19/20/21）
+  /// - 曲池随机 → 「范围内随机选择」（用户指定原文）
+  String get headline {
+    if (kind == ClassSlotKind.randomPool) return display ?? '范围内随机选择';
+    final raw = display ?? _rangeFromLevels();
+    // 兼容旧数据/手改数据里带 "Lv" 前缀或空值的情况
+    final t = raw.replaceAll('Lv', '').trim();
+    return t.isEmpty ? '等级随机' : t;
+  }
+
+  /// 小字说明：等级随机写「等级随机」，曲池随机写「N 选 1」。
+  String get sublabel {
+    if (kind != ClassSlotKind.randomPool) return '等级随机';
+    return poolSize == null ? '曲池随机' : '$poolSize 选 1';
+  }
+
+  String _rangeFromLevels() {
+    final a = levelFrom ?? '';
+    final b = levelTo ?? a;
+    if (a.isEmpty) return '';
+    return a == b ? a : '$a ~ $b';
+  }
+
+  static ClassSlot fromJson(Map<String, dynamic> json) {
+    return ClassSlot(
+      order: (json['order'] as num?)?.toInt() ?? 0,
+      kind: ClassSlotKind.parse(json['kind'] as String?),
+      linkId: json['linkId'] as String?,
+      difficulty: json['difficulty'] as String?,
+      levelFrom: json['levelFrom'] as String?,
+      levelTo: json['levelTo'] as String?,
+      poolSize: (json['poolSize'] as num?)?.toInt(),
+      display: json['display'] as String?,
+      image: json['image'] as String?,
+    );
+  }
+}
+
+/// 一个段位组曲（固定 3 个槽）。
 class ClassCourse {
-  const ClassCourse({required this.key, required this.title, required this.songKeys, required this.difficulties});
+  const ClassCourse({required this.key, required this.title, required this.slots});
 
   final String key;
   final String title;
-  final List<String> songKeys;
+  final List<ClassSlot> slots;
 
-  /// 与 songKeys 一一对应，显示用的难度标签
-  final List<String> difficulties;
+  /// 这个组曲里有几个「固定曲目」槽（随机槽不算，因为不知道具体曲目）
+  int get fixedCount => slots.where((s) => s.isFixed).length;
+
+  int get randomCount => slots.length - fixedCount;
 
   static ClassCourse fromJson(Map<String, dynamic> json) {
-    final rawSongs = json['songs'];
-    final keys = <String>[];
-    final diffs = <String>[];
-    if (rawSongs is List) {
-      for (final s in rawSongs) {
-        if (s is Map) {
-          keys.add((s['linkId'] as String?) ?? '');
-          diffs.add((s['difficulty'] as String?) ?? '');
-        }
-      }
-    }
+    final raw = json['songs'];
     return ClassCourse(
       key: (json['key'] as String?) ?? '',
       title: (json['title'] as String?) ?? '',
-      songKeys: keys,
-      difficulties: diffs,
+      slots: raw is List
+          ? raw
+              .whereType<Map>()
+              .map((s) => ClassSlot.fromJson(s.cast<String, dynamic>()))
+              .toList()
+          : const [],
     );
   }
 }
@@ -86,7 +186,8 @@ class ClassData {
 
   final List<ClassTier> tiers;
 
-  /// 是否为占位数据（UI 会显示提醒）
+  /// 是否为占位数据（UI 会显示提醒）。
+  /// 现在已经换成真实的 36 个组曲，所以通常为 false。
   final bool placeholder;
 
   final String unlockRuleText;
@@ -121,9 +222,6 @@ class ClassData {
       tier.courses.isNotEmpty && tier.courses.every((c) => doneCourseKeys.contains(c.key));
 
   /// 是否已达成缎带条件：**任一**等级的所有组曲都完成
-  ///
-  /// 注意这是 AIR 门的真正解锁条件。不过当前段位课程还是占位数据，
-  /// 所以门是否解锁仍以「手动确认」为准（见 gate_status.dart）。
   bool ribbonAchieved(Set<String> doneCourseKeys) =>
       tiers.any((t) => tierComplete(t, doneCourseKeys));
 

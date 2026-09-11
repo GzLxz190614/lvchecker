@@ -288,6 +288,116 @@ def _brace_delta(line: str) -> int:
     return delta
 
 
+def _balance_error(src: str) -> tuple[int, int, str]:
+    """
+    检查 () [] {} 是否配对，以及引号是否闭合。
+
+    返回 (行号, 列号, 错误说明)；没问题时说明为空串。
+
+    为什么值得单独写一个扫描器（而不是像 _brace_delta 那样只看大括号）：
+    Dart 的字符串插值 `${ ... }` 里可以放真表达式，`$name` 又是另一种形式；
+    如果简单地把引号内的内容整段丢掉，`'${a['b']}'` 这种就会被漏掉，
+    反过来如果把引号内的大括号全算上，`'}'` 这种字面量就会误报。
+    所以这里把 `$` 之后的 `{` 明确当成代码处理。
+    """
+    # 期望的闭合符号 -> 由哪种开括号压入
+    CLOSE = {")": "(", "]": "[", "}": "{"}
+    stack: list[tuple[str, int, int]] = []
+    line = 1
+    col = 0
+    i = 0
+    n = len(src)
+    quote: str | None = None
+    # 记录「这个 { 是插值进来的」——出栈时不匹配也不算错，
+    # 因为插值在 strip_comments 之后仍保留原样，但缩进/换行处理可能不完美。
+    in_string_start = 0
+
+    def bump(ch: str) -> None:
+        nonlocal line, col
+        if ch == "\n":
+            line += 1
+            col = 0
+        else:
+            col += 1
+
+    while i < n:
+        c = src[i]
+
+        if quote is None:
+            if c == "/" and i + 1 < n and src[i + 1] == "/":
+                while i < n and src[i] != "\n":
+                    bump(src[i])
+                    i += 1
+                continue
+            if c == "/" and i + 1 < n and src[i + 1] == "*":
+                bump(c)
+                bump(src[i + 1])
+                i += 2
+                while i < n and not (src[i] == "*" and i + 1 < n and src[i + 1] == "/"):
+                    bump(src[i])
+                    i += 1
+                if i < n:
+                    bump(src[i])
+                    bump(src[i + 1])
+                    i += 2
+                continue
+            if c in ("'", '"'):
+                quote = c
+                in_string_start = line
+                bump(c)
+                i += 1
+                continue
+            if c in "([{":
+                stack.append((c, line, col + 1))
+                bump(c)
+                i += 1
+                continue
+            if c in ")]}":
+                if not stack:
+                    return (line, col + 1, f"多余的 '{c}'")
+                opener, oline, ocol = stack.pop()
+                if opener != CLOSE[c]:
+                    return (
+                        line, col + 1,
+                        f"'{c}' 与第 {oline} 行第 {ocol} 列的 '{opener}' 不匹配",
+                    )
+                bump(c)
+                i += 1
+                continue
+            bump(c)
+            i += 1
+            continue
+
+        # ---- 字符串内部 ----
+        if c == "\\":
+            bump(c)
+            if i + 1 < n:
+                bump(src[i + 1])
+            i += 2
+            continue
+        if c == quote:
+            quote = None
+            bump(c)
+            i += 1
+            continue
+        if c == "$" and i + 1 < n and src[i + 1] == "{":
+            # 字符串插值里的表达式：当代码处理
+            bump(c)
+            bump(src[i + 1])
+            stack.append(("{", line, col + 1))
+            i += 2
+            continue
+        bump(c)
+        i += 1
+
+    if quote is not None:
+        return (in_string_start, 1, f"从第 {in_string_start} 行开始的 {quote} 字符串没有闭合")
+    if stack:
+        opener, oline, ocol = stack[-1]
+        return (oline, ocol, f"'{opener}' 没有闭合")
+    return (0, 0, "")
+
+
 def main() -> int:
     files = sorted(p for d in DIRS if d.exists() for p in d.rglob("*.dart"))
     if not files:
@@ -535,6 +645,21 @@ def main() -> int:
 
     nullable_param_problems = sorted(set(nullable_param_problems))
 
+    # ---------------- 5. 括号 / 引号平衡 ----------------
+    # 为什么需要这条：本地没有 Flutter SDK，Dart 是「盲写」的，而括号漏一个
+    # 会让整个文件后面全部解析失败（报一堆和真实错误无关的信息）。
+    # 修 `.add(` 展开语法那次就是这么发现的：22 个错误全是因为前面少了一个括号。
+    #
+    # 限制：字符串里的括号不参与计数，所以 `'('` 这种是安全的；
+    # 字符串插值 `${...}` **算**（因为里面的表达式真的可以是多行集合字面量）。
+    balance_problems: list[str] = []
+    for f in files:
+        line, col, msg = _balance_error(clean[f])
+        if msg:
+            balance_problems.append(
+                f"  ✗ {f.relative_to(ROOT).as_posix()}:{line}:{col}  {msg}"
+            )
+
     # ---------------- 输出 ----------------
     print(f"扫描 {len(files)} 个 dart 文件，{len(defs)} 个类型定义，"
           f"{len(var_types)} 个文件有可解析的变量类型\n")
@@ -568,6 +693,13 @@ def main() -> int:
         print("\n".join(nullable_param_problems))
     else:
         print("✅ 没有把可空变量传给非空参数")
+
+    if balance_problems:
+        ok = False
+        print("\n❌ 括号 / 引号不平衡（会导致整个文件解析失败）：")
+        print("\n".join(balance_problems))
+    else:
+        print("✅ 括号与引号都平衡")
 
     return 0 if ok else 1
 

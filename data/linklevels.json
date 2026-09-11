@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-1",
+  "dataVersion": "2026.09.11-2",
   "region": "cn",
   "note": "国服缓和周期未完全公布。已知的填日期，未知的留 null（不猜）。每个门的开放日期与缓和周期各自独立，不共用。",
   "defaultLevel": 5,

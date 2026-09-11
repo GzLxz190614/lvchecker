@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-1",
+  "dataVersion": "2026.09.11-2",
   "region": "cn",
   "note": "全局条目元数据。gates.json / classes.json 通过 linkId 引用这里。",
   "entries": {
@@ -817,6 +817,690 @@
       "genre": "VARIETY",
       "works": "Invalid",
       "image": "assets/img/music/2978/jacket.png"
+    },
+    "music:106": {
+      "type": "music",
+      "id": 106,
+      "title": "宛城、炎上！！",
+      "artist": "Cranky feat.おもしろ三国志",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. PLUS",
+      "image": "assets/img/music/106/jacket.png"
+    },
+    "music:135": {
+      "type": "music",
+      "id": 135,
+      "title": "Vallista",
+      "artist": "削除",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/135/jacket.png"
+    },
+    "music:145": {
+      "type": "music",
+      "id": 145,
+      "title": "Change Our MIRAI！",
+      "artist": "イロドリミドリ",
+      "genre": "イロドリミドリ",
+      "works": "Invalid",
+      "image": "assets/img/music/145/jacket.png"
+    },
+    "music:157": {
+      "type": "music",
+      "id": 157,
+      "title": "ギガンティックO.T.N",
+      "artist": "ギガ",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/157/jacket.png"
+    },
+    "music:179": {
+      "type": "music",
+      "id": 179,
+      "title": "すろぉもぉしょん",
+      "artist": "ピノキオピー",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/179/jacket.png"
+    },
+    "music:200": {
+      "type": "music",
+      "id": 200,
+      "title": "無敵We are one!!",
+      "artist": "イロドリミドリ",
+      "genre": "イロドリミドリ",
+      "works": "Invalid",
+      "image": "assets/img/music/200/jacket.png"
+    },
+    "music:201": {
+      "type": "music",
+      "id": 201,
+      "title": "Contrapasso -inferno-",
+      "artist": "t+pazolite",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. PLUS",
+      "image": "assets/img/music/201/jacket.png"
+    },
+    "music:226": {
+      "type": "music",
+      "id": 226,
+      "title": "Garakuta Doll Play",
+      "artist": "t+pazolite",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/226/jacket.png"
+    },
+    "music:303": {
+      "type": "music",
+      "id": 303,
+      "title": "Dreams Dreams:Kids Ver.",
+      "artist": "Tomoko Sasaki「NiGHTS～星降る夜の物語～」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/303/jacket.png"
+    },
+    "music:330": {
+      "type": "music",
+      "id": 330,
+      "title": "ドキドキDREAM!!!",
+      "artist": "イロドリミドリ",
+      "genre": "イロドリミドリ",
+      "works": "Invalid",
+      "image": "assets/img/music/330/jacket.png"
+    },
+    "music:376": {
+      "type": "music",
+      "id": 376,
+      "title": "ECHO",
+      "artist": "CIRCRUSH",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/376/jacket.png"
+    },
+    "music:455": {
+      "type": "music",
+      "id": 455,
+      "title": "Vampire",
+      "artist": "電気式華憐音楽集団",
+      "genre": "POPS & ANIME",
+      "works": "Invalid",
+      "image": "assets/img/music/455/jacket.png"
+    },
+    "music:549": {
+      "type": "music",
+      "id": 549,
+      "title": "色は匂へど散りぬるを",
+      "artist": "幽閉サテライト",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/549/jacket.png"
+    },
+    "music:574": {
+      "type": "music",
+      "id": 574,
+      "title": "ネ！コ！",
+      "artist": "パトリシア・オブ・エンド(CV：高森奈津美)、黒木 未知(CV：仙台エリ)、夕莉 シャチ(CV：浅川悠)、明日原 ユウキ(CV：種﨑敦美)「ノラと皇女と野良猫ハート」",
+      "genre": "POPS & ANIME",
+      "works": "ノラと皇女と野良猫ハート",
+      "image": "assets/img/music/574/jacket.png"
+    },
+    "music:583": {
+      "type": "music",
+      "id": 583,
+      "title": "碧き孤島のアングゥィス",
+      "artist": "電気式華憐音楽集団",
+      "genre": "POPS & ANIME",
+      "works": "Invalid",
+      "image": "assets/img/music/583/jacket.png"
+    },
+    "music:599": {
+      "type": "music",
+      "id": 599,
+      "title": "Chocolate Happy",
+      "artist": "Carotte☆（ripple＆めらみぽっぷ）",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/599/jacket.png"
+    },
+    "music:656": {
+      "type": "music",
+      "id": 656,
+      "title": "DAYBREAK FRONTLINE",
+      "artist": "Orangestar",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/656/jacket.png"
+    },
+    "music:698": {
+      "type": "music",
+      "id": 698,
+      "title": "2DVenture",
+      "artist": "dawn-system",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. AMAZON",
+      "image": "assets/img/music/698/jacket.png"
+    },
+    "music:738": {
+      "type": "music",
+      "id": 738,
+      "title": "はやくそれになりたい！",
+      "artist": "キノシタ feat. 音街ウナ",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/738/jacket.png"
+    },
+    "music:744": {
+      "type": "music",
+      "id": 744,
+      "title": "ゴールドビジョン",
+      "artist": "Pizuya's Cell",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/744/jacket.png"
+    },
+    "music:765": {
+      "type": "music",
+      "id": 765,
+      "title": "The Pursuit of Speed",
+      "artist": "SoundDrive「龍が如く５　夢、叶えし者」",
+      "genre": "VARIETY",
+      "works": "龍が如く",
+      "image": "assets/img/music/765/jacket.png"
+    },
+    "music:785": {
+      "type": "music",
+      "id": 785,
+      "title": "ユメキキョウ",
+      "artist": "RD-Sounds feat.中恵光城",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. AMAZON PLUS",
+      "image": "assets/img/music/785/jacket.png"
+    },
+    "music:787": {
+      "type": "music",
+      "id": 787,
+      "title": "GIGA DRIVE",
+      "artist": "黒沢ダイスケ",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. AMAZON PLUS",
+      "image": "assets/img/music/787/jacket.png"
+    },
+    "music:797": {
+      "type": "music",
+      "id": 797,
+      "title": "ハイセンスナンセンス",
+      "artist": "盛るP",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/797/jacket.png"
+    },
+    "music:802": {
+      "type": "music",
+      "id": 802,
+      "title": "STARTLINER",
+      "artist": "曲：kz(livetune)／歌：オンゲキシューターズ",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/802/jacket.png"
+    },
+    "music:895": {
+      "type": "music",
+      "id": 895,
+      "title": "Life is PIANO",
+      "artist": "Junk",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/895/jacket.png"
+    },
+    "music:930": {
+      "type": "music",
+      "id": 930,
+      "title": "7 days a week",
+      "artist": "Silver Forest",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/930/jacket.png"
+    },
+    "music:935": {
+      "type": "music",
+      "id": 935,
+      "title": "ロング・スロー・アライブ",
+      "artist": "はるまきごはん feat.めらみぽっぷ",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CRYSTAL PLUS",
+      "image": "assets/img/music/935/jacket.png"
+    },
+    "music:949": {
+      "type": "music",
+      "id": 949,
+      "title": "エキセントリックコンコン",
+      "artist": "Clean Tears feat.kukuri",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CRYSTAL PLUS",
+      "image": "assets/img/music/949/jacket.png"
+    },
+    "music:971": {
+      "type": "music",
+      "id": 971,
+      "title": "Hainuwele",
+      "artist": "ETIA.",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CRYSTAL PLUS",
+      "image": "assets/img/music/971/jacket.png"
+    },
+    "music:974": {
+      "type": "music",
+      "id": 974,
+      "title": "みんな Happy!!",
+      "artist": "曲：ヒゲドライバー／歌：藤沢 柚子(CV：久保田 梨沙)",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/974/jacket.png"
+    },
+    "music:1017": {
+      "type": "music",
+      "id": 1017,
+      "title": "ANU",
+      "artist": "sasakure.UK VS 穴山大輔",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. PARADISE",
+      "image": "assets/img/music/1017/jacket.png"
+    },
+    "music:1035": {
+      "type": "music",
+      "id": 1035,
+      "title": "赤壁、大炎上！！",
+      "artist": "Cranky feat.おもしろ三国志",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. PARADISE",
+      "image": "assets/img/music/1035/jacket.png"
+    },
+    "music:1059": {
+      "type": "music",
+      "id": 1059,
+      "title": "Good bye, Merry-Go-Round.",
+      "artist": "Yooh",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/1059/jacket.png"
+    },
+    "music:1091": {
+      "type": "music",
+      "id": 1091,
+      "title": "クロートーと星の観測者",
+      "artist": "しーけー",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/1091/jacket.png"
+    },
+    "music:1098": {
+      "type": "music",
+      "id": 1098,
+      "title": "董卓討つべし",
+      "artist": "おもしろ三国志",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/1098/jacket.png"
+    },
+    "music:2036": {
+      "type": "music",
+      "id": 2036,
+      "title": "CHAOS",
+      "artist": "Æsir「Cytus Ⅱ」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2036/jacket.png"
+    },
+    "music:2129": {
+      "type": "music",
+      "id": 2129,
+      "title": "Starduster",
+      "artist": "ジミーサムP",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/2129/jacket.png"
+    },
+    "music:2138": {
+      "type": "music",
+      "id": 2138,
+      "title": "NightTheater",
+      "artist": "わかどり",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2138/jacket.png"
+    },
+    "music:2208": {
+      "type": "music",
+      "id": 2208,
+      "title": "Reverberate",
+      "artist": "とろまる",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. NEW PLUS",
+      "image": "assets/img/music/2208/jacket.png"
+    },
+    "music:2251": {
+      "type": "music",
+      "id": 2251,
+      "title": "みずいろレインドロップ",
+      "artist": "暁Records",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/2251/jacket.png"
+    },
+    "music:2263": {
+      "type": "music",
+      "id": 2263,
+      "title": "神っぽいな",
+      "artist": "ピノキオピー",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/2263/jacket.png"
+    },
+    "music:2272": {
+      "type": "music",
+      "id": 2272,
+      "title": "ミラージュ・フレイグランス",
+      "artist": "Sound piercer “Espitz”",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2272/jacket.png"
+    },
+    "music:2274": {
+      "type": "music",
+      "id": 2274,
+      "title": "クリーパー",
+      "artist": "遼遼 feat.あじっこ",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. SUN",
+      "image": "assets/img/music/2274/jacket.png"
+    },
+    "music:2317": {
+      "type": "music",
+      "id": 2317,
+      "title": "きゅうくらりん",
+      "artist": "いよわ",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/2317/jacket.png"
+    },
+    "music:2381": {
+      "type": "music",
+      "id": 2381,
+      "title": "Let you DIVE!",
+      "artist": "HARDCORE TANO*C & エリザベス（CV:大西沙織）「WACCA」",
+      "genre": "VARIETY",
+      "works": "WACCA",
+      "image": "assets/img/music/2381/jacket.png"
+    },
+    "music:2384": {
+      "type": "music",
+      "id": 2384,
+      "title": "Exitium",
+      "artist": "Laur「WACCA」",
+      "genre": "VARIETY",
+      "works": "WACCA",
+      "image": "assets/img/music/2384/jacket.png"
+    },
+    "music:2385": {
+      "type": "music",
+      "id": 2385,
+      "title": "eden",
+      "artist": "\"漆黒\"の堕天使《Gram》†Versus† \"聖刻\"の熾天使《Gram》「WACCA」",
+      "genre": "VARIETY",
+      "works": "WACCA",
+      "image": "assets/img/music/2385/jacket.png"
+    },
+    "music:2388": {
+      "type": "music",
+      "id": 2388,
+      "title": "INTERNET OVERDOSE",
+      "artist": "Aiobahn feat. KOTOKO「NEEDY GIRL OVERDOSE」",
+      "genre": "POPS & ANIME",
+      "works": "NEEDY GIRL OVERDOSE",
+      "image": "assets/img/music/2388/jacket.png"
+    },
+    "music:2406": {
+      "type": "music",
+      "id": 2406,
+      "title": "ASH",
+      "artist": "cubesato",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. SUN PLUS",
+      "image": "assets/img/music/2406/jacket.png"
+    },
+    "music:2410": {
+      "type": "music",
+      "id": 2410,
+      "title": "Invisible Frenzy",
+      "artist": "Kobaryo「WACCA」",
+      "genre": "VARIETY",
+      "works": "WACCA",
+      "image": "assets/img/music/2410/jacket.png"
+    },
+    "music:2412": {
+      "type": "music",
+      "id": 2412,
+      "title": "幻想症候群",
+      "artist": "幽閉サテライト",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/2412/jacket.png"
+    },
+    "music:2435": {
+      "type": "music",
+      "id": 2435,
+      "title": "異星にいこうね",
+      "artist": "いよわ　feat.星界",
+      "genre": "niconico",
+      "works": "音楽的同位体プロジェクト",
+      "image": "assets/img/music/2435/jacket.png"
+    },
+    "music:2452": {
+      "type": "music",
+      "id": 2452,
+      "title": "あなたは世界の終わりにずんだを食べるのだ",
+      "artist": "なみぐる",
+      "genre": "niconico",
+      "works": "東北ずん子",
+      "image": "assets/img/music/2452/jacket.png"
+    },
+    "music:2468": {
+      "type": "music",
+      "id": 2468,
+      "title": "カリスマ煉獄天神",
+      "artist": "森羅万象",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/2468/jacket.png"
+    },
+    "music:2475": {
+      "type": "music",
+      "id": 2475,
+      "title": "Chaotic Ørder",
+      "artist": "TAG VS Kai",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. SUN PLUS",
+      "image": "assets/img/music/2475/jacket.png"
+    },
+    "music:2503": {
+      "type": "music",
+      "id": 2503,
+      "title": "INTERNET YAMERO",
+      "artist": "Aiobahn feat. KOTOKO「NEEDY GIRL OVERDOSE」",
+      "genre": "POPS & ANIME",
+      "works": "NEEDY GIRL OVERDOSE",
+      "image": "assets/img/music/2503/jacket.png"
+    },
+    "music:2509": {
+      "type": "music",
+      "id": 2509,
+      "title": "おどロボ",
+      "artist": "海茶・多良レイト",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/2509/jacket.png"
+    },
+    "music:2523": {
+      "type": "music",
+      "id": 2523,
+      "title": "インターネットサバイバー",
+      "artist": "あやぽんず＊ feat.ビートまりお × まろん",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/2523/jacket.png"
+    },
+    "music:2524": {
+      "type": "music",
+      "id": 2524,
+      "title": "ユックリ feat.餅千歳",
+      "artist": "まろん × COOL&CREATE",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/2524/jacket.png"
+    },
+    "music:2537": {
+      "type": "music",
+      "id": 2537,
+      "title": "GIGA BLAST",
+      "artist": "Blacklolita",
+      "genre": "VARIETY",
+      "works": "Diverse System",
+      "image": "assets/img/music/2537/jacket.png"
+    },
+    "music:2539": {
+      "type": "music",
+      "id": 2539,
+      "title": "Ωκεανος",
+      "artist": "cosMo＠暴走P",
+      "genre": "VARIETY",
+      "works": "Diverse System",
+      "image": "assets/img/music/2539/jacket.png"
+    },
+    "music:2540": {
+      "type": "music",
+      "id": 2540,
+      "title": "Love's Theme of BADASS ～バッド・アス 愛のテーマ～",
+      "artist": "Hommarju",
+      "genre": "VARIETY",
+      "works": "Diverse System",
+      "image": "assets/img/music/2540/jacket.png"
+    },
+    "music:2542": {
+      "type": "music",
+      "id": 2542,
+      "title": "Burn it All",
+      "artist": "Cosmograph「勝利の女神：NIKKE」",
+      "genre": "VARIETY",
+      "works": "勝利の女神：NIKKE",
+      "image": "assets/img/music/2542/jacket.png"
+    },
+    "music:2546": {
+      "type": "music",
+      "id": 2546,
+      "title": "それはもうらぶちゅ",
+      "artist": "タケノコ少年 feat. 周央サンゴ（にじさんじ）「Muse Dash」",
+      "genre": "VARIETY",
+      "works": "Muse Dash",
+      "image": "assets/img/music/2546/jacket.png"
+    },
+    "music:2554": {
+      "type": "music",
+      "id": 2554,
+      "title": "MarbleBlue.",
+      "artist": "MisoilePunch♪",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2554/jacket.png"
+    },
+    "music:2560": {
+      "type": "music",
+      "id": 2560,
+      "title": "四月の雨",
+      "artist": "cubesato",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2560/jacket.png"
+    },
+    "music:2566": {
+      "type": "music",
+      "id": 2566,
+      "title": "少女PastQ",
+      "artist": "雄之助 feat.ねんね",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. LUMINOUS",
+      "image": "assets/img/music/2566/jacket.png"
+    },
+    "music:2585": {
+      "type": "music",
+      "id": 2585,
+      "title": "カオスが極まる",
+      "artist": "UNISON SQUARE GARDEN「ブルーロック」",
+      "genre": "POPS & ANIME",
+      "works": "ブルーロック",
+      "image": "assets/img/music/2585/jacket.png"
+    },
+    "music:2632": {
+      "type": "music",
+      "id": 2632,
+      "title": "ずんだパーリナイ",
+      "artist": "なみぐる feat.ずんだもん",
+      "genre": "niconico",
+      "works": "Invalid",
+      "image": "assets/img/music/2632/jacket.png"
+    },
+    "music:2657": {
+      "type": "music",
+      "id": 2657,
+      "title": "1000年生きてる",
+      "artist": "いよわ",
+      "genre": "niconico",
+      "works": "いよわ",
+      "image": "assets/img/music/2657/jacket.png"
+    },
+    "music:8198": {
+      "type": "music",
+      "id": 8198,
+      "title": "巫女みこナース・愛のテーマ",
+      "artist": "Chu☆",
+      "genre": "POPS & ANIME",
+      "works": "Invalid",
+      "image": "assets/img/music/8198/jacket.png"
+    },
+    "music:8227": {
+      "type": "music",
+      "id": 8227,
+      "title": "Trackless wilderness",
+      "artist": "Noah",
+      "genre": "ORIGINAL",
+      "works": "Invalid",
+      "image": "assets/img/music/8227/jacket.png"
+    },
+    "music:8252": {
+      "type": "music",
+      "id": 8252,
+      "title": "まっすぐ→→→ストリーム！",
+      "artist": "曲：本多友紀（Arte Refact）／歌：日向 千夏(CV：岡咲 美保)",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/8252/jacket.png"
+    },
+    "music:8281": {
+      "type": "music",
+      "id": 8281,
+      "title": "Parad'ox",
+      "artist": "Potwi",
+      "genre": "ORIGINAL",
+      "works": "Invalid",
+      "image": "assets/img/music/8281/jacket.png"
+    },
+    "music:8282": {
+      "type": "music",
+      "id": 8282,
+      "title": "otorii INNOVATED -[i]3-",
+      "artist": "NAOKI underground",
+      "genre": "ORIGINAL",
+      "works": "Invalid",
+      "image": "assets/img/music/8282/jacket.png"
     }
   }
 }

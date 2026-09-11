@@ -16,7 +16,7 @@
 4. [数据模型](#4-数据模型)
 5. [十三个门的数据](#5-十三个门的数据)
 6. [通关条件缓和（Link LEVEL / Class）配置设计](#6-通关条件缓和配置设计)
-7. [AIR 门：段位（CLASS）数据结构](#7-air-门段位class数据结构)
+7. [AIR 门：段位（CLASS）数据](#7-air-门段位class数据结构)
 8. [落雪查分器导入](#8-落雪查分器导入)
 9. [在线数据同步](#9-在线数据同步)
 10. [UI 设计](#10-ui-设计)
@@ -775,75 +775,69 @@ UNIVERSE 门**多一条**：
 
 所以设计是：**6 个等级中任意一个的组曲全勾满 → AIR 门显示「已解锁」**。我会按这个做，并在此确认没理解错。
 
-### 7.3 `data/classes.json` JSON 示范（你要的）
+### 7.3 数据来源与生成方式（**已落地，不再是占位符**）
+
+段位课程数据的来源一开始是缺失的（`condition/2-air/` 里只有 `条件.txt` 和 `日期.txt`），
+最初的方案是「先写占位数据、拿到 XML 再换」。**这个方案已经废弃**，
+因为后来在 `condition/class/` 下找到了完整的段位数据：
+
+```
+condition/class/course/<id>/Course.xml    36 个组曲（6 个 CLASS）
+condition/class/music/<id>/Music.xml      组曲用到的 76 首曲目
+condition/class/random/cover.png          「?」——曲池随机的封面
+condition/class/random in range/cover.png 「!」——等级随机的封面
+```
+
+生成方式：
+
+| 文件 | 负责什么 |
+|---|---|
+| `tools/gen_classes.py` | 解析 36 个 `Course.xml` → `data/classes.json`；转换两张封面 |
+| `tools/build.py` | 把 `condition/class/music` 下的曲目登记进 `meta.json`（曲名/曲师/曲绘） |
+| `tools/check_classes.py` | 校验引用 + **等级换算的回归测试**（见 7.5） |
+
+`build.py` 会自动调用 `gen_classes.py`，也可以单独跑 `python tools\gen_classes.py`。
+
+### 7.4 `data/classes.json` 实际结构
 
 ```jsonc
 {
   "schemaVersion": 1,
-  "dataVersion": "placeholder",
-  "placeholder": true,
+  "dataVersion": "2026.09.11-2",     // 与 meta/gates/linklevels 共用同一个值
+  "placeholder": false,
   "region": "cn",
-  "note": "段位课程数据尚未提供（condition/2-air 为空）。以下为占位符，仅用于预览 UI。",
   "gateId": "air",
   "unlockRule": {
     "type": "anyClassAllCourses",
     "text": "完成任一 CLASS 内的所有组曲，即可获得缎带"
   },
+  "levelIdMapping": { "note": "...", "baseId": 19, "baseDifficulty": "Lv10" },
   "classes": [
     {
-      "key": "I",
-      "label": "I",
-      "level": 1,
-      "color": "#3D66F2",
+      "key": "I", "label": "I", "level": 1, "color": "#3D66F2",
+      "classRawName": "CLASS Ⅰ",
       "courses": [
         {
-          "key": "I-1",
-          "title": "占位组曲 1",
+          "key": "course00040021",      // 来自 Course.xml 的 dataName，也是存进存档的进度 key
+          "title": "CLASS认定 - I - Random",
           "songs": [
-            { "order": 1, "songId": 51, "title": "My First Phone", "difficulty": "MASTER",
-              "image": "assets/img/music/51/jacket.png" },
-            { "order": 2, "songId": 53, "title": "Teriqma", "difficulty": "MASTER",
-              "image": "assets/img/music/53/jacket.png" },
-            { "order": 3, "songId": 59, "title": "Invitation", "difficulty": "MASTER",
-              "image": "assets/img/music/59/jacket.png" }
+            // ① 固定曲目：有 linkId + 难度
+            { "order": 1, "kind": "fixed", "linkId": "music:802", "difficulty": "MASTER" },
+
+            // ② 等级随机：有内部 ID、显示等级、封面
+            { "order": 1, "kind": "randomRange",
+              "levelFromId": 19, "levelToId": 19,       // 内部 ID，保留下来便于核对
+              "levelFrom": "10", "levelTo": "10",
+              "display": "10",                          // UI 直接用这个
+              "image": "assets/img/class/range_cover.png" },
+
+            // ③ 曲池随机：只有池大小，不列具体曲目
+            { "order": 1, "kind": "randomPool", "poolSize": 10,
+              "display": "范围内随机选择",
+              "image": "assets/img/class/random_cover.png" }
           ]
         }
       ]
-    },
-    {
-      "key": "II",
-      "label": "II",
-      "level": 2,
-      "color": "#0DB991",
-      "courses": [ /* ... */ ]
-    },
-    {
-      "key": "III",
-      "label": "III",
-      "level": 3,
-      "color": "#F2AA00",
-      "courses": [ /* ... */ ]
-    },
-    {
-      "key": "IV",
-      "label": "IV",
-      "level": 4,
-      "color": "#E13C29",
-      "courses": [ /* ... */ ]
-    },
-    {
-      "key": "V",
-      "label": "V",
-      "level": 5,
-      "color": "#4A0973",
-      "courses": [ /* ... */ ]
-    },
-    {
-      "key": "infinity",
-      "label": "∞",
-      "level": 0,
-      "color": "#FCDBEF",
-      "courses": [ /* ... */ ]
     }
   ]
 }
@@ -860,66 +854,78 @@ UNIVERSE 门**多一条**：
 | V | `#4A0973` |
 | ∞ | `#FCDBEF` |
 
-### 7.4 进度计算
+### 7.5 ⚠️ `fromLevel` 内部 ID 与游戏内等级的换算（**最容易写错的地方**）
+
+`Course.xml` 里等级随机的槽只给了一个内部 ID（`selectLevel/fromLevel/id`），
+而界面上要显示的是游戏内等级。这两者的对应关系是：
+
+```
+ID_19 = Lv10    ID_20 = Lv10+   ID_21 = Lv11
+ID_22 = Lv11+   ID_23 = Lv12    ID_24 = Lv12+
+ID_25 = Lv13    ID_26 = Lv13+   ID_27 = Lv14
+ID_28 = Lv14+   ID_29 = Lv15    ID_30 = Lv15+
+```
+
+也就是 `Lv = (ID - 19) / 2 + 10`，**每 2 个 ID 涨 1 级**，奇数偏移是 `.5`（显示成 `+`）。
+
+> ⚠️ 不要写成「等级 = ID − 9」。那样 ID_19 → 10 看着是对的（巧合），
+> 但 ID_20 会变成 11，而实际是 10+。这是本设计里唯一一个「错了也看不出来」的地方，
+> 所以 `tools/check_classes.py` 把下面这张表硬编码成了回归测试：
+
+| 等级 | 随机槽允许出现的内部 ID | 对应等级 |
+|---|---|---|
+| I | 19 / 20 / 21 | 10 / 10+ / 11 |
+| II | 22 / 23 / 24 | 11+ / 12 / 12+ |
+| III | 24 / 25 / 26 | 12+ / 13 / 13+ |
+| IV | 26 / 27 / 28 | 13+ / 14 / 14+ |
+| V | 27 / 28 / 29 | 14 / 14+ / 15 |
+| ∞ | 28 / 29 / 30 | 14+ / 15 / 15+ |
+
+定这个换算的**依据**是你确认过的一句话：
+
+> 「CLASS认定 - Ⅰ - Random 不是『等级 19 / 20 / 21』，19/20/21 是 id，真正的等级是 Lv10」
+
+而 `condition/class/course` 里 `CLASS认定 - I - Random` 那三个槽的 `fromLevel`
+正好是 `ID_19 / ID_20 / ID_21`。另一条独立佐证：`混沌を越えし我らが神聖なる調律主を讃えよ`（id 407）
+在本地数据里是 ADVANCED Lv10，而它所在的组曲槽位就是 `ID_19`。
+
+### 7.6 进度计算
 
 ```
 每个组曲：classDone["air"]["III-1"] 存在 → 该组曲已完成
-每个等级：该等级下所有组曲都完成 → 该等级「已达成勋章条件」
+每个等级：该等级下所有组曲都完成 → 显示「已达成缎带条件」
 AIR 门解锁：任意一个等级的所有组曲完成 → 已解锁
 ```
 
 UI 同时显示两个状态：
 
 - 组曲级：勾选框（点一下标记完成，再点取消）
-- 等级级：折叠框标题右侧显示「3/5 组曲」+ 全部完成时显示「**已达成**」
+- 等级级：折叠框标题右侧显示「3/5 组曲」+ 全部完成时显示「已达成缎带条件」
 - 门级：顶栏显示「已解锁」（任一等级全完成）
 
-### 7.5 缺失的数据与占位符方案
+**进度粒度是「组曲」而不是「单曲」**：缎带条件是通关整个组曲，
+组曲里的 3 首只是告诉你这个组曲要打什么，所以它们是**只读展示**，不能逐首打勾。
 
-**`condition/2-air/` 里只有 `条件.txt` 和 `日期.txt`，工作区里没有任何段位课程数据。**（全盘搜过 `Class`/`Course` 关键字，零命中。）
+### 7.7 随机槽的显示（你指定的写法）
 
-**已定稿的处理方式**：
+| 槽类型 | 封面 | 大字 | 小字 |
+|---|---|---|---|
+| 等级随机 `randomRange` | `random in range/cover.png`（`!`） | 游戏内等级，如 `11+`、`13+ ~ 14` | 等级随机 |
+| 曲池随机 `randomPool` | `random/cover.png`（`?`） | `范围内随机选择` | `10 选 1` |
 
-1. `data/classes.json` **先写占位符数据**（每个等级 2 个组曲、每个组曲 3 首假歌）
-2. `dataVersion` 标成 `"placeholder"`，JSON 里加 `"placeholder": true`
-3. App 检测到 `placeholder: true` 时，在 AIR 门页顶部显示一条提示：
-   「⚠️ 段位课程数据为占位符，仅用于预览界面」
-4. 等你把段位 XML 给我 → 重跑 `gen_gates.py` → 推送到 GitHub
-5. 你手机上的 app **点一下「立即同步数据」**即可更新，**不用重装 APK** ✅
+「`シビュラ精霊記 Random Set`」属于曲池随机，按你的要求只写「范围内随机选择」，不列具体曲目。
 
-**占位符示例**（这就是 M0 会生成的初始内容）：
+### 7.8 已废弃：占位符方案（保留记录，别再走一遍）
 
-```jsonc
-{
-  "schemaVersion": 1,
-  "dataVersion": "placeholder",
-  "placeholder": true,
-  "region": "cn",
-  "gateId": "air",
-  "unlockRule": {
-    "type": "anyClassAllCourses",
-    "text": "完成任一 CLASS 内的所有组曲，即可获得缎带"
-  },
-  "classes": [
-    { "key": "I", "label": "I", "level": 1, "color": "#3D66F2",
-      "courses": [
-        { "key": "I-1", "title": "占位组曲 1",
-          "songs": [ {"order":1,"songId":51,"title":"My First Phone","difficulty":"MASTER","image":"assets/img/music/51/jacket.png"},
-                     {"order":2,"songId":53,"title":"Teriqma","difficulty":"MASTER","image":"assets/img/music/53/jacket.png"},
-                     {"order":3,"songId":59,"title":"Invitation","difficulty":"MASTER","image":"assets/img/music/59/jacket.png"} ] },
-        { "key": "I-2", "title": "占位组曲 2", "songs": [ /* ... */ ] }
-      ] },
-    { "key": "II",      "label": "II", "level": 2, "color": "#0DB991", "courses": [] },
-    { "key": "III",     "label": "III","level": 3, "color": "#F2AA00", "courses": [] },
-    { "key": "IV",      "label": "IV", "level": 4, "color": "#E13C29", "courses": [] },
-    { "key": "V",       "label": "V",  "level": 5, "color": "#4A0973", "courses": [] },
-    { "key": "infinity","label": "∞",  "level": 0, "color": "#FCDBEF", "courses": [] }
-  ]
-}
-```
+最初的方案是在 `condition/2-air` 为空时写一份假数据（每级 2 个组曲、每曲 3 首假歌），
+并用 `placeholder: true` 让 UI 显示提醒。**已经删除**：
 
-> 占位符里的 3 首歌我故意用真实的曲目 id（51/53/59），这样能顺便验证「图片 + 名称」的渲染链路是通的。
+- `build.py` 里的 `build_classes_placeholder()` 和 `CLASS_COLORS` 字典都没了
+- `classes.json` 现在只由 `gen_classes.py` 从真实 XML 生成
+- 保留 `placeholder` 字段只是为了让「同步到旧数据」这种情况能被 UI 识别出来
 
+教训：占位数据会制造「看起来有数据其实是假的」的假象。宁可让页面空着，
+也不要填假数据——`check_classes.py` 现在会把 `placeholder: true` 视为异常。
 
 ---
 
@@ -1205,9 +1211,26 @@ App 启动
 - 等级折叠框标题：等级符号（用等级色）+ 「n/m 组曲」进度
 - **组曲内的 3 首歌是只读展示**（告诉你这个组曲要打哪三首），
   **点击完成的目标是「整个组曲」**——因为缎带条件是「通关组曲」，不是「逐首打勾」
-- 某等级全部组曲完成 → 标题右侧显示「**已达成勋章条件**」徽章
+- 某等级全部组曲完成 → 标题右侧显示「**已达成缎带条件**」徽章
 - **任一等级**全完成 → 门页顶栏显示「**已解锁**」（= 拿到缎带）
-- 组曲完成后：整个组曲折叠框加半透明白色遮罩 + 「已完成」，并移到该等级列表末尾
+- 组曲完成后：整行前面变成绿色勾 + 标题变绿；按钮变成「取消标记」
+
+**组曲内部的槽渲染**（对应 7.7）：
+
+| 槽 | 渲染 |
+|---|---|
+| `fixed` 固定曲 | 和门页其它地方一样的曲目卡（曲绘 + 曲名 + 曲师），**只读** |
+| `randomRange` 等级随机 | `random in range/cover.png` 封面 + 压在下半部的**等级大字**（`11+`），小字「等级随机」 |
+| `randomPool` 曲池随机 | `random/cover.png` 封面 + 「范围内随机选择」，小字「10 选 1」 |
+
+实现上有两个坑，代码里都写了注释：
+
+1. **不能用 `Wrap` 混排固定曲卡和随机卡**：`ItemCard` 内部用 `Expanded`，
+   而 `Wrap` 给子项的纵向约束是 unbounded，`Expanded` 会直接抛异常。
+   所以两类卡都走网格布局（`ItemGrid` / `_RandomSlotGrid`），由 `childAspectRatio` 定高。
+2. **不能用 `ItemGrid` 直接排组曲**：它会把「未完成」的排到前面，
+   而组曲的槽是**有顺序的**（槽 1→2→3）。这里传入的 `isDone` 永远返回 false，
+   让它的分组结果等于原始顺序。
 
 ### 10.7 奖励乐曲页（第 14 页）
 
@@ -1378,27 +1401,31 @@ release APK 必须签名才能安装。
 lvchecker/
 ├── .github/
 │   └── workflows/
-│       └── build-apk.yml
-├── android/
-│   └── app/build.gradle.kts        # minSdk = 29
-├── data/                            # ← 在线同步的源（raw 直链指向这里）
-│   ├── meta.json                    # 全局条目元数据（图片 + 名称）
-│   ├── gates.json                   # 13 个门
+│       ├── build-apk.yml             # 手动触发 / tag 触发 → 出 APK
+│       └── publish-pages.yml         # 把 data/*.json 发布到 GitHub Pages（可选源）
+├── data/                            # ← 在线同步的源（各源的直链指向这里）
+│   ├── meta.json                    # 全局条目元数据（157 条：曲名/曲师 + 图片路径）
+│   ├── gates.json                   # 13 个门 + 1 个奖励页
 │   ├── linklevels.json              # 缓和配置 + 判定色
-│   └── classes.json                 # AIR 段位课程
+│   └── classes.json                 # AIR 段位课程（6 CLASS / 36 组曲）
 ├── assets/
-│   ├── data/                        # ← APK 内置副本（= data/ 的拷贝）
-│   └── img/
-│       ├── music/{id}/jacket.png + meta.json      # × 62
-│       ├── chara/{id}/image.png + meta.json       # × 1（1080×1080）
-│       └── avatar/{id}/icon.png + tex.png + meta.json  # × 3
+│   └── img/                         # 160 张 PNG / 19.31 MB
+│       ├── music/{id}/jacket.png          # 曲绘（含 WE 曲）
+│       ├── chara/{id}/image.png           # × 1（1080×1080）
+│       ├── avatar/{id}/icon.png + tex.png # × 3
+│       └── class/                         # 段位随机槽封面 × 2
 ├── lib/
 │   ├── main.dart
 │   ├── models/
+│   │   ├── entry.dart               # meta.json
+│   │   ├── gate.dart                # gates.json
+│   │   ├── link_level.dart          # linklevels.json
+│   │   └── class_course.dart        # classes.json（含等级显示换算）
 │   ├── data/
 │   │   ├── data_loader.dart         # 内置 → 缓存 → 在线 三级加载
-│   │   ├── data_sync.dart           # 自动/手动同步
-│   │   └── progress_store.dart      # 存档读写
+│   │   ├── data_sync.dart           # 多源同步（UrlSource / ApiSource）
+│   │   ├── gate_status.dart         # 每个门是否已解锁
+│   │   └── progress_store.dart      # 存档读写（SharedPreferences）
 │   ├── import/
 │   │   ├── progress_importer.dart   # 接口
 │   │   ├── lxns_importer.dart
@@ -1408,28 +1435,42 @@ lvchecker/
 │   │   ├── gate_page.dart           # 单个门的页面
 │   │   └── settings_page.dart
 │   └── widgets/
-│       ├── item_card.dart           # 图片 + 名字 通用卡片
+│       ├── item_card.dart           # 图片 + 名字 通用卡片（ItemGrid / MarqueeText）
 │       ├── admonition.dart          # 折叠条件区块
 │       ├── link_level_list.dart     # 通关条件三态列表
-│       └── class_section.dart       # AIR 门双层折叠
-├── tools/                           # 只在本地跑，不进 APK
+│       └── class_section.dart       # AIR 门双层折叠 + 随机槽卡片
+├── tools/                           # 只在本地/CI 跑，不进 APK
 │   ├── build.py                     # condition/ → data/ + assets/img/
+│   ├── gen_classes.py               # condition/class/course → data/classes.json
+│   ├── gen_asset_list.py            # 重新生成 pubspec 的 assets 列表（必须逐文件列）
+│   ├── check_dart.py                # 无本地 Flutter 时的 Dart 静态自查
+│   ├── check_assets.py              # pubspec 声明 ↔ 磁盘 PNG 双向校验
+│   ├── check_classes.py             # 段位数据 + 等级换算回归
+│   ├── validate.py                  # 跨文件引用完整性
 │   └── preview.py                   # 生成验收预览图
 ├── preview/                         # 只在本地看，不进 APK
-│   ├── origin_sheet.png
-│   └── gates_overview.png
-├── condition/                       # 你的原始游戏数据（只读输入）
-├── test/
+├── condition/                       # 你的原始游戏数据（只读输入，不入 git）
+├── test/                            # CI 里 flutter test 跑这些
 ├── pubspec.yaml
 ├── README.md                        # 给朋友看的：怎么装、怎么用、怎么配密钥
 └── DESIGN.md                        # 本文档
 ```
 
-**两个本地工具**：
+> `android/` **故意不进 git**：由 CI 里的 `flutter create --platforms=android` 现场生成，
+> 再用 `sed` 改 `applicationId` / `minSdk` / 应用名。原因是手写的 gradle/AGP/Kotlin/wrapper
+> 版本必须和 Flutter 版本严格配套，提交进仓库等于给自己埋一颗「某天突然构建失败」的雷。
+
+**本地/CI 脚本一览**：
 
 | 脚本 | 作用 |
 |---|---|
 | `tools/build.py` | 解析 `condition/` 的 XML → 生成 `data/*.json`；同时把 `.dds` 转成 PNG 并按 ID 归档。**拿到新版本游戏数据重跑即可，不用手抄曲名** |
+| `tools/gen_classes.py` | 解析 36 个 `Course.xml` → `data/classes.json`，并转换两张随机封面 |
+| `tools/gen_asset_list.py` | 按磁盘现状重建 `pubspec.yaml` 的 `assets:` 列表。**Flutter 的 assets 声明不是递归的**，必须逐文件列出，少一行就是「图片全部丢失」 |
+| `tools/check_dart.py` | 本地没有 Flutter SDK，拿它做有限的静态自查（未定义类型、成员访问、展开语法、可空传参）。**它不能替代 `flutter analyze`** |
+| `tools/check_assets.py` | `pubspec` 声明 ↔ 磁盘 PNG 双向校验（声明了但没文件、有文件但没声明都报） |
+| `tools/check_classes.py` | 段位引用完整性 + **等级换算回归**（见 7.5） |
+| `tools/validate.py` | 跨文件 `linkId` 引用完整性 |
 | `tools/preview.py` | 生成验收预览图（`preview/*.png`），用来肉眼检查曲绘和条件文本渲染是否正常 |
 
 ---
@@ -1498,7 +1539,7 @@ git push origin v0.1.0
 | **M2** | 其余 12 个门（`items` / `auto` / `universe` / `manual`） | 全部 Stage 1 + Stage 2 可用 | ✅ |
 | **M3** | 在线同步 + 设置页 + README | 不用重发 APK 就能更新数据 | ✅ |
 | **M4** | 落雪导入（只查门要求的歌 + 汇总弹窗） | 自动辅助 | ✅ |
-| **M5** | AIR 段位 UI（用占位符数据先跑通，等 XML 替换） | 完整 | ✅（占位符）/ 待数据（真实值） |
+| **M5** | AIR 段位 UI + 真实课程数据（36 个组曲 / 86 首固定曲） | 完整 | ✅ |
 | **M6** | 曲绘/图片资源接入各卡片 | 观感 | ✅ |
 
 **建议先做 M0 + M1**：M0 你能立刻检查数据对不对（纯 JSON + 图片，不用装任何东西），M1 让 ORIGIN 立刻能用。
@@ -1507,11 +1548,15 @@ git push origin v0.1.0
 
 **M0 的具体产出清单**（✅ 已生成，脚本：`tools/build.py`）：
 
+> ⚠️ 下面是 **M0 完成时**的快照（81 条 meta / 82 张 PNG）。之后陆续接入了
+> 段位课程曲目、奖励曲等，**当前实际数字是 157 条 meta / 160 张 PNG / 19.31 MB**。
+> 每次重新生成后以 `tools/validate.py` 的输出为准。
+
 ```
 data/meta.json            81 个条目的元数据（music 75 / chara 1 / avatar 3 / mission 1 / map 1）
 data/gates.json           14 个页（13 个解锁条件门 + 1 个奖励乐曲页）
 data/linklevels.json      13 个门的 Link LEVEL 表 + 4 个判定色
-data/classes.json         AIR 段位占位符（placeholder: true）
+data/classes.json         6 个 CLASS / 36 个组曲（真实数据，来自 condition/class/course）
 assets/img/music/{id}/jacket.png + meta.json      × 75（含 13 首 BOSS + 奖励曲）
 assets/img/chara/24320/image.png + meta.json      × 1（1080×1080）
 assets/img/avatar/{id}/icon.png + tex.png + meta.json  × 3
@@ -1577,7 +1622,7 @@ tools/validate.py         数据校验
 
 | # | 风险/缺口 | 影响 | 应对 |
 |---|---|---|---|
-| R1 | **段位课程数据完全缺失**（`condition/2-air` 为空） | AIR 门的段位 UI 无数据可填 | 先写占位符；UI 框架留好，等 XML 填 JSON（见 7.5） |
+| R1 | ~~段位课程数据完全缺失~~ | — | ✅ **已解决**：在 `condition/class/` 下找到了 36 个 `Course.xml`，真实数据已接入（见 7.3）；旧的占位符方案已删除（见 7.8） |
 | R2 | 国服门开放日期未知（除 ORIGIN/AIR） | 日期判断不准 | `releaseStatus: notYetOpen`，不猜 |
 | R3 | 国服缓和日期表未知 | 无法自动算当前 Link LEVEL | 用户手动选；JSON 留 null 等填 |
 | R4 | `scores` 接口时间信息缺失（21/30 首） | 自动打勾不可靠 | 只查门要求的歌 + 三态 + 汇总弹窗（见 8.3） |
@@ -1602,7 +1647,7 @@ tools/validate.py         数据校验
 | ~~Q9~~ | ~~NEW 门到底要哪 3 件服装？~~ | ✅ **已解决**：要 61（服）/ 62（頭）/ 67（ランドセル）；65（アイス）排除 |
 | Q10 | 曲目区默认显示全部还是只未完成？ | ✅ **已定稿**：**显示全部**，未完成在前、已完成在后，不做筛选标签 |
 | Q11 | 采纳**方案 A（现在就转 public）**吗？ | ✅ **已完成**：仓库已是 public（实测 `"private": false`） |
-| Q12 | AIR 门在没有段位数据前怎么办？ | ✅ **已定稿**：写**占位符课程数据**让你看到 UI 效果，等 XML 到手替换 |
+| ~~Q12~~ | ~~AIR 门在没有段位数据前怎么办？~~ | ✅ **已解决**：占位符方案已废弃；`condition/class/course` 里找到了真实的 36 个组曲，直接接入（见 7.3） |
 | Q13 | 要不要把图片内置进 APK？ | ✅ **已定稿**：要。**不用在线曲绘**，全部本地 dds→png |
 | Q14 | `source` 字段（原 `confirmed`）保留吗？ | ✅ **保留**，防止以后忘了哪条日期是猜的 |
 | ~~Q15~~ | ~~RE:VERSE 的 11 首要「打过」还是「拿到」？~~ | ✅ **已解决**（见下） |

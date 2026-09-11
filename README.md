@@ -89,28 +89,34 @@ flutter build apk --release
 
 ```
 lvchecker/
-├── data/                  ← 在线同步的源（raw 直链指向这里）
-│   ├── meta.json          81 个条目的元数据（曲名/曲师/图片路径/难度）
+├── data/                  ← 在线同步的源（直链指向这里）
+│   ├── meta.json          157 个条目的元数据（曲名/曲师/图片路径/难度）
 │   ├── gates.json         14 页的完整定义
 │   ├── linklevels.json    Link LEVEL 缓和配置 + 判定色
-│   └── classes.json       AIR 段位课程（当前为占位符）
+│   └── classes.json       AIR 段位课程（6 个 CLASS / 36 个真实组曲）
 ├── assets/
-│   └── img/               82 张 PNG（曲绘 / 角色立绘 / 服装）
-│       ├── music/{id}/    jacket.png + meta.json
-│       ├── chara/{id}/    image.png + meta.json
-│       └── avatar/{id}/   icon.png + tex.png + meta.json
-├── tools/                 ← 只在本地跑，不进 APK
+│   └── img/               160 张 PNG / 19.31 MB（曲绘 / 角色立绘 / 服装 / 段位封面）
+│       ├── music/{id}/    jacket.png
+│       ├── chara/{id}/    image.png
+│       ├── avatar/{id}/   icon.png + tex.png
+│       └── class/         段位随机槽的封面 × 2
+├── tools/                 ← 只在本地/CI 跑，不进 APK
 │   ├── build.py           从 condition/ 生成 data/ 与 assets/img/
-│   ├── preview.py         生成验收预览图（本地用）
-│   └── validate.py        数据完整性校验
+│   ├── gen_classes.py     从 condition/class/course 生成 classes.json
+│   ├── gen_asset_list.py  重建 pubspec 的 assets 列表（必须逐文件列）
+│   ├── check_dart.py      没有本地 Flutter 时的 Dart 静态自查
+│   ├── check_assets.py    pubspec 声明 ↔ 磁盘 PNG 双向校验
+│   ├── check_classes.py   段位数据 + 等级换算回归
+│   ├── validate.py        数据完整性校验
+│   └── preview.py         生成验收预览图（本地用）
 ├── lib/                   ← Flutter 源码
 │   ├── main.dart
 │   ├── theme.dart
-│   ├── models/            entry.dart / gate.dart
-│   ├── data/              data_loader.dart / progress_store.dart / gate_status.dart
+│   ├── models/            entry.dart / gate.dart / link_level.dart / class_course.dart
+│   ├── data/              data_loader.dart / data_sync.dart / progress_store.dart / gate_status.dart
 │   ├── pages/             gate_pager.dart / gate_page.dart / settings_page.dart
-│   └── widgets/           item_card.dart / admonition.dart / boss_section.dart
-├── test/                  模型解析单测
+│   └── widgets/           item_card.dart / admonition.dart / boss_section.dart / class_section.dart
+├── test/                  模型解析单测（含段位等级换算回归）
 ├── .github/workflows/     build-apk.yml（APK 只在这里构建）
 ├── DESIGN.md              设计文档（数据模型 / UI / CI / 全部决策）
 └── .gitignore
@@ -170,12 +176,46 @@ lvchecker/
 
 ```bash
 pip install Pillow fontTools
-python tools/build.py      # 重新生成 data/ 与 assets/img/
-python tools/validate.py   # 校验完整性
-python tools/preview.py    # 生成预览图到 preview/（本地用，不入库）
+python tools/build.py          # 重新生成 data/ 与 assets/img/
+python tools/gen_classes.py    # 只重生成段位数据（build.py 也会自动调用）
+python tools/validate.py       # 跨文件引用完整性
+python tools/check_classes.py  # 段位数据 + 等级换算
+python tools/check_assets.py   # pubspec 声明 ↔ 磁盘 PNG
+python tools/preview.py        # 生成预览图到 preview/（本地用，不入库）
 ```
 
-`build.py` 会自动：解析 XML → 生成 JSON → 把 `.dds` 转成 PNG → 按 ID 归档 → 写 `meta.json`。
+`build.py` 会自动：解析 XML → 生成 JSON → 把 `.dds` 转成 PNG → 按 ID 归档 →
+写 `meta.json` → **重建 `pubspec.yaml` 的 assets 列表**。
+
+> ⚠️ 最后一步（`gen_asset_list.py`）不能跳过。Flutter 的 `assets:` 声明**不是递归的**，
+> 写 `assets/img/music/` 一个目录**不等于**声明了里面的文件。少声明任何一张图，
+> app 里那张图就会显示「图片丢失」——这个坑踩过三次，所以现在由脚本按磁盘现状生成。
+
+### 段位（CLASS）课程数据
+
+AIR 门的解锁条件是「获得一个段位缎带」，即**任一 CLASS 内所有组曲通关**。
+课程数据来自 `condition/class/course/*/Course.xml`（36 个组曲，6 个 CLASS），
+由 `tools/gen_classes.py` 生成 `data/classes.json`。
+
+组曲里的槽有三种：
+
+| 槽 | 显示 |
+|---|---|
+| 固定曲目 | 曲绘 + 曲名 + 曲师（只读，告诉你这组要打哪几首） |
+| 等级随机 | `!` 封面 + 游戏内等级（例 `11+`） |
+| 曲池随机 | `?` 封面 + 「范围内随机选择」 |
+
+**进度粒度是「组曲」而不是「单曲」**：点组曲标题即标记该组曲通关，
+因为缎带条件本来就是「通关整个组曲」。
+
+> ⚠️ 一个容易搞错的地方：XML 里等级随机槽只给内部 ID（`fromLevel = 19/20/21`），
+> 而游戏内显示的是 `Lv10 / Lv10+ / Lv11`（换算：`Lv = (ID-19)/2 + 10`，**每 2 个 ID 涨 1 级**）。
+> 写成「ID − 9」在 `ID_19` 上看着是对的，但 `ID_20` 会算成 11 而不是 10+。
+> 这个错误肉眼看不出，所以 `tools/check_classes.py` 和 `test/class_course_test.dart`
+> 都把这张对应表钉死成了回归测试。
+
+`classes.json` 里的 `placeholder` 字段正常情况下是 `false`。
+APP 只有在它变成 `true` 时才会在 AIR 门顶部弹一条警告——那说明同步到的是旧数据或生成失败了。
 
 ---
 
@@ -288,11 +328,15 @@ Pages 让热更新更快，但需要**手动启用一次**（`GITHUB_TOKEN` 无�
 | 内容 | 能否热更新 | 原因 |
 |---|---|---|
 | 曲目与条件、开放日期、缓和表、段位课程 | ✅ 能 | 都是 `data/*.json` |
-| 曲绘 / 角色立绘 / 服装图 | ❌ 不能 | 图片在 APK 内（82 张，走网络得不偿失） |
+| 曲绘 / 角色立绘 / 服装图 / 段位封面 | ❌ 不能 | 图片在 APK 内（160 张，走网络得不偿失） |
 | UI 与逻辑 | ❌ 不能 | 要重新构建 APK |
 
 所以「加了新曲目」需要重发 APK（因为要带新曲绘），
-但「给某个门填上开放日期」「修正缓和表」这类改数据**不用重装**。
+但「给某个门填上开放日期」「修正缓和表」「修正段位等级」这类改数据**不用重装**。
+
+> 数据版本号是 `data/*.json` 里的 `dataVersion`，四个文件共用同一个值
+> （由 `tools/build.py` 的 `DATA_VERSION` 统一定义，`gen_classes.py` 直接 import 它，
+> 避免两个脚本写出不一样的版本号）。改数据时记得把它 +1。
 
 ---
 
@@ -302,29 +346,32 @@ Pages 让热更新更快，但需要**手动启用一次**（`GITHUB_TOKEN` 无�
 |---|---|---|
 | **M0** | 数据生成脚本 + `data/*.json` + 图片资源 | ✅ **完成** |
 | **M1** | Flutter 工程 + ORIGIN 门 + 打勾存档 + 翻页 | ✅ **完成**（首次 APK） |
-| M2 | 其余 12 个门（items / auto / universe / manual） | 🚧 进行中 |
-| M3 | 在线同步 + 设置页完善 | ⬜ |
-| M4 | 落雪导入 | ⬜ |
-| M5 | AIR 段位课程 UI（等课程 XML） | ⬜ 待数据 |
-| M6 | 其余视觉打磨 | ⬜ |
+| **M2** | 其余 12 个门（items / auto / universe / manual） | ✅ **完成** |
+| **M3** | 在线同步（多源回退）+ 设置页 + 连通性探测 | ✅ **完成** |
+| **M4** | 落雪导入（只查门要求的歌 + 三态 + 汇总弹窗） | ✅ **完成** |
+| **M5** | AIR 段位课程 UI + 36 个真实组曲 | ✅ **完成** |
+| **M6** | 视觉打磨（跑马灯曲名 / 曲绘 / 段位随机槽卡片） | ✅ **完成** |
 
-### M1 实现了什么
+### 主要功能
 
 - 每个门一页，**左右滑动切换**；顶部页码条可看到滑到哪、还剩几个门
 - 页面自上而下：门名 + 状态 → 解锁条件（默认折叠，可展开看游戏原文）→ 待完成卡片 → **BOSS（仅解锁后显示）**
 - 卡片「**点一下 = 已完成**」，半透明白遮罩 + 居中「已完成」，再点取消
+- 长曲名**自动左右滚动**（跑马灯），不用点开也能看全
+- AIR 门：6 个 CLASS 折叠框 → 组曲折叠框 → 组曲内 3 个槽（固定曲 / 等级随机 / 曲池随机）
 - 进度**立即落盘**（`shared_preferences`），只存手机本地
-- ORIGIN（30 首曲目清单）可完整使用；其余门也有页面，条件与条目都能看
 - 奖励乐曲页在前 13 门全解锁后才出现
 
 ### 已知缺口
 
 | 缺口 | 影响 | 应对 |
 |---|---|---|
-| **段位课程数据缺失** | AIR 门的段位 UI 无数据 | 先用占位符 + 手动确认；拿到 XML 后重跑脚本即可，**不用重发 APK** |
 | 国服门开放日期未知（除 ORIGIN/AIR） | 日期判断 | 显示「未更新」，**不猜日期** |
 | 国服缓和日期表未知 | 无法自动算当前 Link LEVEL | 用户手动选等级；JSON 留 `null` 等填 |
 | CRYSTAL 条件未知 | 无法给准确条件 | 标「条件待确认」+ 手动确认 |
+| 段位随机槽的具体曲目无法预知 | 只知道等级，不知道会抽到哪首 | 按设计只显示等级 / 「范围内随机选择」 |
+| 落雪 `scores` 缺时间信息 | 不能全自动判断「更新后是否打过」 | 三态显示 + 手动确认（见上文） |
+| 部分国内网络屏蔽 `githubusercontent` 系域名 | 热更新可能不可用 | 多源回退（Pages / Contents API / jsDelivr / raw / githack）+ 连通性探测 |
 
 ---
 

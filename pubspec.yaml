@@ -51,29 +51,79 @@ flutter:
     - assets/img/avatar/6704401/icon.png
     - assets/img/avatar/6704401/tex.png
     - assets/img/chara/24320/image.png
+    - assets/img/class/random_cover.png
+    - assets/img/class/range_cover.png
     - assets/img/music/100/jacket.png
     - assets/img/music/101/jacket.png
+    - assets/img/music/1017/jacket.png
+    - assets/img/music/1035/jacket.png
     - assets/img/music/105/jacket.png
+    - assets/img/music/1059/jacket.png
+    - assets/img/music/106/jacket.png
     - assets/img/music/107/jacket.png
     - assets/img/music/108/jacket.png
+    - assets/img/music/1091/jacket.png
+    - assets/img/music/1098/jacket.png
+    - assets/img/music/135/jacket.png
     - assets/img/music/140/jacket.png
     - assets/img/music/141/jacket.png
+    - assets/img/music/145/jacket.png
     - assets/img/music/147/jacket.png
     - assets/img/music/148/jacket.png
     - assets/img/music/151/jacket.png
     - assets/img/music/152/jacket.png
+    - assets/img/music/157/jacket.png
     - assets/img/music/163/jacket.png
+    - assets/img/music/179/jacket.png
     - assets/img/music/180/jacket.png
+    - assets/img/music/200/jacket.png
+    - assets/img/music/201/jacket.png
+    - assets/img/music/2036/jacket.png
     - assets/img/music/2050/jacket.png
+    - assets/img/music/2129/jacket.png
+    - assets/img/music/2138/jacket.png
+    - assets/img/music/2208/jacket.png
+    - assets/img/music/2251/jacket.png
+    - assets/img/music/226/jacket.png
+    - assets/img/music/2263/jacket.png
     - assets/img/music/2266/jacket.png
+    - assets/img/music/2272/jacket.png
+    - assets/img/music/2274/jacket.png
+    - assets/img/music/2317/jacket.png
     - assets/img/music/2326/jacket.png
     - assets/img/music/2327/jacket.png
     - assets/img/music/2353/jacket.png
     - assets/img/music/2354/jacket.png
     - assets/img/music/2355/jacket.png
+    - assets/img/music/2381/jacket.png
+    - assets/img/music/2384/jacket.png
+    - assets/img/music/2385/jacket.png
+    - assets/img/music/2388/jacket.png
+    - assets/img/music/2406/jacket.png
+    - assets/img/music/2410/jacket.png
+    - assets/img/music/2412/jacket.png
+    - assets/img/music/2435/jacket.png
+    - assets/img/music/2452/jacket.png
+    - assets/img/music/2468/jacket.png
+    - assets/img/music/2475/jacket.png
     - assets/img/music/2493/jacket.png
+    - assets/img/music/2503/jacket.png
+    - assets/img/music/2509/jacket.png
+    - assets/img/music/2523/jacket.png
+    - assets/img/music/2524/jacket.png
+    - assets/img/music/2537/jacket.png
+    - assets/img/music/2539/jacket.png
+    - assets/img/music/2540/jacket.png
+    - assets/img/music/2542/jacket.png
+    - assets/img/music/2546/jacket.png
+    - assets/img/music/2554/jacket.png
     - assets/img/music/2556/jacket.png
+    - assets/img/music/2560/jacket.png
+    - assets/img/music/2566/jacket.png
+    - assets/img/music/2585/jacket.png
     - assets/img/music/2597/jacket.png
+    - assets/img/music/2632/jacket.png
+    - assets/img/music/2657/jacket.png
     - assets/img/music/2704/jacket.png
     - assets/img/music/2705/jacket.png
     - assets/img/music/2712/jacket.png
@@ -102,30 +152,58 @@ flutter:
     - assets/img/music/2978/jacket.png
     - assets/img/music/2999/jacket.png
     - assets/img/music/3000/jacket.png
+    - assets/img/music/303/jacket.png
+    - assets/img/music/330/jacket.png
+    - assets/img/music/376/jacket.png
     - assets/img/music/384/jacket.png
     - assets/img/music/407/jacket.png
+    - assets/img/music/455/jacket.png
     - assets/img/music/483/jacket.png
     - assets/img/music/51/jacket.png
     - assets/img/music/53/jacket.png
+    - assets/img/music/549/jacket.png
+    - assets/img/music/574/jacket.png
+    - assets/img/music/583/jacket.png
     - assets/img/music/59/jacket.png
+    - assets/img/music/599/jacket.png
     - assets/img/music/629/jacket.png
     - assets/img/music/63/jacket.png
     - assets/img/music/64/jacket.png
     - assets/img/music/65/jacket.png
+    - assets/img/music/656/jacket.png
     - assets/img/music/67/jacket.png
     - assets/img/music/69/jacket.png
+    - assets/img/music/698/jacket.png
     - assets/img/music/70/jacket.png
     - assets/img/music/71/jacket.png
     - assets/img/music/712/jacket.png
+    - assets/img/music/738/jacket.png
     - assets/img/music/74/jacket.png
+    - assets/img/music/744/jacket.png
     - assets/img/music/75/jacket.png
     - assets/img/music/76/jacket.png
+    - assets/img/music/765/jacket.png
     - assets/img/music/777/jacket.png
+    - assets/img/music/785/jacket.png
+    - assets/img/music/787/jacket.png
     - assets/img/music/788/jacket.png
     - assets/img/music/79/jacket.png
+    - assets/img/music/797/jacket.png
     - assets/img/music/80/jacket.png
+    - assets/img/music/802/jacket.png
+    - assets/img/music/8198/jacket.png
     - assets/img/music/82/jacket.png
+    - assets/img/music/8227/jacket.png
+    - assets/img/music/8252/jacket.png
+    - assets/img/music/8281/jacket.png
+    - assets/img/music/8282/jacket.png
+    - assets/img/music/895/jacket.png
+    - assets/img/music/930/jacket.png
+    - assets/img/music/935/jacket.png
+    - assets/img/music/949/jacket.png
     - assets/img/music/95/jacket.png
+    - assets/img/music/971/jacket.png
+    - assets/img/music/974/jacket.png
 
 # 启动图标配置（见上面的 flutter_launcher_icons 依赖）。
 flutter_launcher_icons:

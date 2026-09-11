@@ -72,7 +72,13 @@ for g in gates:
         ck([b["linkId"]], g["id"] + "/boss")
 for c in cls["classes"]:
     for co in c["courses"]:
-        ck([s["linkId"] for s in co["songs"]], "classes/" + co["key"])
+        # 段位组曲的槽有三种 kind：
+        #   fixed       固定曲目，有 linkId
+        #   randomRange 按等级随机，只有 levelFrom/levelTo
+        #   randomPool  按曲池随机，只有 poolSize
+        for s in co["songs"]:
+            if s.get("kind", "fixed") == "fixed":
+                ck([s["linkId"]], "classes/" + co["key"])
 print(f"  悬空引用: {bad}")
 
 print("\n=== 6. 图片统计 ===")

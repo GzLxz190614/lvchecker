@@ -42,7 +42,10 @@ except Exception:  # noqa: BLE001
     pass
 
 SCHEMA_VERSION = 1
-DATA_VERSION = "2026.09.11-1"
+# 数据版本号。meta/gates/linklevels/classes 四个 json 共用同一个值
+# （gen_classes.py 会从这里 import，免得两边写不一致）。
+# 改数据后把它 +1，App 的「检查更新」就是靠比对这个字符串来判断有没有新数据的。
+DATA_VERSION = "2026.09.11-2"
 
 # 门的开放日期（来自 condition/*/日期.txt）
 RELEASE_OPEN = "2026-09-10T10:00"   # 无时区，按手机本地时间解析
@@ -103,6 +106,22 @@ BOSS_SHARED = {2967: ["xverse", "reverse"]}
 REWARD_SONG_ID = 3000     # Linked Tune
 REWARD_GATE_ID = "reward"
 
+# 段位课程目录
+CLASS_DIR = CONDITION / "class"
+CLASS_COURSE_DIR = CLASS_DIR / "course"
+CLASS_MUSIC_DIR = CLASS_DIR / "music"
+CLASS_RANDOM_COVER = CLASS_DIR / "random" / "cover.png"          # 「?」图
+CLASS_RANGE_COVER = CLASS_DIR / "random in range" / "cover.png"  # 「!」图
+
+# fromLevel 的内部 ID -> 真实难度显示。
+#
+# 这个映射是**验证过的**，不是猜的：组曲「カオス Set」的随机槽 fromLevel = ID_19，
+# 而同一组曲的固定曲 混沌を越えし我らが神聖なる調律主を讃えよ(id407) 在本地
+# Music.xml 里是 ADVANCED Lv10 —— 两处吻合，所以 ID_19 = Lv10。
+# 其余按 1 递增，'.0' 显示成整数、'.5' 显示成 'x+'（游戏内写法）。
+LEVEL_ID_BASE = 19          # ID_19 对应 Lv10
+LEVEL_ID_BASE_DIFFICULTY = 10
+
 # 判定色（用户提供）
 JUDGES = {
     "JUSTICE":          {"damage": -5,  "color": "#FF6A00"},
@@ -120,11 +139,11 @@ LINK_LEVEL_TABLE = [
     (1, "BASIC",  3000, ["JUSTICE", "ATTACK", "MISS"]),
 ]
 
-# AIR 段位等级颜色（用户提供）
-CLASS_COLORS = {
-    "I": "#3D66F2", "II": "#0DB991", "III": "#F2AA00",
-    "IV": "#E13C29", "V": "#4A0973", "infinity": "#FCDBEF",
-}
+# 说明：段位（CLASS）的配色与显示名不再写在这里。
+# 段位数据由 tools/gen_classes.py 直接解析 condition/class/course/*/Course.xml 生成
+# data/classes.json（含 color 字段），build.py 只负责把 class/music 里的曲目登记进 meta 表。
+# 早期版本的 build_classes_placeholder() 已经删除——它会在 Course.xml 缺失时
+# 用假数据填满 classes.json，导致「看起来有数据其实是占位」的假象。
 
 warnings: list[str] = []
 meta: dict[str, dict] = {}
@@ -254,7 +273,11 @@ def build_boss_map() -> dict[str, dict]:
 
 
 def add_music(xml_path: Path, gate: str) -> int:
-    """把一首曲目加入 meta 表，返回 songId。"""
+    """把一首曲目加入 meta 表，返回 songId。
+
+    图片路径**固定按曲目 id 推导**为 `assets/img/music/<id>/jacket.png`，
+    因为转换阶段（convert_one_dds）会往那里写。
+    """
     info = parse_music(xml_path)
     sid = info["id"]
     key = f"music:{sid}"
@@ -269,6 +292,32 @@ def add_music(xml_path: Path, gate: str) -> int:
             "image": f"assets/img/music/{sid}/jacket.png",
         }
     return sid
+
+
+def collect_class_music() -> list[int]:
+    """把 condition/class/music 下所有曲目登记进 meta。
+
+    为什么必须单独收：
+        这批曲目（76 首）是**段位组曲**用到的，不属于任何「门」，
+        之前 build.py 只扫门的目录和 boss/，所以它们一直没进 app，
+        段位页面里这些曲子会全部显示「图片缺失」。
+
+    注意曲绘文件名不能从目录名推：
+        WE 谱面目录用**曲目 id**（music8198），但里面的图是 `CHU_UI_Jacket_0889.dds`
+        —— 889 才是原曲 id（8198 是它的 WORLD'S END 谱面）。
+        所以这里读 `jaketFile` 声明，记下来给 convert_images 用。
+    """
+    if not CLASS_MUSIC_DIR.exists():
+        warn(f"找不到 {CLASS_MUSIC_DIR}，段位曲目不会进 meta")
+        return []
+
+    ids: list[int] = []
+    for d in sorted(p for p in CLASS_MUSIC_DIR.iterdir() if p.is_dir()):
+        xml = d / "Music.xml"
+        if not xml.exists():
+            continue
+        ids.append(add_music(xml, "class"))
+    return ids
 
 
 def avatar_slot(title: str) -> str:
@@ -634,45 +683,6 @@ def build_linklevels() -> dict:
     }
 
 
-# ---------------------------------------------------------------- classes 占位符
-
-def build_classes_placeholder() -> dict:
-    def dummy_course(key: str, title: str, ids: list[int]) -> dict:
-        songs = []
-        for i, sid in enumerate(ids, start=1):
-            m = meta.get(f"music:{sid}", {})
-            songs.append({
-                "order": i,
-                "linkId": f"music:{sid}",
-                "difficulty": "MASTER",
-            })
-        return {"key": key, "title": title, "songs": songs}
-
-    return {
-        "schemaVersion": SCHEMA_VERSION,
-        "dataVersion": "placeholder",
-        "placeholder": True,
-        "region": "cn",
-        "note": "段位课程数据尚未提供（condition/2-air 为空）。以下为占位符，仅用于预览 UI。",
-        "gateId": "air",
-        "unlockRule": {
-            "type": "anyClassAllCourses",
-            "text": "完成任一 CLASS 内的所有组曲，即可获得缎带",
-        },
-        "classes": [
-            {"key": "I", "label": "I", "level": 1, "color": CLASS_COLORS["I"],
-             "courses": [dummy_course("I-1", "占位组曲 1", [51, 53, 59]),
-                         dummy_course("I-2", "占位组曲 2", [63, 65, 67])]},
-            {"key": "II", "label": "II", "level": 2, "color": CLASS_COLORS["II"], "courses": []},
-            {"key": "III", "label": "III", "level": 3, "color": CLASS_COLORS["III"], "courses": []},
-            {"key": "IV", "label": "IV", "level": 4, "color": CLASS_COLORS["IV"], "courses": []},
-            {"key": "V", "label": "V", "level": 5, "color": CLASS_COLORS["V"], "courses": []},
-            {"key": "infinity", "label": "∞", "level": 0, "color": CLASS_COLORS["infinity"],
-             "courses": []},
-        ],
-    }
-
-
 # ---------------------------------------------------------------- 图片转换
 
 def convert_images() -> None:
@@ -693,6 +703,10 @@ def convert_images() -> None:
     if boss_dir.exists():
         targets += [p for p in boss_dir.rglob("*.dds") if p.is_file()]
 
+    # ③ condition/class/music/<曲>/ 下的 dds（段位组曲用到的曲目）
+    if CLASS_MUSIC_DIR.exists():
+        targets += [p for p in CLASS_MUSIC_DIR.rglob("*.dds") if p.is_file()]
+
     # 门根目录下的 dds（例如 condition/3-star/CHU_UI_Character_2432_00_00.dds）
     for gate_order, dirname, gpath in gate_dirs():
         targets += [p for p in gpath.glob("*.dds") if p.is_file()]
@@ -702,6 +716,24 @@ def convert_images() -> None:
             convert_one_dds(dds)
         except Exception as e:  # noqa: BLE001
             warn(f"转换失败 {dds}: {type(e).__name__}: {e}")
+
+
+def song_id_of_dds_dir(folder: Path) -> int | None:
+    """按 dds 所在目录里的 Music.xml 精确取 song_id。
+
+    为什么不能按文件名反查：
+        多首曲目可能共用同一张曲绘（例如几首曲目用同一张图），
+        按文件名反查会串号，还会在 assets/img/music/ 下生成多余的 id 目录。
+        读同目录的 Music.xml 才是唯一可靠的依据。
+    """
+    xml = folder / "Music.xml"
+    if not xml.exists():
+        return None
+    try:
+        sid = ET.parse(xml).getroot().findtext("name/id")
+        return int(sid) if sid else None
+    except (ET.ParseError, ValueError):
+        return None
 
 
 def convert_one_dds(dds: Path) -> None:
@@ -744,9 +776,15 @@ def convert_one_dds(dds: Path) -> None:
     kind, raw = m.group(1), m.group(2)
 
     if kind == "Jacket":
-        out_dir = IMG / "music" / str(int(raw))
+        # 段位曲目的曲绘文件名**不一定等于曲目 id**：
+        #   music8198（WE 谱面）里的图是 CHU_UI_Jacket_0889.dds，
+        #   889 才是原曲 id。而 music8252 用的是 2162 的图……
+        # 更麻烦的是**多首曲目可能共用同一张图**，所以不能按文件名反查
+        # （会串号、生成多余目录）。这里按 dds 所在目录精确取 song_id。
+        sid = song_id_of_dds_dir(dds.parent) or int(raw)
+        out_dir = IMG / "music" / str(sid)
         out_name = "jacket.png"
-        mkey = f"music:{int(raw)}"
+        mkey = f"music:{sid}"
     elif kind == "Avatar_Icon":
         aid = int(raw)
         out_dir = IMG / "avatar" / str(aid)
@@ -822,6 +860,10 @@ def main() -> int:
     print("\n== 解析门与曲目 ==")
     gates = build_gates(boss_map)
 
+    print("\n== 解析段位曲目 ==")
+    class_ids = collect_class_music()
+    print(f"  段位曲目 {len(class_ids)} 首")
+
     print("\n== 转换图片 ==")
     convert_images()
 
@@ -829,7 +871,8 @@ def main() -> int:
     write_meta_sidecars()
 
     print("\n== 写 data/*.json ==")
-    meta_doc = {        "schemaVersion": SCHEMA_VERSION,
+    meta_doc = {
+        "schemaVersion": SCHEMA_VERSION,
         "dataVersion": DATA_VERSION,
         "region": "cn",
         "note": "全局条目元数据。gates.json / classes.json 通过 linkId 引用这里。",
@@ -849,8 +892,27 @@ def main() -> int:
         json.dumps(meta_doc, ensure_ascii=False, indent=2), encoding="utf-8")
     (DATA / "linklevels.json").write_text(
         json.dumps(build_linklevels(), ensure_ascii=False, indent=2), encoding="utf-8")
-    (DATA / "classes.json").write_text(
-        json.dumps(build_classes_placeholder(), ensure_ascii=False, indent=2), encoding="utf-8")
+    # ---- 段位课程（classes.json）----
+    #
+    # 段位数据在 condition/class/ 下，格式和门不同（Course.xml），
+    # 所以由 tools/gen_classes.py 独立处理，这里调用它，
+    # 保证 build.py 一条命令就能全量重建。
+    print("\n== 生成段位课程（condition/class → classes.json）==")
+    if CLASS_COURSE_DIR.exists():
+        try:
+            import subprocess
+            gen = ROOT / "tools" / "gen_classes.py"
+            r = subprocess.run([sys.executable, str(gen)], capture_output=True, text=True,
+                               encoding="utf-8")
+            print(r.stdout.strip() if r.stdout else "")
+            if r.returncode != 0:
+                warn("gen_classes.py 执行失败，classes.json 可能不完整")
+                if r.stderr:
+                    print(r.stderr[-800:])
+        except Exception as e:  # noqa: BLE001
+            warn(f"无法调用 gen_classes.py：{e}")
+    else:
+        warn(f"找不到 {CLASS_COURSE_DIR}，跳过段位课程生成")
 
     # ---- 重新生成 pubspec 的资源列表 ----
     #
@@ -899,5 +961,7 @@ def main() -> int:
     return 0
 
 
+# 这个 __name__ 判断不是可有可无的：gen_classes.py 会 `from build import DATA_VERSION`，
+# 如果没有它，那次 import 会把 build.py 整个 main() 再跑一遍（还会递归调用 gen_classes）。
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -291,12 +291,21 @@ class ItemGrid extends StatelessWidget {
     required this.isDone,
     required this.onTap,
     this.onLongPress,
+    this.childAspectRatio = _childAspectRatio,
+    this.minTile = _minTile,
   });
 
   final List<Entry> entries;
   final bool Function(Entry) isDone;
   final void Function(Entry) onTap;
   final void Function(Entry)? onLongPress;
+
+  /// 每张卡的宽高比。默认 0.62（见下面的说明）；段位随机槽那类「没有曲名/曲师」的卡片
+  /// 可以传更大的值，免得文字区空一大块。
+  final double childAspectRatio;
+
+  /// 单张卡片的最小宽度（含间距）
+  final double minTile;
 
   /// 单张卡片的最小宽度（含间距）
   static const double _minTile = 104;
@@ -325,7 +334,7 @@ class ItemGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        var cols = ((width + _gap) / (_minTile + _gap)).floor();
+        var cols = ((width + _gap) / (minTile + _gap)).floor();
         if (cols < 2) cols = 2;
         if (cols > 6) cols = 6;
         return GridView.builder(
@@ -336,7 +345,7 @@ class ItemGrid extends StatelessWidget {
             crossAxisCount: cols,
             crossAxisSpacing: _gap,
             mainAxisSpacing: _gap,
-            childAspectRatio: _childAspectRatio,
+            childAspectRatio: childAspectRatio,
           ),
           itemCount: ordered.length,
           itemBuilder: (context, i) {

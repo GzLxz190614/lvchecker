@@ -12,8 +12,8 @@ import 'item_card.dart';
 /// 因为缎带条件是「通关组曲」，组曲内的 3 首只是告诉你这个组曲要打什么，
 /// 所以它们是**只读展示**；点一下组曲标题那一行才算完成。
 ///
-/// 当前段位课程还是占位数据（`classes.json` 的 placeholder 为 true），
-/// 所以页面上会显示一条提醒，且门是否解锁仍以「手动确认」为准。
+/// 课程数据来自 `condition/class/course/*/Course.xml`（真实数据，36 个组曲），
+/// 不再是占位符；只有当 `classes.json` 的 `placeholder` 为 true 时才显示提醒条。
 class ClassSection extends StatefulWidget {
   const ClassSection({
     super.key,
@@ -102,18 +102,33 @@ class _ClassSectionState extends State<ClassSection> {
           ),
           children: [
             for (final course in tier.courses)
-              _courseBlock(tier, course, doneCourses.contains(course.key)),
+              _courseBlock(course, doneCourses.contains(course.key)),
           ],
         ),
       ),
     );
   }
 
-  Widget _courseBlock(ClassTier tier, ClassCourse course, bool done) {
+  // 组曲的槽有三种：固定曲目（能显示曲绘）、等级随机、曲池随机。
+  // 后两种没有具体曲目，改用「class/random」「class/random in range」下那两张封面 + 文字说明。
+  //
+  // 遍历顺序就是 slots 的顺序（游戏里 1→2→3），**没有**按「先固定曲再随机槽」重排。
+  // 渲染时固定曲走 ItemGrid、随机槽走 _RandomSlotGrid（原因见 _slotGrid 的注释），
+  // 所以万一某组曲是混排的（当前 36 个组曲都不是），会显示成「先全部固定曲、再全部随机槽」，
+  // 但每一类内部仍保持原始相对顺序。
+  Widget _courseBlock(ClassCourse course, bool done) {
     final entries = <Entry>[];
-    for (final k in course.songKeys) {
-      final e = widget.meta[k];
-      if (e != null) entries.add(e);
+    final randomSlots = <ClassSlot>[];
+    final diffs = <String>[];
+    for (final slot in course.slots) {
+      if (slot.isFixed) {
+        final key = slot.linkId;
+        final e = key == null ? null : widget.meta[key];
+        if (e != null) entries.add(e); // 数据缺失就跳过，别渲染成空白卡
+        diffs.add(slot.difficulty ?? '');
+      } else {
+        randomSlots.add(slot);
+      }
     }
 
     return Container(
@@ -153,26 +168,26 @@ class _ClassSectionState extends State<ClassSection> {
                   ),
                 ),
               ),
+              if (course.randomCount > 0)
+                Padding(
+                  padding: const EdgeInsets.only(left: 6),
+                  child: Text(
+                    '${course.fixedCount}+${course.randomCount}随机',
+                    style: const TextStyle(fontSize: 10.5, color: AppTheme.textFaint),
+                  ),
+                ),
             ],
           ),
           children: [
-            // 只读展示这 3 首。用和曲目卡片一样的样式，保持视觉一致。
-            IgnorePointer(
-              child: ItemGrid(
-                entries: entries,
-                isDone: (_) => false,
-                onTap: (_) {},
-              ),
-            ),
-            const SizedBox(height: 4),
+            _slotGrid(entries, randomSlots),
+            const SizedBox(height: 8),
             // 难度标签
             Wrap(
               spacing: 6,
               runSpacing: 4,
               children: [
-                for (var i = 0; i < course.songKeys.length; i++)
-                  if (i < course.difficulties.length && course.difficulties[i].isNotEmpty)
-                    _DifficultyTag(course.difficulties[i]),
+                for (var i = 0; i < diffs.length; i++)
+                  if (diffs[i].isNotEmpty) _DifficultyTag(diffs[i]),
               ],
             ),
             const SizedBox(height: 10),
@@ -190,6 +205,156 @@ class _ClassSectionState extends State<ClassSection> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 组曲内的槽卡片（只读）。
+  ///
+  /// 为什么不用一个 `Wrap` 把固定曲和随机卡混排：`ItemCard` 内部用了 `Expanded`
+  /// （文字区自适应高度），而 `Wrap` 给子项的纵向约束是 unbounded，
+  /// `Expanded` 在没有高度上限时会直接抛异常。
+  /// 所以这里复用 `ItemGrid`——它用 `childAspectRatio` 给每张卡算出确定高度。
+  ///
+  /// `ItemGrid` 内部会「未完成在前」，但传入的 `isDone` 永远返回 false，
+  /// 分组结果就是原始顺序，正好符合「槽 1→2→3」的要求。
+  Widget _slotGrid(List<Entry> entries, List<ClassSlot> randomSlots) {
+    if (entries.isEmpty && randomSlots.isEmpty) return const SizedBox.shrink();
+    return IgnorePointer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (entries.isNotEmpty)
+            ItemGrid(entries: entries, isDone: (_) => false, onTap: (_) {}),
+          if (entries.isNotEmpty && randomSlots.isNotEmpty) const SizedBox(height: 10),
+          if (randomSlots.isNotEmpty)
+            _RandomSlotGrid(slots: randomSlots, childAspectRatio: _randomAspect),
+        ],
+      ),
+    );
+  }
+
+  /// 随机槽卡片的宽高比。比 `ItemGrid` 的 0.62 略大，因为随机卡没有曲名/曲师两行文字，
+  /// 只需要一行小字。保持接近是为了和固定曲卡视觉一致。
+  static const double _randomAspect = 0.78;
+}
+
+/// 随机槽的小网格。列数与 `ItemGrid` 用同一套算法，保证随机卡和固定曲卡上下对齐。
+class _RandomSlotGrid extends StatelessWidget {
+  const _RandomSlotGrid({required this.slots, required this.childAspectRatio});
+
+  final List<ClassSlot> slots;
+  final double childAspectRatio;
+
+  static const double _minTile = 104;
+  static const double _gap = 10;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var cols = ((constraints.maxWidth + _gap) / (_minTile + _gap)).floor();
+        if (cols < 2) cols = 2;
+        if (cols > 6) cols = 6;
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            crossAxisSpacing: _gap,
+            mainAxisSpacing: _gap,
+            childAspectRatio: childAspectRatio,
+          ),
+          itemCount: slots.length,
+          itemBuilder: (context, i) => _RandomSlotCard(slot: slots[i]),
+        );
+      },
+    );
+  }
+}
+
+/// 随机槽的卡片：用 `class/random` 与 `class/random in range` 的封面 + 文字。
+///
+/// - 等级随机（`randomRange`）→ 大字写**游戏内等级**（`11+` / `13+ ~ 14`），
+///   小字写「等级随机」。用户明确要求：写真实等级，不要写内部 id（19/20/21）。
+/// - 曲池随机（`randomPool`）→ 大字写「范围内随机选择」（用户指定原文），
+///   小字写「N 选 1」。
+///
+/// 结构故意和 `ItemCard` 一致（封面 + 下方文字区都靠 `Expanded` 撑），
+/// 这样和固定曲卡放在同一个网格体系里高度相同、看起来是一套东西。
+class _RandomSlotCard extends StatelessWidget {
+  const _RandomSlotCard({required this.slot});
+
+  final ClassSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    // 等级随机用强调色（等级是要记住的信息），曲池随机用弱化色（只知道「范围内随机」）
+    final accent =
+        slot.kind == ClassSlotKind.randomRange ? AppTheme.accent : AppTheme.textDim;
+
+    return Material(
+      color: AppTheme.surface,
+      borderRadius: BorderRadius.circular(10),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            // 与 ItemCard 的封面比例一致（0.82），保证文字区高度也对得上
+            aspectRatio: 0.82,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (slot.image == null)
+                  ColoredBox(color: AppTheme.surfaceHigh)
+                else
+                  Image.asset(
+                    slot.image!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => ColoredBox(color: AppTheme.surfaceHigh),
+                  ),
+                // 封面图上半部是「!」/「?」图标，所以文字压在下半部，
+                // 并加一层半透明底，避免盖住图标也避免文字看不清。
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                    color: AppTheme.bg.withValues(alpha: 0.72),
+                    child: Text(
+                      slot.headline,
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: slot.kind == ClassSlotKind.randomPool ? 10 : 13,
+                        height: 1.1,
+                        fontWeight: FontWeight.w800,
+                        color: accent,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: Text(
+                  slot.sublabel,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 10.5, height: 1.25, color: AppTheme.textFaint),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -262,7 +427,8 @@ class _PlaceholderBanner extends StatelessWidget {
           Expanded(
             child: Text(
               '段位课程为占位数据，组曲名与曲目都还不是真的。\n'
-              '等级与配色已按游戏设定填好。拿到课程数据后同步即可更新，不用重装。',
+              '正常情况下不会看到这条——它只在 classes.json 的 placeholder 为 true 时出现，'
+              '说明同步到的是旧数据或生成失败。',
               style: TextStyle(fontSize: 11.5, height: 1.5, color: AppTheme.warning),
             ),
           ),

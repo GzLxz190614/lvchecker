@@ -1,169 +1,157 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "placeholder",
-  "placeholder": true,
+  "dataVersion": "2026.09.11-2",
+  "placeholder": false,
   "region": "cn",
-  "note": "段位课程数据尚未提供（condition/2-air 为空）。以下为占位符：等级与配色是真的，组曲名与曲目是按已有曲库随手填的，仅用于预览 UI。拿到课程 XML 后由 tools/build.py 重新生成即可，app 端不用改代码、也不用重发 APK。",
+  "note": "段位课程来自 condition/class/course 的 36 个 Course.xml；随机槽按等级或曲池随机，因此只给等级/池大小，不列具体曲目。",
   "gateId": "air",
   "unlockRule": {
     "type": "anyClassAllCourses",
     "text": "完成任一 CLASS 内的所有组曲，即可获得缎带"
   },
+  "levelIdMapping": {
+    "note": "fromLevel 的内部 ID 与游戏内难度的对应关系（已验证）",
+    "baseId": 19,
+    "baseDifficulty": "Lv10"
+  },
   "classes": [
     {
-      "key": "I",
-      "label": "I",
-      "level": 1,
-      "color": "#3D66F2",
+      "key": "∞",
+      "label": "∞",
+      "level": 0,
+      "color": "#FCDBEF",
+      "classRawName": "CLASS ∞",
       "courses": [
         {
-          "key": "I-1",
-          "title": "占位组曲 1",
+          "key": "course00040025",
+          "title": "INNOVATION Set",
           "songs": [
-            { "order": 1, "linkId": "music:51", "difficulty": "BASIC" },
-            { "order": 2, "linkId": "music:53", "difficulty": "BASIC" },
-            { "order": 3, "linkId": "music:59", "difficulty": "BASIC" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:8227",
+              "difficulty": "WORLD'S END"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:8281",
+              "difficulty": "WORLD'S END"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:8282",
+              "difficulty": "WORLD'S END"
+            }
           ]
         },
         {
-          "key": "I-2",
-          "title": "占位组曲 2",
+          "key": "course00040026",
+          "title": "CRITICAL JUSTICE CHALLENGE",
           "songs": [
-            { "order": 1, "linkId": "music:63", "difficulty": "BASIC" },
-            { "order": 2, "linkId": "music:65", "difficulty": "BASIC" },
-            { "order": 3, "linkId": "music:67", "difficulty": "BASIC" }
-          ]
-        }
-      ]
-    },
-    {
-      "key": "II",
-      "label": "II",
-      "level": 2,
-      "color": "#0DB991",
-      "courses": [
-        {
-          "key": "II-1",
-          "title": "占位组曲 1",
-          "songs": [
-            { "order": 1, "linkId": "music:69", "difficulty": "ADVANCED" },
-            { "order": 2, "linkId": "music:70", "difficulty": "ADVANCED" },
-            { "order": 3, "linkId": "music:71", "difficulty": "ADVANCED" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:1091",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2272",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:744",
+              "difficulty": "MASTER"
+            }
           ]
         },
         {
-          "key": "II-2",
-          "title": "占位组曲 2",
+          "key": "course00040027",
+          "title": "Sukiyaki Boss Rush",
           "songs": [
-            { "order": 1, "linkId": "music:74", "difficulty": "ADVANCED" },
-            { "order": 2, "linkId": "music:75", "difficulty": "ADVANCED" },
-            { "order": 3, "linkId": "music:76", "difficulty": "ADVANCED" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2208",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:777",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:1017",
+              "difficulty": "MASTER"
+            }
           ]
         },
         {
-          "key": "II-3",
-          "title": "占位组曲 3",
+          "key": "course00040028",
+          "title": "CLASS认定 - ∞ - Random",
           "songs": [
-            { "order": 1, "linkId": "music:79", "difficulty": "ADVANCED" },
-            { "order": 2, "linkId": "music:80", "difficulty": "ADVANCED" },
-            { "order": 3, "linkId": "music:82", "difficulty": "ADVANCED" }
-          ]
-        }
-      ]
-    },
-    {
-      "key": "III",
-      "label": "III",
-      "level": 3,
-      "color": "#F2AA00",
-      "courses": [
-        {
-          "key": "III-1",
-          "title": "占位组曲 1",
-          "songs": [
-            { "order": 1, "linkId": "music:95", "difficulty": "EXPERT" },
-            { "order": 2, "linkId": "music:100", "difficulty": "EXPERT" },
-            { "order": 3, "linkId": "music:101", "difficulty": "EXPERT" }
-          ]
-        },
-        {
-          "key": "III-2",
-          "title": "占位组曲 2",
-          "songs": [
-            { "order": 1, "linkId": "music:105", "difficulty": "EXPERT" },
-            { "order": 2, "linkId": "music:107", "difficulty": "EXPERT" },
-            { "order": 3, "linkId": "music:108", "difficulty": "EXPERT" }
-          ]
-        },
-        {
-          "key": "III-3",
-          "title": "占位组曲 3",
-          "songs": [
-            { "order": 1, "linkId": "music:140", "difficulty": "EXPERT" },
-            { "order": 2, "linkId": "music:141", "difficulty": "EXPERT" },
-            { "order": 3, "linkId": "music:147", "difficulty": "EXPERT" }
+            {
+              "order": 1,
+              "kind": "randomRange",
+              "levelFromId": 28,
+              "levelToId": 28,
+              "levelFrom": "14+",
+              "levelTo": "14+",
+              "display": "14+",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 2,
+              "kind": "randomRange",
+              "levelFromId": 29,
+              "levelToId": 29,
+              "levelFrom": "15",
+              "levelTo": "15",
+              "display": "15",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 3,
+              "kind": "randomRange",
+              "levelFromId": 30,
+              "levelToId": 30,
+              "levelFrom": "15+",
+              "levelTo": "15+",
+              "display": "15+",
+              "image": "assets/img/class/range_cover.png"
+            }
           ]
         },
         {
-          "key": "III-4",
-          "title": "占位组曲 4",
+          "key": "course00043011",
+          "title": "千夏フルパワー！",
           "songs": [
-            { "order": 1, "linkId": "music:148", "difficulty": "EXPERT" },
-            { "order": 2, "linkId": "music:151", "difficulty": "EXPERT" },
-            { "order": 3, "linkId": "music:152", "difficulty": "EXPERT" }
-          ]
-        }
-      ]
-    },
-    {
-      "key": "IV",
-      "label": "IV",
-      "level": 4,
-      "color": "#E13C29",
-      "courses": [
-        {
-          "key": "IV-1",
-          "title": "占位组曲 1",
-          "songs": [
-            { "order": 1, "linkId": "music:163", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:180", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:712", "difficulty": "MASTER" }
-          ]
-        },
-        {
-          "key": "IV-2",
-          "title": "占位组曲 2",
-          "songs": [
-            { "order": 1, "linkId": "music:777", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2050", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2266", "difficulty": "MASTER" }
-          ]
-        },
-        {
-          "key": "IV-3",
-          "title": "占位组曲 3",
-          "songs": [
-            { "order": 1, "linkId": "music:2326", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2327", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2353", "difficulty": "MASTER" }
-          ]
-        },
-        {
-          "key": "IV-4",
-          "title": "占位组曲 4",
-          "songs": [
-            { "order": 1, "linkId": "music:2354", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2355", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2493", "difficulty": "MASTER" }
-          ]
-        },
-        {
-          "key": "IV-5",
-          "title": "占位组曲 5",
-          "songs": [
-            { "order": 1, "linkId": "music:2556", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2597", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2704", "difficulty": "MASTER" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:1059",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2554",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:8252",
+              "difficulty": "WORLD'S END"
+            }
           ]
         }
       ]
@@ -173,76 +161,849 @@
       "label": "V",
       "level": 5,
       "color": "#4A0973",
+      "classRawName": "CLASS Ⅴ",
       "courses": [
         {
-          "key": "V-1",
-          "title": "占位组曲 1",
+          "key": "course00040020",
+          "title": "Boss Selection Set",
           "songs": [
-            { "order": 1, "linkId": "music:2705", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2712", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2802", "difficulty": "MASTER" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:226",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:201",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:180",
+              "difficulty": "MASTER"
+            }
           ]
         },
         {
-          "key": "V-2",
-          "title": "占位组曲 2",
+          "key": "course00040021",
+          "title": "CRITICAL EX CHALLENGE",
           "songs": [
-            { "order": 1, "linkId": "music:2968", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2969", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2970", "difficulty": "MASTER" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2263",
+              "difficulty": "EXPERT"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:376",
+              "difficulty": "EXPERT"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2036",
+              "difficulty": "EXPERT"
+            }
           ]
         },
         {
-          "key": "V-3",
-          "title": "占位组曲 3",
+          "key": "course00040022",
+          "title": "WACCA BOSS Re:MIX",
           "songs": [
-            { "order": 1, "linkId": "music:2971", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2972", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2973", "difficulty": "MASTER" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2385",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2384",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2410",
+              "difficulty": "MASTER"
+            }
           ]
         },
         {
-          "key": "V-4",
-          "title": "占位组曲 4",
+          "key": "course00040023",
+          "title": "おもしろ三国志 Set",
           "songs": [
-            { "order": 1, "linkId": "music:2974", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2975", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2976", "difficulty": "MASTER" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:1098",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:106",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:1035",
+              "difficulty": "MASTER"
+            }
           ]
         },
         {
-          "key": "V-5",
-          "title": "占位组曲 5",
+          "key": "course00040024",
+          "title": "CLASS认定 - Ⅴ - Random",
           "songs": [
-            { "order": 1, "linkId": "music:2977", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2978", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2838", "difficulty": "MASTER" }
+            {
+              "order": 1,
+              "kind": "randomRange",
+              "levelFromId": 27,
+              "levelToId": 27,
+              "levelFrom": "14",
+              "levelTo": "14",
+              "display": "14",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 2,
+              "kind": "randomRange",
+              "levelFromId": 28,
+              "levelToId": 28,
+              "levelFrom": "14+",
+              "levelTo": "14+",
+              "display": "14+",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 3,
+              "kind": "randomRange",
+              "levelFromId": 29,
+              "levelToId": 29,
+              "levelFrom": "15",
+              "levelTo": "15",
+              "display": "15",
+              "image": "assets/img/class/range_cover.png"
+            }
+          ]
+        },
+        {
+          "key": "course00043009",
+          "title": "Adventure Boss Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:574",
+              "difficulty": "ULTIMA"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:455",
+              "difficulty": "ULTIMA"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:8198",
+              "difficulty": "WORLD'S END"
+            }
+          ]
+        },
+        {
+          "key": "course00043010",
+          "title": "ALL JUSTICE CHALLENGE",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:698",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:949",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:785",
+              "difficulty": "MASTER"
+            }
           ]
         }
       ]
     },
     {
-      "key": "infinity",
-      "label": "∞",
-      "level": 0,
-      "color": "#FCDBEF",
+      "key": "IV",
+      "label": "IV",
+      "level": 4,
+      "color": "#E13C29",
+      "classRawName": "CLASS Ⅳ",
       "courses": [
         {
-          "key": "inf-1",
-          "title": "占位组曲 1（ULTIMA）",
+          "key": "course00040015",
+          "title": "TAP TAP PARADISE Set",
           "songs": [
-            { "order": 1, "linkId": "music:2967", "difficulty": "ULTIMA" },
-            { "order": 2, "linkId": "music:2999", "difficulty": "ULTIMA" },
-            { "order": 3, "linkId": "music:2966", "difficulty": "MASTER" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2539",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2138",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:135",
+              "difficulty": "MASTER"
+            }
           ]
         },
         {
-          "key": "inf-2",
-          "title": "占位组曲 2（MASTER）",
+          "key": "course00040016",
+          "title": "ULTIMATE SeelischTact Set",
           "songs": [
-            { "order": 1, "linkId": "music:2954", "difficulty": "MASTER" },
-            { "order": 2, "linkId": "music:2938", "difficulty": "MASTER" },
-            { "order": 3, "linkId": "music:2919", "difficulty": "MASTER" }
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:65",
+              "difficulty": "ULTIMA"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:95",
+              "difficulty": "ULTIMA"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:148",
+              "difficulty": "ULTIMA"
+            }
+          ]
+        },
+        {
+          "key": "course00040017",
+          "title": "cubesato Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2560",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2406",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:51",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040018",
+          "title": "Scratch Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:797",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2540",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2542",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040019",
+          "title": "CLASS认定 - Ⅳ - Random",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "randomRange",
+              "levelFromId": 26,
+              "levelToId": 26,
+              "levelFrom": "13+",
+              "levelTo": "13+",
+              "display": "13+",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 2,
+              "kind": "randomRange",
+              "levelFromId": 27,
+              "levelToId": 27,
+              "levelFrom": "14",
+              "levelTo": "14",
+              "display": "14",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 3,
+              "kind": "randomRange",
+              "levelFromId": 28,
+              "levelToId": 28,
+              "levelFrom": "14+",
+              "levelTo": "14+",
+              "display": "14+",
+              "image": "assets/img/class/range_cover.png"
+            }
+          ]
+        },
+        {
+          "key": "course00043007",
+          "title": "シビュラ精霊記 Random Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "randomPool",
+              "poolSize": 10,
+              "display": "范围内随机选择",
+              "image": "assets/img/class/random_cover.png"
+            },
+            {
+              "order": 2,
+              "kind": "randomPool",
+              "poolSize": 8,
+              "display": "范围内随机选择",
+              "image": "assets/img/class/random_cover.png"
+            },
+            {
+              "order": 3,
+              "kind": "randomPool",
+              "poolSize": 2,
+              "display": "范围内随机选择",
+              "image": "assets/img/class/random_cover.png"
+            }
+          ]
+        },
+        {
+          "key": "course00043008",
+          "title": "GIGA Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:787",
+              "difficulty": "EXPERT"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:157",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2537",
+              "difficulty": "MASTER"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "III",
+      "label": "III",
+      "level": 3,
+      "color": "#F2AA00",
+      "classRawName": "CLASS Ⅲ",
+      "courses": [
+        {
+          "key": "course00040010",
+          "title": "インターネット Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2388",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2523",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2503",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040011",
+          "title": "いよわ Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2657",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2435",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2317",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040012",
+          "title": "ずんだもん PARTY",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2452",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2509",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2632",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040013",
+          "title": "DRAGON Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:765",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:971",
+              "difficulty": "EXPERT"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:583",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040014",
+          "title": "CLASS认定 - Ⅲ - Random",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "randomRange",
+              "levelFromId": 24,
+              "levelToId": 24,
+              "levelFrom": "12+",
+              "levelTo": "12+",
+              "display": "12+",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 2,
+              "kind": "randomRange",
+              "levelFromId": 25,
+              "levelToId": 25,
+              "levelFrom": "13",
+              "levelTo": "13",
+              "display": "13",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 3,
+              "kind": "randomRange",
+              "levelFromId": 26,
+              "levelToId": 26,
+              "levelFrom": "13+",
+              "levelTo": "13+",
+              "display": "13+",
+              "image": "assets/img/class/range_cover.png"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "II",
+      "label": "II",
+      "level": 2,
+      "color": "#0DB991",
+      "classRawName": "CLASS Ⅱ",
+      "courses": [
+        {
+          "key": "course00040006",
+          "title": "ゆっくりしていってね！",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:935",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:179",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2524",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040007",
+          "title": "それ Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2542",
+              "difficulty": "EXPERT"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:738",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2546",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040008",
+          "title": "そらいろカリン Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2381",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2468",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2251",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040009",
+          "title": "CLASS认定 - Ⅱ - Random",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "randomRange",
+              "levelFromId": 22,
+              "levelToId": 22,
+              "levelFrom": "11+",
+              "levelTo": "11+",
+              "display": "11+",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 2,
+              "kind": "randomRange",
+              "levelFromId": 23,
+              "levelToId": 23,
+              "levelFrom": "12",
+              "levelTo": "12",
+              "display": "12",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 3,
+              "kind": "randomRange",
+              "levelFromId": 24,
+              "levelToId": 24,
+              "levelFrom": "12+",
+              "levelTo": "12+",
+              "display": "12+",
+              "image": "assets/img/class/range_cover.png"
+            }
+          ]
+        },
+        {
+          "key": "course00043003",
+          "title": "イロドリミドリ Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:145",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:200",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:330",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00043004",
+          "title": "Happy Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:599",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:974",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2266",
+              "difficulty": "EXPERT"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "I",
+      "label": "I",
+      "level": 1,
+      "color": "#3D66F2",
+      "classRawName": "CLASS Ⅰ",
+      "courses": [
+        {
+          "key": "course00040000",
+          "title": "First Step",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:802",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2129",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2566",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040002",
+          "title": "Pianist Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:2354",
+              "difficulty": "EXPERT"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:895",
+              "difficulty": "EXPERT"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:656",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00040003",
+          "title": "カオス Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:407",
+              "difficulty": "ADVANCED"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2585",
+              "difficulty": "EXPERT"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2475",
+              "difficulty": "ADVANCED"
+            }
+          ]
+        },
+        {
+          "key": "course00040004",
+          "title": "CLASS认定 - I - Random",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "randomRange",
+              "levelFromId": 19,
+              "levelToId": 19,
+              "levelFrom": "10",
+              "levelTo": "10",
+              "display": "10",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 2,
+              "kind": "randomRange",
+              "levelFromId": 20,
+              "levelToId": 20,
+              "levelFrom": "10+",
+              "levelTo": "10+",
+              "display": "10+",
+              "image": "assets/img/class/range_cover.png"
+            },
+            {
+              "order": 3,
+              "kind": "randomRange",
+              "levelFromId": 21,
+              "levelToId": 21,
+              "levelFrom": "11",
+              "levelTo": "11",
+              "display": "11",
+              "image": "assets/img/class/range_cover.png"
+            }
+          ]
+        },
+        {
+          "key": "course00043001",
+          "title": "Techno Kitchen Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:80",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:303",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:2274",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "course00043002",
+          "title": "東方Normal Set",
+          "songs": [
+            {
+              "order": 1,
+              "kind": "fixed",
+              "linkId": "music:549",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "kind": "fixed",
+              "linkId": "music:2412",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "kind": "fixed",
+              "linkId": "music:930",
+              "difficulty": "MASTER"
+            }
           ]
         }
       ]
