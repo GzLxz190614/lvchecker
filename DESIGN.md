@@ -1461,6 +1461,7 @@ lvchecker/
 │   ├── build.py                     # condition/ → data/ + assets/img/
 │   ├── gen_classes.py               # condition/class/course → data/classes.json
 │   ├── gen_asset_list.py            # 重新生成 pubspec 的 assets 列表（必须逐文件列）
+│   ├── patch_android_manifest.py    # APK 显示名 + **INTERNET 权限**（见 Q17）
 │   ├── check_dart.py                # 无本地 Flutter 时的 Dart 静态自查
 │   ├── check_assets.py              # pubspec 声明 ↔ 磁盘 PNG 双向校验
 │   ├── check_classes.py             # 段位数据 + 等级换算回归
@@ -1485,6 +1486,7 @@ lvchecker/
 | `tools/build.py` | 解析 `condition/` 的 XML → 生成 `data/*.json`；同时把 `.dds` 转成 PNG 并按 ID 归档。**拿到新版本游戏数据重跑即可，不用手抄曲名** |
 | `tools/gen_classes.py` | 解析 36 个 `Course.xml` → `data/classes.json`，并转换两张随机封面 |
 | `tools/gen_asset_list.py` | 按磁盘现状重建 `pubspec.yaml` 的 `assets:` 列表。**Flutter 的 assets 声明不是递归的**，必须逐文件列出，少一行就是「图片全部丢失」 |
+| `tools/patch_android_manifest.py` | 给 `flutter create` 生成的 manifest 补应用显示名与 **`INTERNET` 权限**。漏权限时 release APK 完全不能联网，且**没有任何编译期报错**（见 Q17） |
 | `tools/check_dart.py` | 本地没有 Flutter SDK，拿它做有限的静态自查（未定义类型、成员访问、展开语法、可空传参）。**它不能替代 `flutter analyze`** |
 | `tools/check_assets.py` | `pubspec` 声明 ↔ 磁盘 PNG 双向校验（声明了但没文件、有文件但没声明都报） |
 | `tools/check_classes.py` | 段位引用完整性 + **等级换算回归**（见 7.5） |
@@ -1687,6 +1689,51 @@ tools/validate.py         数据校验
 | R11 | `MISS` 判定色是纯黑 `#000000` | 深色背景下看不见 | UI 加描边或浅色卡片底 |
 | R12 | 预览图的字体回退 | 仅影响本地预览图，不影响 APK | 已实现逐字回退（见 14 节 M0 说明） |
 | R13 | ~~RE:VERSE 的 11 首是「游玩」还是「拿到」~~ | — | ✅ **已解决**：见 Q15 |
+| R14 | ~~release APK 没有 `INTERNET` 权限，导致热更新全部失败~~ | — | ✅ **已解决**：见 Q17。构建期补权限 + **用 aapt 查成品 APK** 断言 |
+
+### Q17 结论：release APK 必须显式声明 `INTERNET`（**最隐蔽的一个坑**）
+
+**现象**：手机上浏览器能正常打开 raw 链接，但 app 里「测试各数据源的连通性」
+显示 **6 个源全部「域名解析失败」**，连国内域名 Gitee 都不通。
+
+**根因**：`flutter create` 生成的模板里，`INTERNET` 权限**只写在 debug/profile 的
+`AndroidManifest.xml`** 里（那是给 Flutter 工具连 VM Service / 热重载用的），
+**主 manifest 里没有**。而 release APK 用的是主 manifest → **完全不能联网**。
+
+而它的表现**非常像「被墙」**：
+
+| | 缺权限 | 真被墙 |
+|---|---|---|
+| 失败范围 | **所有域名一起失败**（包括国内域名） | 只有部分域名失败 |
+| 错误信息 | `Failed host lookup: 'xxx'` | 同左 |
+| 浏览器能否打开 | **能**（浏览器不受 app 权限限制） | 可能能，可能不能 |
+
+**「所有域名一起失败 + 浏览器正常」就是缺权限的指纹。** 当时第一反应是
+「国内网络把 githubusercontent 拦了」，于是花了不少工夫加 Gitee 镜像 ——
+方向虽然不算错（Gitee 确实有独立价值：绕开 Contents API 的 60 次/小时配额），
+但**它解决不了这个 bug**，因为根本原因是权限，不是域名。
+
+**修法**（`tools/patch_android_manifest.py` + workflow 两步）：
+
+1. `flutter create` 之后，给主 manifest 插入
+   `<uses-permission android:name="android.permission.INTERNET" />`，并改显示名
+2. **构建出 APK 后用 `aapt dump permissions` 查成品**，没有这个权限就让构建失败
+
+`INTERNET` 是 normal 权限，安装时即授予，**不需要**运行时申请。
+
+#### 由此得到的两个通用教训
+
+1. **构建成功 ≠ 功能可用。** 这个 bug 全程没有任何编译期报错，
+   `flutter analyze`、`flutter test`、`flutter build` 全部通过。
+   凡是有「运行时才有意义的配置」（权限、proguard、签名、manifest 合并），
+   都应该**对最终产物做断言**，而不是只对源文件做断言。
+2. **补丁脚本要能在本地跑。** 这一步最初是用 `sed -i` 内联写在 workflow 里的，
+   但 `sed` 的插入命令在本地没法验证（Windows 上跑不起来），只能推到 CI 试错。
+   而它失败时 APK 照样能构建成功 —— 又是一个「假绿勾」。
+   改成 Python 之后可以在本地跑真实模板验证（含幂等性和失败路径）。
+
+> 同类风险提醒：`publish-pages.yml` 的 `enablement: true` 那个失败也是同一类问题——
+> 构建/部署流水线「看起来跑了」，但产物其实不对。这类问题只能靠**验证产物**发现。
 
 ---
 

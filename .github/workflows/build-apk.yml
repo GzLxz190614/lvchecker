@@ -102,18 +102,30 @@ jobs:
           grep -qE 'minSdk[[:space:]]*=[[:space:]]*29' "$F"
           echo "OK: applicationId 与 minSdk=29 已生效"
 
-      # 应用显示名。flutter create 会把 label 设成项目名（lvchecker），
-      # 这里改成要显示的名字。桌面图标下面和系统设置里看到的就是它。
-      - name: Set app display name
+      # 应用显示名 + **联网权限**。
+      #
+      # ⚠️ INTERNET 权限是必须在 release 里显式声明的，这是本项目最隐蔽的一个坑：
+      #   `flutter create` 生成的模板里，INTERNET 只写在 debug/profile 的 manifest 里
+      #   （那是给 Flutter 工具连 VM Service 用的），**主 manifest 里没有**。
+      #   而 release APK 用主 manifest，所以**默认完全不能联网**。
+      #
+      #   它的表现非常像「被墙」：所有请求都抛 Failed host lookup（域名解析失败），
+      #   于是「每个源都不通」看起来像网络问题，实际上 app 连 DNS 都没权限查。
+      #
+      #   实测症状：手机浏览器打开 raw 链接正常，但 app 里 6 个数据源**全部**报
+      #   「域名解析失败」——连国内域名 Gitee 都不通。
+      #   **「所有域名一起失败」就是缺权限的指纹**；真被墙只会是部分域名失败。
+      #
+      #   漏掉权限时**不会有任何编译期报错**，所以把补丁和断言都放进这个脚本，
+      #   它自己会校验并在不满足时非零退出（见 tools/patch_android_manifest.py）。
+      #   为什么不用 sed 内联：sed 的插入没法在本地验证，失败时 APK 照样能构建成功，
+      #   只有装到手机上才会发现「又不能联网了」——又是一个「假绿勾」。
+      - name: Set app display name and INTERNET permission
         run: |
           set -e
-          M=android/app/src/main/AndroidManifest.xml
-          sed -i -E 's/(android:label=")[^"]*(")/\1Linked VERSE Checker\2/' "$M"
-          echo '----- AndroidManifest 关键行 -----'
-          grep -nE 'android:label|package=' "$M" || true
-          echo '----- 断言 -----'
-          grep -q 'android:label="Linked VERSE Checker"' "$M"
-          echo "OK: 显示名已设为 Linked VERSE Checker"
+          python3 tools/patch_android_manifest.py \
+            --manifest android/app/src/main/AndroidManifest.xml \
+            --label "Linked VERSE Checker"
 
       - name: Get dependencies
         run: flutter pub get
@@ -129,6 +141,9 @@ jobs:
           python3 tools/check_dart.py
           python3 tools/check_assets.py
           python3 tools/check_classes.py
+          # manifest 补丁脚本的自检。它负责的是「APK 有没有联网权限」，
+          # 自己错了就毫无意义，所以在构建之前先验证它的逻辑（含失败路径）。
+          python3 tools/patch_android_manifest.py --self-test
 
       # 从仓库根目录的 icon.png 生成各密度启动图标。
       # 必须在 flutter pub get 之后跑（它依赖 flutter_launcher_icons 包）。
@@ -166,10 +181,44 @@ jobs:
       - name: Build release APK
         run: flutter build apk --release
 
+      # 确认打出来的 APK **真的**带上了联网权限。
+      #
+      # 为什么要查「成品」而不是只查 manifest：manifest 补丁成功 ≠ APK 里有权限。
+      # 中间还可能被 manifest merger、flavor、或别的 manifest 覆盖掉。
+      # 之前那次「六个源全部域名解析失败」的教训就是：**构建成功不等于功能可用**，
+      # 必须拿最终产物验证。aapt 在 Android SDK build-tools 里，runner 上一定有。
       - name: Show APK info
         run: |
+          set -e
+          APK=build/app/outputs/flutter-apk/app-release.apk
           ls -lh build/app/outputs/flutter-apk/
-          du -h build/app/outputs/flutter-apk/app-release.apk
+          du -h "$APK"
+
+          # 用 mapfile 而不是 `AAPT=$(find ... | sort | tail)`：后者在 `set -e` 下
+          # 一旦 find 什么都没找到就会**静默退出整个步骤**，连下面那句人话错误都打不出来。
+          # （`|| true` 能兜住管道最后一段，但读起来容易误解，不如显式判断。）
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          mapfile -t AAPT_CANDIDATES < <(find "$SDK/build-tools" -name aapt -type f 2>/dev/null | sort -V)
+          if [ "${#AAPT_CANDIDATES[@]}" -eq 0 ]; then
+            echo "::error::在 $SDK/build-tools 下找不到 aapt，无法验证 APK 权限"
+            exit 1
+          fi
+          AAPT="${AAPT_CANDIDATES[-1]}"
+          echo "使用 $AAPT"
+
+          echo '----- APK 里的权限 -----'
+          # 先落到文件再 grep。不写成 `if aapt dump ... | grep -q` 是因为那样
+          # aapt 自己失败（比如 APK 损坏）会被当成「没有这个权限」，报出误导性的原因。
+          # 先让 aapt 跑完并检查退出码，再单独判断权限在不在。
+          "$AAPT" dump permissions "$APK" | tee /tmp/apk-permissions.txt
+
+          echo '----- 断言：APK 必须声明 INTERNET -----'
+          if grep -q 'android.permission.INTERNET' /tmp/apk-permissions.txt; then
+            echo "OK: APK 已带 INTERNET 权限，热更新才有网络可用"
+          else
+            echo "::error::APK 里没有 INTERNET 权限 —— 装上去会完全无法联网（所有源都报域名解析失败）"
+            exit 1
+          fi
 
       # 打 tag 时发 Release：Release 附件不计入 Actions 存储额度，
       # 而且给出一个固定下载链接，手机上点开就能装。

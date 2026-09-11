@@ -40,6 +40,12 @@ dist/
 
 # 一次性探针脚本（临时排查用，不进仓库）
 tools/_probe_*.py
+tools/_tmp_*.sh
+tools/_tmp_*.py
+
+# patch_android_manifest.py --self-test 的临时目录。
+# 它正常结束时会自己删掉，加这条只是防止被 Ctrl-C 打断后残留。
+tools/.selftest-*/
 
 # ============================================================
 # Flutter / Dart
