@@ -62,8 +62,17 @@ jobs:
           echo '----- 体积 -----'
           du -sh _site
 
+      # enablement: true —— 允许这个 action **首次运行时自动启用 Pages**
+      # （等价于在 Settings -> Pages 里把 Source 选成 GitHub Actions）。
+      #
+      # 不加它的话首次会失败：
+      #   ##[error]Get Pages site failed. Please verify that the repository has
+      #   Pages enabled and configured to build using GitHub Actions,
+      #   or consider exploring the `enablement` parameter for this action.
       - name: Configure Pages
         uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
