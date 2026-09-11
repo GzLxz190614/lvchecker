@@ -108,10 +108,10 @@ jobs:
       # ------------------------------------------------------------------
       # 本地检查（因为无法在本地跑 flutter，这些静态校验就放在 CI 里）
       # ------------------------------------------------------------------
-      - name: Static checks (imports / assets / classes)
+      - name: Static checks (dart / assets / classes)
         run: |
           set -e
-          python3 tools/check_imports.py
+          python3 tools/check_dart.py
           python3 tools/check_assets.py
           python3 tools/check_classes.py
 
@@ -120,13 +120,27 @@ jobs:
       - name: Generate launcher icons
         run: dart run flutter_launcher_icons
 
-      # analyze 只做提示，不阻断构建。
-      # 理由：lints 的 info/warning 不应该让「只想出个包」的构建失败，
-      # 但日志里保留下来方便事后排查。
-      - name: Analyze (non-blocking)
+      # analyze 的 info/warning 不阻断（不该因为 lint 提示就出不了包），
+      # **但 error 必须阻断**。
+      #
+      # 为什么这样写：Run #1 时这一步报了 2 个 error（undefined_class 等），
+      # 却因为在 UI 上显示 success 而被忽略——问题只写在日志文字里。
+      # 下面显式把 error 数出来并让它失败，避免再次出现「假绿勾」。
+      - name: Analyze
         if: ${{ !inputs.skip_tests }}
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
-        continue-on-error: true
+        run: |
+          set +e
+          flutter analyze --no-fatal-infos --no-fatal-warnings > analyze.log 2>&1
+          cat analyze.log
+          set -e
+          # 匹配行的开头是 error 加空格（不依赖那个项目符号字符，避免编码差异）
+          if grep -qE '^[[:space:]]*error[[:space:]]' analyze.log; then
+            echo ""
+            echo "❌ analyze 报了 error，构建中止。"
+            echo "（info/warning 不阻断，error 阻断）"
+            exit 1
+          fi
+          echo "OK: analyze 没有 error"
 
       # test 是阻断的：模型解析错了会导致整个 app 显示错数据，必须拦住。
       - name: Test

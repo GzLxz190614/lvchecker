@@ -78,10 +78,21 @@ class LinkLevelTier {
 
 /// 一个门的缓和表。
 class GateLinkLevels {
-  const GateLinkLevels({required this.tiers, this.note});
+  const GateLinkLevels({
+    required this.tiers,
+    this.judges = const {},
+    this.note,
+  });
 
-  /// 已按 level 降序排好（V -> I），∞ 档 level=0 自然排最前
+  /// 已按 level 降序排好（∞ 档 level=0 自然排最前）
   final List<LinkLevelTier> tiers;
+
+  /// 判定样式表。
+  ///
+  /// 判定色是全局的（`linklevels.json` 的顶层 `judges`），但这里**复制一份到每个门**，
+  /// 因为 UI 只需要「某个门的通关条件」，拿不到顶层的 LinkLevelData。
+  final Map<String, JudgeStyle> judges;
+
   final String? note;
 }
 
@@ -136,8 +147,11 @@ class LinkLevelData {
           if (b.level == 0 && a.level != 0) return 1;
           return b.level.compareTo(a.level);
         });
-        gates[gateId.toString()] =
-            GateLinkLevels(tiers: tiers, note: value['note'] as String?);
+        gates[gateId.toString()] = GateLinkLevels(
+          tiers: tiers,
+          judges: judges,
+          note: value['note'] as String?,
+        );
       });
     }
 
