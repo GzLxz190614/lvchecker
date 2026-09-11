@@ -12,10 +12,16 @@ dependencies:
   shared_preferences: ^2.3.2
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   flutter_lints: ^4.0.0
 
 flutter:
-  uses-material-design: false
+  # 必须为 true。
+  # 代码里用了 Icons.*（chevron_right / check_circle / settings_outlined 等），
+  # 这些字形来自 MaterialIcons 字体。设为 false 时编译器不会报错，
+  # 但运行时所有图标会显示成空白方块——这种「编译过但看起来坏了」的坑很难查。
+  uses-material-design: true
 
   assets:
     # 数据层。这些路径是仓库根目录的 data/ 与 assets/img/，
