@@ -1,0 +1,80 @@
+name: Publish data to GitHub Pages
+
+# 目的：给 app 的热更新多一个**可在国内网络访问**的源。
+#
+# 背景：实测部分国内网络下 GitHub 系域名整体不可达
+#   raw.githubusercontent.com / raw.githack.com / cdn.jsdelivr.net 全部 DNS 解析失败。
+# 而 `*.github.io` 是另一个域名、走另一套 CDN，在很多这类网络下能通。
+#
+# 做法：把 data/*.json 平铺发布到 Pages 根路径，于是 URL 形如
+#   https://gzlxz190614.github.io/lvchecker/data/meta.json
+# 注意 Pages 只能 serve 仓库根目录或 /docs，而数据在 data/ 下，
+# 所以这里把文件复制到发布目录的 data/ 子目录里，保持同样的相对路径。
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'data/**'
+      - '.github/workflows/publish-pages.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build site content
+        run: |
+          set -e
+          mkdir -p _site/data
+          # 只发布 app 需要的数据文件，不带别的
+          cp data/meta.json data/gates.json data/linklevels.json data/classes.json _site/data/
+          # 根路径放一个索引页，方便用浏览器直接确认 Pages 是否生效
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <meta charset="utf-8">
+          <title>lvchecker data</title>
+          <h1>lvchecker data</h1>
+          <p>这是 linked VERSE 连章进度 app 的热更新数据源。</p>
+          <ul>
+            <li><a href="data/meta.json">data/meta.json</a></li>
+            <li><a href="data/gates.json">data/gates.json</a></li>
+            <li><a href="data/linklevels.json">data/linklevels.json</a></li>
+            <li><a href="data/classes.json">data/classes.json</a></li>
+          </ul>
+          HTML
+          echo '----- 待发布文件 -----'
+          find _site -type f | sort
+          echo '----- 体积 -----'
+          du -sh _site
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy
+        id: deploy
+        uses: actions/deploy-pages@v4
+
+      - name: Show URL
+        run: |
+          echo "Pages 地址：${{ steps.deploy.outputs.page_url }}"
+          echo "app 用的数据 URL：${{ steps.deploy.outputs.page_url }}data/gates.json"

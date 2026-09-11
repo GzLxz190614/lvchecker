@@ -61,10 +61,20 @@ class DataSync {
   /// 要同步的文件名（都在 data/ 下）
   static const List<String> files = ['meta.json', 'gates.json', 'linklevels.json', 'classes.json'];
 
-  /// 源的顺序就是优先级。第一个可用即生效。
+  /// 源的顺序就是优先级，第一个可用即生效。
   ///
-  /// 仓库是 public，所以 raw 与 jsDelivr 都不需要 token。
+  /// 为什么第一个是 GitHub Pages：
+  ///   实测在部分国内网络下，**GitHub 系域名整体不可达**——
+  ///   raw.githubusercontent.com / raw.githack.com / cdn.jsdelivr.net 全部 DNS 解析失败。
+  ///   而 `*.github.io` 是**另一个域名**，走的是另一套 CDN，在很多这类网络下能通。
+  ///   所以数据会由 CI 额外发布一份到 Pages（见 .github/workflows/publish-pages.yml）。
+  ///
+  ///   注意 Pages 只能 serve 仓库根目录或 /docs，而数据在 data/ 下，
+  ///   所以发布时把文件**平铺**到 Pages 根路径，URL 就是 .../lvchecker/data/meta.json。
+  ///
+  /// 仓库是 public，所有源都不需要 token。
   static const List<String> sources = [
+    'https://gzlxz190614.github.io/lvchecker/data/',
     'https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/',
     'https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/',
     'https://raw.githack.com/GzLxz190614/lvchecker/main/data/',
@@ -109,6 +119,8 @@ class DataSync {
   /// 执行同步。
   ///
   /// 逐文件尝试所有源：某个文件在源 A 失败就换源 B，全部失败则保留本机缓存不动。
+  /// 失败时会把**每个源各自的失败原因**都记下来——之前只留最后一个源的错误，
+  /// 结果看不出到底是哪一个源不通，排查时很吃亏。
   Future<SyncReport> sync() async {
     final client = http.Client();
     final results = <SyncResult>[];
@@ -117,14 +129,15 @@ class DataSync {
     try {
       for (final name in files) {
         var done = false;
-        String? lastError;
+        final errors = <String>[];
 
         for (final base in sources) {
           final url = '$base$name';
+          final host = Uri.parse(url).host;
           try {
             final resp = await client.get(Uri.parse(url)).timeout(_timeout);
             if (resp.statusCode != 200) {
-              lastError = 'HTTP ${resp.statusCode}';
+              errors.add('$host: HTTP ${resp.statusCode}');
               continue;
             }
 
@@ -132,7 +145,7 @@ class DataSync {
             final text = utf8.decode(resp.bodyBytes);
             final decoded = jsonDecode(text);
             if (decoded is! Map) {
-              lastError = '返回的不是 JSON 对象';
+              errors.add('$host: 返回的不是 JSON 对象');
               continue;
             }
 
@@ -140,7 +153,7 @@ class DataSync {
             final target = cacheFile(name);
             if (target.existsSync() && target.readAsStringSync() == text) {
               results.add(SyncResult(file: name, outcome: SyncOutcome.unchanged));
-              usedSource ??= Uri.parse(url).host;
+              usedSource ??= host;
               done = true;
               break;
             }
@@ -151,11 +164,11 @@ class DataSync {
             await tmp.rename(target.path);
 
             results.add(SyncResult(file: name, outcome: SyncOutcome.updated));
-            usedSource ??= Uri.parse(url).host;
+            usedSource ??= host;
             done = true;
             break;
           } catch (e) {
-            lastError = e.toString();
+            errors.add('$host: ${_shortError(e)}');
           }
         }
 
@@ -163,7 +176,7 @@ class DataSync {
           results.add(SyncResult(
             file: name,
             outcome: SyncOutcome.failed,
-            message: lastError ?? '所有源都取不到',
+            message: errors.isEmpty ? '没有可用的源' : errors.join('；'),
           ));
         }
       }
@@ -178,6 +191,55 @@ class DataSync {
     );
   }
 
+  /// 把异常压成一眼能看懂的一句。DNS 不通是最常见的情况，单独说清楚。
+  static String _shortError(Object e) {
+    final s = e.toString();
+    if (s.contains('Failed host lookup')) {
+      final m = RegExp(r"Failed host lookup: '([^']+)'").firstMatch(s);
+      return '域名解析失败（${m?.group(1) ?? '?'}），本机网络访问不到这个域名';
+    }
+    if (s.contains('TimeoutException')) return '超时';
+    if (s.contains('Connection refused')) return '连接被拒绝';
+    return s.length > 90 ? '${s.substring(0, 90)}…' : s;
+  }
+
+  /// 逐个源做一次连通性测试，给设置页用。
+  ///
+  /// 目的：当所有源都失败时，能一眼看出**是全部域名都不通，还是只有某一个**。
+  /// 探测的是 `data/gates.json`（体积小、必然存在）。
+  Future<List<SourceProbe>> probeSources() async {
+    final client = http.Client();
+    final out = <SourceProbe>[];
+    try {
+      for (final base in sources) {
+        final url = '${base}gates.json';
+        final host = Uri.parse(url).host;
+        final sw = Stopwatch()..start();
+        try {
+          final resp = await client.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+          sw.stop();
+          out.add(SourceProbe(
+            host: host,
+            ok: resp.statusCode == 200,
+            detail: resp.statusCode == 200 ? '正常' : 'HTTP ${resp.statusCode}',
+            millis: sw.elapsedMilliseconds,
+          ));
+        } catch (e) {
+          sw.stop();
+          out.add(SourceProbe(
+            host: host,
+            ok: false,
+            detail: _shortError(e),
+            millis: sw.elapsedMilliseconds,
+          ));
+        }
+      }
+    } finally {
+      client.close();
+    }
+    return out;
+  }
+
   /// 清空缓存（回到「用 APK 内置数据」的状态）
   Future<void> clearCache() async {
     for (final f in files) {
@@ -185,4 +247,19 @@ class DataSync {
       if (file.existsSync()) await file.delete();
     }
   }
+}
+
+/// 单个源的探测结果。
+class SourceProbe {
+  const SourceProbe({
+    required this.host,
+    required this.ok,
+    required this.detail,
+    required this.millis,
+  });
+
+  final String host;
+  final bool ok;
+  final String detail;
+  final int millis;
 }

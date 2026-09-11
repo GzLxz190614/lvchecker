@@ -39,7 +39,9 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _syncing = false;
+  bool _probing = false;
   SyncReport? _lastReport;
+  List<SourceProbe>? _probes;
 
   @override
   Widget build(BuildContext context) {
@@ -183,6 +185,87 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
+    // 连通性测试。所有源都失败时，靠它区分「全部域名都不通」还是「只有某一个不通」。
+    children.add(const SizedBox(height: 8));
+    children.add(
+      OutlinedButton.icon(
+        onPressed: (sync == null || _probing) ? null : _doProbe,
+        icon: _probing
+            ? const SizedBox(
+                width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+            : const Icon(Icons.network_check, size: 17),
+        label: Text(_probing ? '测试中…' : '测试各数据源的连通性'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.textSecondary,
+          side: const BorderSide(color: AppTheme.border),
+          minimumSize: const Size.fromHeight(40),
+        ),
+      ),
+    );
+
+    if (_probes != null) {
+      children.add(const SizedBox(height: 10));
+      children.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: AppTheme.bg.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(7),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final p in _probes!)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 3),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Icon(
+                          p.ok ? Icons.check_circle : Icons.cancel,
+                          size: 14,
+                          color: p.ok ? AppTheme.accent : const Color(0xFFE57373),
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              p.host,
+                              style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.textSecondary),
+                            ),
+                            Text(
+                              p.ok ? '正常（${p.millis} ms）' : p.detail,
+                              style: const TextStyle(
+                                  fontSize: 11, color: AppTheme.textFaint, height: 1.4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 5),
+              const Text(
+                '全部不通说明本机网络访问不到这些域名（国内常见），'
+                '此时热更新用不了，但 app 完全正常——会一直用 APK 内置数据。',
+                style: TextStyle(fontSize: 11, color: AppTheme.textFaint, height: 1.45),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     // 注意：这里是**方法体**，不是集合字面量。
     // 所以不能用 collection-if 的展开写法 `if (cond) ...[a, b]`——
     // 那样 Dart 会把 `...[` 当成非法 token（会报 "Expected an identifier"）。
@@ -240,6 +323,21 @@ class _SettingsPageState extends State<SettingsPage> {
     }
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(report.summary)));
+  }
+
+  Future<void> _doProbe() async {
+    final sync = widget.sync;
+    if (sync == null) return;
+    setState(() {
+      _probing = true;
+      _probes = null;
+    });
+    final probes = await sync.probeSources();
+    if (!mounted) return;
+    setState(() {
+      _probing = false;
+      _probes = probes;
+    });
   }
 
   Future<void> _clearCache() async {

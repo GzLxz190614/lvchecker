@@ -224,15 +224,39 @@ app 支持从[落雪查分器](https://maimai.lxns.net/)导入成绩，**辅助�
 启动时若本机缓存超过 12 小时，会在后台拉一次（**带 12 秒超时，绝不会卡住启动**）。
 设置页也有「立即同步数据」按钮，会显示每个文件的结果。
 
-**多源回退**（实测 `raw.githubusercontent.com` 在部分网络下取不到，CDN 可以）：
+**多源回退**（按优先级，任一成功即生效）：
 
 ```
-1. https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/
-2. https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/
-3. https://raw.githack.com/GzLxz190614/lvchecker/main/data/
+1. https://gzlxz190614.github.io/lvchecker/data/          ← GitHub Pages
+2. https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/
+3. https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/
+4. https://raw.githack.com/GzLxz190614/lvchecker/main/data/
 ```
 
-任一可用即生效；全部失败则继续用本机缓存。
+> ⚠️ **为什么第一个是 GitHub Pages**：实测在部分国内网络下，GitHub 系域名**整体不可达**
+> （`raw.githubusercontent.com` / `raw.githack.com` / `cdn.jsdelivr.net` 全部 DNS 解析失败）。
+> 而 `*.github.io` 是**另一个域名、走另一套 CDN**，在很多这类网络下能通。
+> 数据由 `.github/workflows/publish-pages.yml` 在每次 `data/` 变更时自动发布。
+>
+> 如果全部源都不通，**热更新就用不了**，但 app 完全正常——会一直用 APK 内置数据。
+> 设置页有「测试各数据源的连通性」按钮，可以逐个看出哪条通路可用。
+
+### 排查同步问题
+
+设置页 → 数据同步：
+
+- 「立即同步数据」会列出**每个文件**的结果；失败时会把**每个源各自的原因**都写出来
+  （DNS 解析失败 / 超时 / HTTP 状态码），而不是只留最后一个。
+- 「测试各数据源的连通性」逐个源探测，一眼看出是全部域名都不通，还是只有某一个。
+
+---
+
+## 存档安全
+
+**同步永远不会碰你的打勾记录。** 数据层（`data/*.json`）和存档层
+（`SharedPreferences`）完全隔离，同步只覆盖前者。
+
+---
 
 ### 三级加载
 
@@ -254,11 +278,6 @@ app 支持从[落雪查分器](https://maimai.lxns.net/)导入成绩，**辅助�
 
 所以「加了新曲目」需要重发 APK（因为要带新曲绘），
 但「给某个门填上开放日期」「修正缓和表」这类改数据**不用重装**。
-
-### 存档安全
-
-**同步永远不会碰你的打勾记录。** 数据层（`data/*.json`）和存档层
-（`SharedPreferences`）完全隔离，同步只覆盖前者。
 
 ---
 

@@ -60,11 +60,12 @@ class ItemCard extends StatelessWidget {
 
 /// 卡片的文字区。
 ///
-/// 关键点：**没有省略号**。曲名最长有 25 个全角字符
-/// （`今ぞ♡崇め奉れ☆オマエらよ！！～姫の秘メタル渇望～`），在卡片宽度下要占 3 行，
-/// 会把曲师名挤掉。这里用两条约束同时解决：
-///   1. 文字区可滚动（配右侧细滚动条），再长也读得全，且曲师永远在滚动范围内；
-///   2. 底部加一道渐隐遮罩，暗示「下面还有内容」。
+/// 曲名最长有 25 个全角字符（`今ぞ♡崇め奉れ☆オマエらよ！！～姫の秘メタル渇望～`），
+/// 在卡片宽度下要占 3 行，会把曲师名挤掉。
+///
+/// 处理方式：
+///   - **曲名**用 [MarqueeText]：一行显示，放不下就自动左右循环滚动，完整可读；
+///   - **曲师**正常换行，不再被挤走。
 class _ScrollableText extends StatelessWidget {
   const _ScrollableText({required this.entry});
 
@@ -72,65 +73,147 @@ class _ScrollableText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Scrollbar(
-          thumbVisibility: false,
-          radius: const Radius.circular(3),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // 曲名：完整换行，不截断
-                Text(
-                  entry.title,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    height: 1.28,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                if (entry.caption.isNotEmpty) ...[
-                  const SizedBox(height: 5),
-                  // 曲师：也完整换行。最长的曲师名有 29 个半角宽度
-                  // （`あべにゅうぷろじぇくと feat.佐倉 紗織　produced by ave;new`）
-                  Text(
-                    entry.caption,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      height: 1.32,
-                      color: AppTheme.textDim,
-                    ),
-                  ),
-                ],
-              ],
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(8, 7, 8, 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          MarqueeText(
+            text: entry.title,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.25,
+              color: AppTheme.textPrimary,
             ),
           ),
-        ),
-        // 底部渐隐：提示内容还没到底
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: 12,
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppTheme.surface.withValues(alpha: 0.0),
-                    AppTheme.surface.withValues(alpha: 0.92),
-                  ],
-                ),
+          if (entry.caption.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              entry.caption,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 10.5,
+                height: 1.25,
+                color: AppTheme.textDim,
               ),
             ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// 一行文字，放不下就**自动左右循环滚动**（跑马灯）。
+///
+/// 为什么不用横向滚动条：卡片很窄，手动左右滑很难精确操作，
+/// 而且会和外面门页的上下滚动抢手势。自动循环更适合「一眼看全曲名」。
+///
+/// 实现要点：
+/// - 用 [TextPainter] 量出文字真实宽度，只有**超出可用宽度**时才启动动画；
+///   放得下就静止显示，不会平白动起来。
+/// - 动作用 [AnimationController.repeat] 的 `reverse: true`：
+///   一条 0→1 的直线动画镜像播放，等于「推到末尾再弹回起点」，
+///   首尾都能读到，语义也比手动 forward/reverse 清晰。
+class MarqueeText extends StatefulWidget {
+  const MarqueeText({
+    super.key,
+    required this.text,
+    required this.style,
+    this.velocity = 22,
+  });
+
+  final String text;
+  final TextStyle style;
+
+  /// 滚动速度（逻辑像素 / 秒），用来把溢出距离换算成时长
+  final double velocity;
+
+  @override
+  State<MarqueeText> createState() => _MarqueeTextState();
+}
+
+class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStateMixin {
+  late final AnimationController _c = AnimationController(vsync: this);
+
+  /// 已缓存的测量结果，只为 (text, style, 可用宽度) 组合算一次
+  TextPainter? _tp;
+  double _measuredForWidth = -1;
+  double _overflow = 0;
+  double _lineHeight = 0;
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didUpdateWidget(covariant MarqueeText old) {
+    super.didUpdateWidget(old);
+    if (old.text != widget.text || old.style != widget.style) {
+      _tp = null;
+      _measuredForWidth = -1;
+    }
+  }
+
+  /// 返回 (溢出宽度, 行高)。同一宽度下复用缓存，不在 build 里反复测量。
+  (double, double) _measure(double availableWidth) {
+    var tp = _tp;
+    if (tp == null || (_measuredForWidth - availableWidth).abs() > 0.5) {
+      tp = TextPainter(
+        text: TextSpan(text: widget.text, style: widget.style),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+      _tp = tp;
+      _measuredForWidth = availableWidth;
+      _overflow = (tp.width - availableWidth).clamp(0.0, double.infinity);
+      _lineHeight = tp.height;
+
+      if (_overflow > 0.5) {
+        final ms = (_overflow / widget.velocity * 1000).round();
+        _c.duration = Duration(milliseconds: ms.clamp(900, 9000));
+        if (!_c.isAnimating) _c.repeat(reverse: true);
+      } else if (_c.isAnimating) {
+        _c.stop();
+        _c.value = 0;
+      }
+    }
+    return (_overflow, _lineHeight);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final (overflow, lineHeight) = _measure(constraints.maxWidth);
+
+        final text = AnimatedBuilder(
+          animation: _c,
+          builder: (context, _) => Transform.translate(
+            offset: Offset(-overflow * _c.value, 0),
+            child: Text(
+              widget.text,
+              maxLines: 1,
+              softWrap: false,
+              style: widget.style,
+            ),
           ),
-        ),
-      ],
+        );
+
+        if (overflow <= 0.5) {
+          // 放得下：静止显示，不裁剪
+          return Align(alignment: Alignment.centerLeft, child: text);
+        }
+
+        return SizedBox(
+          height: lineHeight,
+          child: ClipRect(child: Align(alignment: Alignment.centerLeft, child: text)),
+        );
+      },
     );
   }
 }
