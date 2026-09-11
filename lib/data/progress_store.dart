@@ -3,42 +3,27 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 某个门的完成状态。
-///
-/// 存档设计要点：
-/// - 用「门 id + 条目 linkId」关联，**不用数组下标**。
-///   这样以后更新 `gates.json`（加新门、改曲目）不会错位覆盖你的进度。
-/// - 数据层与存档层完全分离：同步数据**永远不碰**这里。
-class GateProgress {
-  const GateProgress({
-    this.ticked = const {},
-    this.groupTicked = const {},
-    this.manualDone = false,
-    this.manualDoneAt,
-  });
-
-  /// 已完成的条目：linkId -> 完成时间
-  final Map<String, String> ticked;
-
-  /// `playAnyOfEach` 类型：组 key -> 该组已选的 linkId
-  final Map<String, String> groupTicked;
-
-  /// 整个门手动确认完成（CRYSTAL / UNIVERSE）
-  final bool manualDone;
-  final String? manualDoneAt;
-}
-
 /// 打勾进度的本地存档。
 ///
 /// **只存手机本地，永不上传。**
+///
+/// 存档按「门 id + 条目 linkId」关联，**不用数组下标**：
+/// 以后更新 `gates.json`（加新门、改曲目）不会错位覆盖你的进度。
+/// 数据层与存档层完全分离：同步数据**永远不碰**这里。
+///
+/// 存储键：
+/// - `p:<gateId>`  条目打勾   -> `{"music:51": "ISO时间"}`
+///   （PARADISE 那种「每位曲师任打一首」也用这个：每组里有一首打过即算该组完成）
+/// - `m:<gateId>`  手动确认   -> `"ISO时间"`
+/// - `c:<gateId>`  段位组曲   -> `{"III-1": "ISO时间"}`
 class ProgressStore extends ChangeNotifier {
   ProgressStore._(this._prefs);
 
   final SharedPreferences _prefs;
 
-  static const _prefixItem = 'p:'; // 条目打勾    p:<gateId>      -> {"music:51": "ISO时间"}
-  static const _prefixGroup = 'g:'; // 分组选择    g:<gateId>      -> {"光吉猛修": "music:180"}
-  static const _prefixManual = 'm:'; // 手动确认    m:<gateId>      -> "ISO时间"
+  static const _prefixItem = 'p:';
+  static const _prefixManual = 'm:';
+  static const _prefixCourse = 'c:';
   static const _keySchema = 'schemaVersion';
 
   static const _currentSchema = 1;
@@ -66,22 +51,24 @@ class ProgressStore extends ChangeNotifier {
 
   bool isTicked(String gateId, String itemKey) => tickedOf(gateId).contains(itemKey);
 
-  Map<String, String> groupTickedOf(String gateId) {
-    final raw = _prefs.getString('$_prefixGroup$gateId');
-    if (raw == null) return <String, String>{};
-    try {
-      final m = jsonDecode(raw) as Map<String, dynamic>;
-      return m.map((k, v) => MapEntry(k, v.toString()));
-    } catch (_) {
-      return <String, String>{};
-    }
-  }
-
-  String? groupChoice(String gateId, String groupKey) => groupTickedOf(gateId)[groupKey];
-
   bool isManualDone(String gateId) => _prefs.getString('$_prefixManual$gateId') != null;
 
   String? manualDoneAt(String gateId) => _prefs.getString('$_prefixManual$gateId');
+
+  /// 段位：已完成的组曲 key 集合
+  Set<String> courseDoneOf(String gateId) {
+    final raw = _prefs.getString('$_prefixCourse$gateId');
+    if (raw == null) return <String>{};
+    try {
+      final m = jsonDecode(raw) as Map<String, dynamic>;
+      return m.keys.toSet();
+    } catch (_) {
+      return <String>{};
+    }
+  }
+
+  bool isCourseDone(String gateId, String courseKey) =>
+      courseDoneOf(gateId).contains(courseKey);
 
   // ---------------------------------------------------------------- 写
 
@@ -96,18 +83,7 @@ class ProgressStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// `playAnyOfEach`：选中某组里的一首。再点同一首则取消。
-  Future<void> selectInGroup(String gateId, String groupKey, String itemKey) async {
-    final map = groupTickedOf(gateId);
-    if (map[groupKey] == itemKey) {
-      map.remove(groupKey);
-    } else {
-      map[groupKey] = itemKey;
-    }
-    await _prefs.setString('$_prefixGroup$gateId', jsonEncode(map));
-    notifyListeners();
-  }
-
+  /// 手动确认整个门达成（AIR 的段位 / CRYSTAL 的条件未知 / UNIVERSE 的剩余血量）
   Future<void> setManualDone(String gateId, bool done) async {
     if (done) {
       await _prefs.setString('$_prefixManual$gateId', _now());
@@ -127,11 +103,31 @@ class ProgressStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 段位：切换某个组曲的完成状态
+  Future<void> toggleCourse(String gateId, String courseKey) async {
+    final raw = _prefs.getString('$_prefixCourse$gateId');
+    Map<String, dynamic> map = <String, dynamic>{};
+    if (raw != null) {
+      try {
+        map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
+      } catch (_) {
+        map = <String, dynamic>{};
+      }
+    }
+    if (map.containsKey(courseKey)) {
+      map.remove(courseKey);
+    } else {
+      map[courseKey] = _now();
+    }
+    await _prefs.setString('$_prefixCourse$gateId', jsonEncode(map));
+    notifyListeners();
+  }
+
   /// 清空某个门的进度
   Future<void> resetGate(String gateId) async {
     await _prefs.remove('$_prefixItem$gateId');
-    await _prefs.remove('$_prefixGroup$gateId');
     await _prefs.remove('$_prefixManual$gateId');
+    await _prefs.remove('$_prefixCourse$gateId');
     notifyListeners();
   }
 

@@ -27,10 +27,13 @@ GateStatus evaluateGate(
   switch (gate.tracking) {
     case TrackingKind.songs:
       if (gate.requirement.type == 'playAnyOfEach') {
-        final chosen = store.groupTickedOf(gate.id);
+        // 每组可以打多首，只要该组里**有一首**打过就算这组完成。
+        // 所以和普通曲目共用同一份打勾记录（store.tickedOf），
+        // 判定的是「有几组已经至少打过一首」。
+        final ticked = store.tickedOf(gate.id);
         var done = 0;
         for (final g in gate.requirement.groups) {
-          if (chosen.containsKey(g.key)) done++;
+          if (g.itemKeys.any(ticked.contains)) done++;
         }
         final total = gate.requirement.groups.length;
         return GateStatus(unlocked: total > 0 && done == total, doneCount: done, totalCount: total);
@@ -47,7 +50,9 @@ GateStatus evaluateGate(
       return GateStatus(unlocked: total > 0 && done == total, doneCount: done, totalCount: total);
 
     case TrackingKind.classes:
-      // 段位课程要等课程 XML（M5）。在此之前只按手动确认处理。
+      // AIR 门的解锁条件是「拿到一个缎带」，也就是任一 CLASS 内所有组曲通关。
+      // 段位课程清单还没拿到（等课程 XML），所以现在按**手动确认**判定，
+      // 否则这个门永远无法完成。等课程数据齐了再改成按组曲自动判定。
       final done = store.isManualDone(gate.id);
       return GateStatus(unlocked: done, doneCount: done ? 1 : 0, totalCount: 1);
 

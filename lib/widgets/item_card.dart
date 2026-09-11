@@ -7,11 +7,11 @@ import '../theme.dart';
 ///
 /// 这是乐曲、角色、服装、段位组曲共用的唯一卡片样式。
 ///
-/// 排版要点（M0 预览时踩过的坑）：
-/// 曲名最长可达 22 个全角字符，曲师名可达 44 字符。**绝不能按固定字符数截断**——
-/// 实测 `今ぞ♡崇め奉れ☆オマエらよ！！～姫の秘メタル渇望～` 这种名字按字数截会读不全，
-/// 按字数留宽又会溢出到相邻卡片。这里统一交给 Text 的 maxLines + ellipsis，
-/// 由 Flutter 按真实可用宽度自己算。
+/// 排行要点：
+/// - 曲名最长 22 个全角字符、曲师名最长 44 字符，**不做字符数截断**，
+///   由 Text 按真实可用宽度换行；文字区**可滚动**，所以再长也读得全。
+/// - 图片加载失败时，错误提示里**带上资源路径**。之前出现过「全部显示图片丢失」
+///   但不知道是哪个 key 的问题，把路径显示出来能一眼看出是路径错还是没打包进去。
 class ItemCard extends StatelessWidget {
   const ItemCard({
     super.key,
@@ -37,7 +37,6 @@ class ItemCard extends StatelessWidget {
         onLongPress: onLongPress,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
-          mainAxisSize: MainAxisSize.min,
           children: [
             AspectRatio(
               aspectRatio: 1,
@@ -49,32 +48,35 @@ class ItemCard extends StatelessWidget {
                 ],
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    entry.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      height: 1.25,
-                      color: AppTheme.textPrimary,
-                    ),
-                  ),
-                  if (entry.caption.isNotEmpty) ...[
-                    const SizedBox(height: 3),
+            // 文字区固定高度 + 可滚动：长曲名/长曲师名不会被省略号砍掉
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      entry.caption,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.textDim),
+                      entry.title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.28,
+                        color: AppTheme.textPrimary,
+                      ),
                     ),
+                    if (entry.caption.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        entry.caption,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          height: 1.3,
+                          color: AppTheme.textDim,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ],
@@ -101,11 +103,25 @@ class _CardImage extends StatelessWidget {
     return Image.asset(
       path!,
       fit: BoxFit.cover,
-      // 图片缺失时不要炸掉整个页面
-      errorBuilder: (_, __, ___) => Container(
+      // 图片缺失时不要炸掉整个页面，并把资源路径显示出来便于定位
+      errorBuilder: (_, error, __) => Container(
         color: AppTheme.surfaceHigh,
+        padding: const EdgeInsets.all(5),
         alignment: Alignment.center,
-        child: const Text('图片缺失', style: TextStyle(color: Color(0xFF666E88), fontSize: 12)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.broken_image_outlined, size: 18, color: Color(0xFF8A5A5A)),
+            const SizedBox(height: 4),
+            Text(
+              path!,
+              textAlign: TextAlign.center,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 8, color: Color(0xFF8A5A5A), height: 1.2),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -134,10 +150,16 @@ class _DoneOverlay extends StatelessWidget {
 
 /// 自适应列数的卡片网格。
 ///
-/// 列数由可用宽度算出来（按 300×300 曲绘的观感定最小宽度），
-/// 不写死列数，这样不同屏宽都不会出现「卡片太扁」。
+/// **排序规则：未完成的在前，已完成的沉到最后**（同组内保持原顺序）。
+/// 所以第一屏永远是「还差什么」，已完成的往下滚才看得到。
 class ItemGrid extends StatelessWidget {
-  const ItemGrid({super.key, required this.entries, required this.isDone, required this.onTap, this.onLongPress});
+  const ItemGrid({
+    super.key,
+    required this.entries,
+    required this.isDone,
+    required this.onTap,
+    this.onLongPress,
+  });
 
   final List<Entry> entries;
   final bool Function(Entry) isDone;
@@ -151,6 +173,15 @@ class ItemGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) return const SizedBox.shrink();
+
+    // 未完成在前。用「稳定分组」而不是 sort，保证同状态内顺序不变
+    final pending = <Entry>[];
+    final finished = <Entry>[];
+    for (final e in entries) {
+      (isDone(e) ? finished : pending).add(e);
+    }
+    final ordered = [...pending, ...finished];
+
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
@@ -167,9 +198,9 @@ class ItemGrid extends StatelessWidget {
             mainAxisSpacing: _gap,
             childAspectRatio: 0.72,
           ),
-          itemCount: entries.length,
+          itemCount: ordered.length,
           itemBuilder: (context, i) {
-            final e = entries[i];
+            final e = ordered[i];
             return ItemCard(
               entry: e,
               done: isDone(e),
@@ -247,8 +278,6 @@ class GroupHeader extends StatelessWidget {
           Flexible(
             child: Text(
               label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

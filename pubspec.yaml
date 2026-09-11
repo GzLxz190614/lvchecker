@@ -15,6 +15,8 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
+  # 从 icon.png 生成各尺寸的 Android 启动图标（在 CI 里跑，本地不需要）
+  flutter_launcher_icons: ^0.14.1
 
 flutter:
   # 必须为 true。
@@ -23,8 +25,32 @@ flutter:
   # 但运行时所有图标会显示成空白方块——这种「编译过但看起来坏了」的坑很难查。
   uses-material-design: true
 
+  # ------------------------------------------------------------------
+  # 资源声明。
+  #
+  # ⚠️ 这里**必须逐个列出子目录**，不能只写 `assets/img/`。
+  #
+  # 实测教训：只声明 `assets/img/` 时，APK 里所有曲绘都读不到，
+  # app 里满屏「图片丢失」。原因见下面这条 issue 描述的 Flutter 名单生成行为，
+  # 它不会稳定地把多级嵌套目录里的文件都收进来。
+  # 显式列出后，每个目录里散落的 PNG 与 meta.json 都会被收进 APK。
+  #
+  # 代价是：build.py 生成新的 id 目录后，要往这里补一行。
+  # tools/check_assets.py 会检查「pubspec 声明」与「磁盘上实际目录」是否一致，
+  # 不一致就报错，避免再次出现「编译过了但图全丢」。
+  # ------------------------------------------------------------------
   assets:
-    # 数据层。这些路径是仓库根目录的 data/ 与 assets/img/，
-    # 不额外拷贝一份，避免出现「两份数据不一致」。
     - data/
-    - assets/img/
+    - assets/img/music/
+    - assets/img/chara/
+    - assets/img/avatar/
+
+# 启动图标：从仓库根目录的 icon.png 生成各密度的 mipmap。
+# CI 里执行 `dart run flutter_launcher_icons` 即可，本地无需 Flutter。
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "icon.png"
+  adaptive_icon_background: "#14141C"
+  adaptive_icon_foreground: "icon.png"
+  min_sdk_android: 29

@@ -6,7 +6,9 @@ import '../data/progress_store.dart';
 // （之前我按「未使用」把它删掉过一次，结果 MetaTable 变成未定义类型——
 //  analyze 报 undefined_class，test 阶段直接编译失败。）
 import '../models/entry.dart';
+import '../models/class_course.dart';
 import '../models/gate.dart';
+import '../models/link_level.dart';
 import '../theme.dart';
 import 'gate_page.dart';
 
@@ -21,6 +23,8 @@ class GatePager extends StatefulWidget {
     required this.gates,
     required this.meta,
     required this.store,
+    required this.linkLevels,
+    required this.classData,
     required this.dataVersion,
     required this.onOpenSettings,
   });
@@ -28,6 +32,8 @@ class GatePager extends StatefulWidget {
   final List<Gate> gates;
   final MetaTable meta;
   final ProgressStore store;
+  final LinkLevelData linkLevels;
+  final ClassData classData;
   final String dataVersion;
   final VoidCallback onOpenSettings;
 
@@ -108,6 +114,8 @@ class _GatePagerState extends State<GatePager> {
                   gate: gate,
                   meta: widget.meta,
                   store: widget.store,
+                  linkLevels: widget.linkLevels.forGate(gate.id),
+                  classData: widget.classData,
                   status: statuses[gate.id] ??
                       const GateStatus(unlocked: false, doneCount: 0, totalCount: 0),
                   statusOf: (id) =>

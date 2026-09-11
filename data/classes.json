@@ -3,7 +3,7 @@
   "dataVersion": "placeholder",
   "placeholder": true,
   "region": "cn",
-  "note": "段位课程数据尚未提供（condition/2-air 为空）。以下为占位符，仅用于预览 UI。",
+  "note": "段位课程数据尚未提供（condition/2-air 为空）。以下为占位符：等级与配色是真的，组曲名与曲目是按已有曲库随手填的，仅用于预览 UI。拿到课程 XML 后由 tools/build.py 重新生成即可，app 端不用改代码、也不用重发 APK。",
   "gateId": "air",
   "unlockRule": {
     "type": "anyClassAllCourses",
@@ -20,42 +20,18 @@
           "key": "I-1",
           "title": "占位组曲 1",
           "songs": [
-            {
-              "order": 1,
-              "linkId": "music:51",
-              "difficulty": "MASTER"
-            },
-            {
-              "order": 2,
-              "linkId": "music:53",
-              "difficulty": "MASTER"
-            },
-            {
-              "order": 3,
-              "linkId": "music:59",
-              "difficulty": "MASTER"
-            }
+            { "order": 1, "linkId": "music:51", "difficulty": "BASIC" },
+            { "order": 2, "linkId": "music:53", "difficulty": "BASIC" },
+            { "order": 3, "linkId": "music:59", "difficulty": "BASIC" }
           ]
         },
         {
           "key": "I-2",
           "title": "占位组曲 2",
           "songs": [
-            {
-              "order": 1,
-              "linkId": "music:63",
-              "difficulty": "MASTER"
-            },
-            {
-              "order": 2,
-              "linkId": "music:65",
-              "difficulty": "MASTER"
-            },
-            {
-              "order": 3,
-              "linkId": "music:67",
-              "difficulty": "MASTER"
-            }
+            { "order": 1, "linkId": "music:63", "difficulty": "BASIC" },
+            { "order": 2, "linkId": "music:65", "difficulty": "BASIC" },
+            { "order": 3, "linkId": "music:67", "difficulty": "BASIC" }
           ]
         }
       ]
@@ -65,35 +41,211 @@
       "label": "II",
       "level": 2,
       "color": "#0DB991",
-      "courses": []
+      "courses": [
+        {
+          "key": "II-1",
+          "title": "占位组曲 1",
+          "songs": [
+            { "order": 1, "linkId": "music:69", "difficulty": "ADVANCED" },
+            { "order": 2, "linkId": "music:70", "difficulty": "ADVANCED" },
+            { "order": 3, "linkId": "music:71", "difficulty": "ADVANCED" }
+          ]
+        },
+        {
+          "key": "II-2",
+          "title": "占位组曲 2",
+          "songs": [
+            { "order": 1, "linkId": "music:74", "difficulty": "ADVANCED" },
+            { "order": 2, "linkId": "music:75", "difficulty": "ADVANCED" },
+            { "order": 3, "linkId": "music:76", "difficulty": "ADVANCED" }
+          ]
+        },
+        {
+          "key": "II-3",
+          "title": "占位组曲 3",
+          "songs": [
+            { "order": 1, "linkId": "music:79", "difficulty": "ADVANCED" },
+            { "order": 2, "linkId": "music:80", "difficulty": "ADVANCED" },
+            { "order": 3, "linkId": "music:82", "difficulty": "ADVANCED" }
+          ]
+        }
+      ]
     },
     {
       "key": "III",
       "label": "III",
       "level": 3,
       "color": "#F2AA00",
-      "courses": []
+      "courses": [
+        {
+          "key": "III-1",
+          "title": "占位组曲 1",
+          "songs": [
+            { "order": 1, "linkId": "music:95", "difficulty": "EXPERT" },
+            { "order": 2, "linkId": "music:100", "difficulty": "EXPERT" },
+            { "order": 3, "linkId": "music:101", "difficulty": "EXPERT" }
+          ]
+        },
+        {
+          "key": "III-2",
+          "title": "占位组曲 2",
+          "songs": [
+            { "order": 1, "linkId": "music:105", "difficulty": "EXPERT" },
+            { "order": 2, "linkId": "music:107", "difficulty": "EXPERT" },
+            { "order": 3, "linkId": "music:108", "difficulty": "EXPERT" }
+          ]
+        },
+        {
+          "key": "III-3",
+          "title": "占位组曲 3",
+          "songs": [
+            { "order": 1, "linkId": "music:140", "difficulty": "EXPERT" },
+            { "order": 2, "linkId": "music:141", "difficulty": "EXPERT" },
+            { "order": 3, "linkId": "music:147", "difficulty": "EXPERT" }
+          ]
+        },
+        {
+          "key": "III-4",
+          "title": "占位组曲 4",
+          "songs": [
+            { "order": 1, "linkId": "music:148", "difficulty": "EXPERT" },
+            { "order": 2, "linkId": "music:151", "difficulty": "EXPERT" },
+            { "order": 3, "linkId": "music:152", "difficulty": "EXPERT" }
+          ]
+        }
+      ]
     },
     {
       "key": "IV",
       "label": "IV",
       "level": 4,
       "color": "#E13C29",
-      "courses": []
+      "courses": [
+        {
+          "key": "IV-1",
+          "title": "占位组曲 1",
+          "songs": [
+            { "order": 1, "linkId": "music:163", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:180", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:712", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "IV-2",
+          "title": "占位组曲 2",
+          "songs": [
+            { "order": 1, "linkId": "music:777", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2050", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2266", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "IV-3",
+          "title": "占位组曲 3",
+          "songs": [
+            { "order": 1, "linkId": "music:2326", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2327", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2353", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "IV-4",
+          "title": "占位组曲 4",
+          "songs": [
+            { "order": 1, "linkId": "music:2354", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2355", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2493", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "IV-5",
+          "title": "占位组曲 5",
+          "songs": [
+            { "order": 1, "linkId": "music:2556", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2597", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2704", "difficulty": "MASTER" }
+          ]
+        }
+      ]
     },
     {
       "key": "V",
       "label": "V",
       "level": 5,
       "color": "#4A0973",
-      "courses": []
+      "courses": [
+        {
+          "key": "V-1",
+          "title": "占位组曲 1",
+          "songs": [
+            { "order": 1, "linkId": "music:2705", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2712", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2802", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "V-2",
+          "title": "占位组曲 2",
+          "songs": [
+            { "order": 1, "linkId": "music:2968", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2969", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2970", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "V-3",
+          "title": "占位组曲 3",
+          "songs": [
+            { "order": 1, "linkId": "music:2971", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2972", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2973", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "V-4",
+          "title": "占位组曲 4",
+          "songs": [
+            { "order": 1, "linkId": "music:2974", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2975", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2976", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "V-5",
+          "title": "占位组曲 5",
+          "songs": [
+            { "order": 1, "linkId": "music:2977", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2978", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2838", "difficulty": "MASTER" }
+          ]
+        }
+      ]
     },
     {
       "key": "infinity",
       "label": "∞",
       "level": 0,
       "color": "#FCDBEF",
-      "courses": []
+      "courses": [
+        {
+          "key": "inf-1",
+          "title": "占位组曲 1（ULTIMA）",
+          "songs": [
+            { "order": 1, "linkId": "music:2967", "difficulty": "ULTIMA" },
+            { "order": 2, "linkId": "music:2999", "difficulty": "ULTIMA" },
+            { "order": 3, "linkId": "music:2966", "difficulty": "MASTER" }
+          ]
+        },
+        {
+          "key": "inf-2",
+          "title": "占位组曲 2（MASTER）",
+          "songs": [
+            { "order": 1, "linkId": "music:2954", "difficulty": "MASTER" },
+            { "order": 2, "linkId": "music:2938", "difficulty": "MASTER" },
+            { "order": 3, "linkId": "music:2919", "difficulty": "MASTER" }
+          ]
+        }
+      ]
     }
   ]
 }

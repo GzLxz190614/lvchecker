@@ -96,6 +96,8 @@ class _Home extends StatelessWidget {
       gates: data.gateData.gates,
       meta: data.meta,
       store: store,
+      linkLevels: data.linkLevels,
+      classData: data.classData,
       dataVersion: data.gateData.dataVersion,
       onOpenSettings: () {
         Navigator.of(context).push(

@@ -2,8 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../models/class_course.dart';
 import '../models/entry.dart';
 import '../models/gate.dart';
+import '../models/link_level.dart';
 
 /// 数据层加载器。
 ///
@@ -18,20 +20,34 @@ class DataLoader {
   Future<AppData> load() async {
     final gatesJson = jsonDecode(await rootBundle.loadString(_gatesPath));
     final metaJson = jsonDecode(await rootBundle.loadString(_metaPath));
+    final linkLevels = await LinkLevelData.loadFromAssets();
+    final classData = await ClassData.loadFromAssets();
 
     final gateData = GateData.fromJson((gatesJson as Map).cast<String, dynamic>());
     final meta = MetaTable.fromJson((metaJson as Map).cast<String, dynamic>());
 
-    return AppData(gateData: gateData, meta: meta);
+    return AppData(
+      gateData: gateData,
+      meta: meta,
+      linkLevels: linkLevels,
+      classData: classData,
+    );
   }
 }
 
 /// 加载好的全部只读数据。
 class AppData {
-  const AppData({required this.gateData, required this.meta});
+  const AppData({
+    required this.gateData,
+    required this.meta,
+    required this.linkLevels,
+    required this.classData,
+  });
 
   final GateData gateData;
   final MetaTable meta;
+  final LinkLevelData linkLevels;
+  final ClassData classData;
 
   /// 按 id 找门
   Gate? gateById(String id) {

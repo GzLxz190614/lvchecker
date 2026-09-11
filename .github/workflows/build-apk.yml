@@ -105,6 +105,21 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      # ------------------------------------------------------------------
+      # 本地检查（因为无法在本地跑 flutter，这些静态校验就放在 CI 里）
+      # ------------------------------------------------------------------
+      - name: Static checks (imports / assets / classes)
+        run: |
+          set -e
+          python3 tools/check_imports.py
+          python3 tools/check_assets.py
+          python3 tools/check_classes.py
+
+      # 从仓库根目录的 icon.png 生成各密度启动图标。
+      # 必须在 flutter pub get 之后跑（它依赖 flutter_launcher_icons 包）。
+      - name: Generate launcher icons
+        run: dart run flutter_launcher_icons
+
       # analyze 只做提示，不阻断构建。
       # 理由：lints 的 info/warning 不应该让「只想出个包」的构建失败，
       # 但日志里保留下来方便事后排查。
