@@ -214,21 +214,51 @@ app 支持从[落雪查分器](https://maimai.lxns.net/)导入成绩，**辅助�
 
 ---
 
-## 在线数据更新
+## 在线数据更新（热更新）
 
-数据文件通过 `raw.githubusercontent.com` 同步，**不用重发 APK 就能更新数据**：
+数据文件通过 GitHub 同步，**不用重发 APK 就能更新**：门的开放日期、解锁条件、
+缓和表、段位课程——这些全在 `data/*.json` 里，改完推上去即可。
+
+### 同步机制
+
+启动时若本机缓存超过 12 小时，会在后台拉一次（**带 12 秒超时，绝不会卡住启动**）。
+设置页也有「立即同步数据」按钮，会显示每个文件的结果。
+
+**多源回退**（实测 `raw.githubusercontent.com` 在部分网络下取不到，CDN 可以）：
 
 ```
-https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/meta.json
-https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/gates.json
-https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/linklevels.json
-https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/classes.json
+1. https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/
+2. https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/
+3. https://raw.githack.com/GzLxz190614/lvchecker/main/data/
 ```
 
-app 启动时后台尝试同步（失败则用本地缓存，首次运行用 APK 内置副本），
-设置页也有「立即同步数据」按钮。
+任一可用即生效；全部失败则继续用本机缓存。
 
-**同步永远不会碰你的打勾记录**——数据更新和进度存档是完全隔离的两层。
+### 三级加载
+
+```
+① 本机缓存（热更新下来的，最新）
+② APK 内置（首次安装，或缓存损坏时兜底）
+```
+
+每一级都先验证能解析成 JSON，解析失败就降级到下一级——所以即使缓存文件坏了
+（例如写到一半断网），app 也能正常启动。写入用「先写 .tmp 再改名」的原子方式。
+
+### 哪些能热更新，哪些不能
+
+| 内容 | 能否热更新 | 原因 |
+|---|---|---|
+| 曲目与条件、开放日期、缓和表、段位课程 | ✅ 能 | 都是 `data/*.json` |
+| 曲绘 / 角色立绘 / 服装图 | ❌ 不能 | 图片在 APK 内（82 张，走网络得不偿失） |
+| UI 与逻辑 | ❌ 不能 | 要重新构建 APK |
+
+所以「加了新曲目」需要重发 APK（因为要带新曲绘），
+但「给某个门填上开放日期」「修正缓和表」这类改数据**不用重装**。
+
+### 存档安全
+
+**同步永远不会碰你的打勾记录。** 数据层（`data/*.json`）和存档层
+（`SharedPreferences`）完全隔离，同步只覆盖前者。
 
 ---
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'data/data_loader.dart';
+import 'data/data_sync.dart';
 import 'data/progress_store.dart';
 import 'pages/gate_pager.dart';
 import 'pages/settings_page.dart';
@@ -16,7 +17,7 @@ class LvCheckerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '连章进度',
+      title: 'Linked VERSE Checker',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.build(),
       home: const _Boot(),
@@ -24,7 +25,29 @@ class LvCheckerApp extends StatelessWidget {
   }
 }
 
-/// 启动页：加载内置数据 + 读取本地存档，然后进主页面。
+/// 启动结果：数据 + 存档 + 同步器。
+class _BootResult {
+  const _BootResult({
+    required this.data,
+    required this.store,
+    required this.sync,
+    this.autoSyncReport,
+  });
+
+  final LoadedData data;
+  final ProgressStore store;
+  final DataSync sync;
+
+  /// 启动时自动同步的结果。null 表示这次没同步（数据还新鲜）。
+  final SyncReport? autoSyncReport;
+}
+
+/// 启动页：先尝试热更新数据，再加载数据与本地存档，然后进主页面。
+///
+/// 顺序刻意如此：**先同步再加载**，这样启动后看到的立刻是最新数据，
+/// 不会出现「先显示旧数据、闪一下变新」的跳动。
+///
+/// 同步失败不影响启动：加载器会自动降级到本机缓存 / APK 内置数据。
 class _Boot extends StatefulWidget {
   const _Boot();
 
@@ -33,17 +56,46 @@ class _Boot extends StatefulWidget {
 }
 
 class _BootState extends State<_Boot> {
-  late final Future<(AppData, ProgressStore)> _future = _init();
+  late final Future<_BootResult> _future = _init();
 
-  Future<(AppData, ProgressStore)> _init() async {
-    final data = await const DataLoader().load();
+  /// 数据新鲜度阈值：超过这个时间才在启动时自动同步。
+  /// 太频繁没必要（数据变化很慢），也会无谓地打网络。
+  static const Duration _freshFor = Duration(hours: 12);
+
+  static const Duration _syncTimeout = Duration(seconds: 12);
+
+  Future<_BootResult> _init() async {
     final store = await ProgressStore.load();
-    return (data, store);
+
+    DataSync? sync;
+    SyncReport? report;
+    try {
+      sync = await DataSync.create();
+      // 只有缓存过期时才自动同步，并且加超时——绝不能因为网络卡住启动
+      if (sync.isStale(_freshFor)) {
+        report = await sync.sync().timeout(
+              _syncTimeout,
+              onTimeout: () => SyncReport(
+                results: const [
+                  SyncResult(file: '(超时)', outcome: SyncOutcome.failed, message: '启动同步超时'),
+                ],
+                usedSource: null,
+                finishedAt: DateTime.now(),
+              ),
+            );
+      }
+    } catch (_) {
+      // 拿不到目录或网络异常都无所谓，退回内置数据
+      sync = null;
+    }
+
+    final data = await const DataLoader().load(sync: sync);
+    return _BootResult(data: data, store: store, sync: sync, autoSyncReport: report);
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<(AppData, ProgressStore)>(
+    return FutureBuilder<_BootResult>(
       future: _future,
       builder: (context, snap) {
         if (snap.hasError) {
@@ -77,40 +129,84 @@ class _BootState extends State<_Boot> {
           );
         }
 
-        final (data, store) = snap.data!;
-        return _Home(data: data, store: store);
+        final r = snap.data!;
+        return _Home(result: r);
       },
     );
   }
 }
 
-class _Home extends StatelessWidget {
-  const _Home({required this.data, required this.store});
+class _Home extends StatefulWidget {
+  const _Home({required this.result});
 
-  final AppData data;
-  final ProgressStore store;
+  final _BootResult result;
+
+  @override
+  State<_Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<_Home> {
+  late _BootResult _r = widget.result;
+
+  @override
+  void initState() {
+    super.initState();
+    // 启动时自动同步过就提示一句（成功/失败都说清，避免用户以为是 bug）
+    final report = _r.autoSyncReport;
+    if (report != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(report.summary),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      });
+    }
+  }
+
+  Future<void> _openSettings() async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => SettingsPage(
+          gates: _r.data.gateData.gates,
+          store: _r.store,
+          dataVersion: _r.data.gateData.dataVersion,
+          gameVersion: _r.data.gateData.gameVersion,
+          sync: _r.sync,
+          origin: _r.data.origin,
+          onDataRefreshed: _reload,
+        ),
+      ),
+    );
+    if (changed == true) await _reload();
+  }
+
+  /// 设置页同步成功后重新加载数据（不重启 app）
+  Future<void> _reload() async {
+    final data = await const DataLoader().load(sync: _r.sync);
+    if (!mounted) return;
+    setState(() {
+      _r = _BootResult(
+        data: data,
+        store: _r.store,
+        sync: _r.sync,
+        autoSyncReport: null,
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return GatePager(
-      gates: data.gateData.gates,
-      meta: data.meta,
-      store: store,
-      linkLevels: data.linkLevels,
-      classData: data.classData,
-      dataVersion: data.gateData.dataVersion,
-      onOpenSettings: () {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => SettingsPage(
-              gates: data.gateData.gates,
-              store: store,
-              dataVersion: data.gateData.dataVersion,
-              gameVersion: data.gateData.gameVersion,
-            ),
-          ),
-        );
-      },
+      gates: _r.data.gateData.gates,
+      meta: _r.data.meta,
+      store: _r.store,
+      linkLevels: _r.data.linkLevels,
+      classData: _r.data.classData,
+      dataVersion: _r.data.gateData.dataVersion,
+      onOpenSettings: _openSettings,
     );
   }
 }

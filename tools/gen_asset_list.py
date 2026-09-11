@@ -54,7 +54,7 @@ def collect_assets() -> list[str]:
 HEAD = '''name: lvchecker
 description: "中二节奏 2027 连章（Linked VERSE）门解锁进度记录工具"
 publish_to: "none"
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -63,6 +63,10 @@ dependencies:
   flutter:
     sdk: flutter
   shared_preferences: ^2.3.2
+  # 热更新：从 GitHub 拉最新的 data/*.json
+  http: ^1.2.2
+  # 热更新：把拉到的 JSON 缓存到应用私有目录，离线时用缓存
+  path_provider: ^2.1.4
 
 dev_dependencies:
   flutter_test:

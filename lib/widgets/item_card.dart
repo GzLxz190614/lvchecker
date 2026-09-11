@@ -38,8 +38,10 @@ class ItemCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // 图片区固定为接近正方形（0.82 能让文字区拿到约 55dp）。
+            // 不写 1.0 是因为文字区必须留够高度，否则长曲名会把曲师挤出去。
             AspectRatio(
-              aspectRatio: 1,
+              aspectRatio: 0.82,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -48,40 +50,87 @@ class ItemCard extends StatelessWidget {
                 ],
               ),
             ),
-            // 文字区固定高度 + 可滚动：长曲名/长曲师名不会被省略号砍掉
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      entry.title,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        height: 1.28,
-                        color: AppTheme.textPrimary,
-                      ),
+            Expanded(child: _ScrollableText(entry: entry)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 卡片的文字区。
+///
+/// 关键点：**没有省略号**。曲名最长有 25 个全角字符
+/// （`今ぞ♡崇め奉れ☆オマエらよ！！～姫の秘メタル渇望～`），在卡片宽度下要占 3 行，
+/// 会把曲师名挤掉。这里用两条约束同时解决：
+///   1. 文字区可滚动（配右侧细滚动条），再长也读得全，且曲师永远在滚动范围内；
+///   2. 底部加一道渐隐遮罩，暗示「下面还有内容」。
+class _ScrollableText extends StatelessWidget {
+  const _ScrollableText({required this.entry});
+
+  final Entry entry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        Scrollbar(
+          thumbVisibility: false,
+          radius: const Radius.circular(3),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 曲名：完整换行，不截断
+                Text(
+                  entry.title,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    height: 1.28,
+                    color: AppTheme.textPrimary,
+                  ),
+                ),
+                if (entry.caption.isNotEmpty) ...[
+                  const SizedBox(height: 5),
+                  // 曲师：也完整换行。最长的曲师名有 29 个半角宽度
+                  // （`あべにゅうぷろじぇくと feat.佐倉 紗織　produced by ave;new`）
+                  Text(
+                    entry.caption,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      height: 1.32,
+                      color: AppTheme.textDim,
                     ),
-                    if (entry.caption.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        entry.caption,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          height: 1.3,
-                          color: AppTheme.textDim,
-                        ),
-                      ),
-                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        // 底部渐隐：提示内容还没到底
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: 12,
+          child: IgnorePointer(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppTheme.surface.withValues(alpha: 0.0),
+                    AppTheme.surface.withValues(alpha: 0.92),
                   ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -170,6 +219,14 @@ class ItemGrid extends StatelessWidget {
   static const double _minTile = 104;
   static const double _gap = 10;
 
+  /// 卡片宽高比。
+  ///
+  /// 取值考虑：图片区是 0.82 宽高比（见 ItemCard），剩下的高度归文字区。
+  /// 0.62 时约 640dp 高的屏上，三列布局每张卡约 168dp 高，
+  /// 文字区能拿到约 55dp —— 够放「曲名 2 行 + 曲师 1 行」，
+  /// 更长的曲名靠滚动看，曲师不会被挤出去。
+  static const double _childAspectRatio = 0.62;
+
   @override
   Widget build(BuildContext context) {
     if (entries.isEmpty) return const SizedBox.shrink();
@@ -196,7 +253,7 @@ class ItemGrid extends StatelessWidget {
             crossAxisCount: cols,
             crossAxisSpacing: _gap,
             mainAxisSpacing: _gap,
-            childAspectRatio: 0.72,
+            childAspectRatio: _childAspectRatio,
           ),
           itemCount: ordered.length,
           itemBuilder: (context, i) {
