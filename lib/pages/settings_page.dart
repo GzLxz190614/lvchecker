@@ -183,7 +183,10 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
 
-    if (sync != null && sync.hasCache) ...[
+    // 注意：这里是**方法体**，不是集合字面量。
+    // 所以不能用 collection-if 的展开写法 `if (cond) ...[a, b]`——
+    // 那样 Dart 会把 `...[` 当成非法 token（会报 "Expected an identifier"）。
+    if (sync != null && sync.hasCache) {
       children.add(const SizedBox(height: 8));
       children.add(
         OutlinedButton.icon(

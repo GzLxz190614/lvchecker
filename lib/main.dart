@@ -185,7 +185,12 @@ class _HomeState extends State<_Home> {
 
   /// 设置页同步成功后重新加载数据（不重启 app）
   Future<void> _reload() async {
-    final data = await const DataLoader().load(sync: _r.sync);
+    // 注意类型：_r.sync 是 DataSync?，而 load() 的参数在传了值时必须非空，
+    // 所以先取到局部变量，让类型提升生效。
+    final sync = _r.sync;
+    final data = sync == null
+        ? await const DataLoader().load()
+        : await const DataLoader().load(sync: sync);
     if (!mounted) return;
     setState(() {
       _r = _BootResult(

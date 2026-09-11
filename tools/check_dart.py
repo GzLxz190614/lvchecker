@@ -413,6 +413,36 @@ def main() -> int:
     # 去重（同一处可能被多个正则命中）
     member_problems = sorted(set(member_problems))
 
+    # ---------------- 3. 语句位置的 collection-if 展开 ----------------
+    #
+    # Dart 的展开语法 `if (cond) ...[a, b]` **只能用在集合字面量里**。
+    # 写在方法体（语句位置）时会报一串莫名其妙的错：
+    #   Expected an identifier / Expected to find ']' / Expected a class member
+    # 而括号计数是平衡的（`[` 与 `]` 配对，只是位置非法），所以数括号抓不到。
+    #
+    # 这个写法很容易在把「集合字面量」改写成「先建 list 再 add」时残留下来。
+    #
+    # 只检测**确切的反模式**：`xxx.add(` 之后紧跟 `if (...) ...[`。
+    # 不去泛泛地找 `) ...[`——那在 `children: [ if (x) ...[...] ]` 里是合法的，
+    # 泛化检测会满屏误报（试过，误报 13 处）。
+    spread_problems: list[str] = []
+    # 反模式的确切形状（`if` 在前、`.add(` 在后）：
+    #     if (sync != null && sync.hasCache) ...[
+    #       children.add(const SizedBox(height: 8));
+    #       ...
+    #     ]
+    # 注意 `\.\.\.\s*\[`：`...` 与 `[` 之间**可能有空格**，写成紧邻会漏掉真实案例。
+    spread_re = re.compile(r"\)\s*\.\.\.\s*\[")
+    for f in files:
+        lines = clean[f].split("\n")
+        for i in range(1, len(lines)):
+            if spread_re.search(lines[i - 1]) and ".add(" in lines[i]:
+                spread_problems.append(
+                    f"  ✗ {f.relative_to(ROOT).as_posix()}:{i}  "
+                    f"上一行用了 'if (...) ...[...]'（语句位置不能展开），"
+                    f"下一行却在 `.add(`。改成普通 if 语句 + 逐个 add。"
+                )
+
     # ---------------- 输出 ----------------
     print(f"扫描 {len(files)} 个 dart 文件，{len(defs)} 个类型定义，"
           f"{len(var_types)} 个文件有可解析的变量类型\n")
@@ -432,6 +462,13 @@ def main() -> int:
         print("\n".join(member_problems))
     else:
         print("✅ 已知类型的成员访问都有效")
+
+    if spread_problems:
+        ok = False
+        print("\n❌ 语法错误（`.add(` 之后用了展开语法）：")
+        print("\n".join(spread_problems))
+    else:
+        print("✅ 没有语句位置的展开语法误用")
 
     return 0 if ok else 1
 

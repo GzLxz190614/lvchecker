@@ -37,7 +37,7 @@ class SyncReport {
 
   String get summary {
     if (usedSource == null) {
-      return '同步失败：${failedCount} 个文件取不到（离线时用本机缓存继续工作）';
+      return '同步失败：$failedCount 个文件取不到（离线时用本机缓存继续工作）';
     }
     return '同步完成（源：$usedSource），更新 $updatedCount 个文件'
         '${failedCount > 0 ? '，$failedCount 个失败' : ''}';
@@ -84,7 +84,6 @@ class DataSync {
   Directory get cacheDir => _dir;
 
   File cacheFile(String name) => File('${_dir.path}/$name');
-
   /// 本机缓存是否已有全部文件
   bool get hasCache => files.every((f) => cacheFile(f).existsSync());
 
