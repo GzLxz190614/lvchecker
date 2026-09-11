@@ -10,6 +10,10 @@ on:
         description: '跳过 analyze/test（仅当测试本身出问题时用，快速出包）'
         type: boolean
         default: false
+      publish_release:
+        description: '构建完直接发一个 Release（测试版，预发布标记）'
+        type: boolean
+        default: false
   push:
     tags:
       - 'v*'
@@ -220,18 +224,59 @@ jobs:
             exit 1
           fi
 
-      # 打 tag 时发 Release：Release 附件不计入 Actions 存储额度，
-      # 而且给出一个固定下载链接，手机上点开就能装。
+      # 发 Release：附件不计入 Actions 存储额度，而且给出一个固定下载链接，
+      # 手机上点开就能装。
+      #
+      # 两条触发路径、都能标「预发布」：
+      #   · 打 tag（v0.2.0-rc.1 这种带后缀的）→ 自动标 prerelease
+      #   · 手动触发并勾上 publish_release → 用 run number 当 tag，标 prerelease
+      #
+      # 为什么 tag 里带 `-` 就自动当预发布：这样「测试版」不需要额外操作，
+      # 只要是 v0.2.0-rc.1 / v0.2.0-test.1 这类 tag，GitHub 上就不会显示成 Latest。
+      # 反之 v0.2.0 这种纯版本号就是正式发布。
+      #
+      # 注意 `github.event.inputs` 只在 workflow_dispatch 时有值；
+      # 打 tag 触发时它是空的，所以必须用 `||` 兜底，不能直接写进 if 的条件里
+      # （未定义的值在表达式里会变成空字符串，容易判断反）。
+      - name: Resolve release options
+        if: startsWith(github.ref, 'refs/tags/') || inputs.publish_release
+        id: rel
+        run: |
+          set -e
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+            if [[ "$TAG" == *-* ]]; then
+              echo "prerelease=true" >> "$GITHUB_OUTPUT"
+              echo "tag 里带后缀 -> 标为预发布"
+            else
+              echo "prerelease=false" >> "$GITHUB_OUTPUT"
+              echo "纯版本号 tag -> 正式发布"
+            fi
+          else
+            echo "tag=v0.2.0-test.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "手动触发 -> 用 run number 当 tag，并标为预发布"
+          fi
+
       - name: Upload to Release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') || inputs.publish_release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.rel.outputs.tag }}
           files: build/app/outputs/flutter-apk/app-release.apk
           generate_release_notes: true
+          # Resolve release options 一定会输出 prerelease（只在这个步骤该跑时才跑），
+          # 所以这里不需要兜底默认值。之所以不写 `|| false`，是因为 YAML 1.1 会把
+          # `false` 解析成布尔值再塞进表达式，类型不一致反而容易出问题。
+          prerelease: ${{ steps.rel.outputs.prerelease }}
+          # 名字里带上「测试版」，避免在 Releases 页面和正式版混淆
+          name: ${{ startsWith(steps.rel.outputs.prerelease, 'true') && '【测试版】' || '' }}${{ steps.rel.outputs.tag }}
 
-      # 手动触发时传 Artifact，保留期调短以免吃掉存储额度。
+      # 手动触发且**没有**发 Release 时，走 Artifact 方便自己下载。
+      # 保留期调短以免吃掉存储额度。
       - name: Upload artifact
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && !inputs.publish_release
         uses: actions/upload-artifact@v4
         with:
           name: lvchecker-apk
