@@ -36,7 +36,10 @@ class _BootResult {
 
   final LoadedData data;
   final ProgressStore store;
-  final DataSync sync;
+
+  /// 同步器。**可以为 null** —— 拿不到应用私有目录时（或初始化抛异常）
+  /// 就没法做热更新，此时 app 退回用 APK 内置数据，功能不受影响。
+  final DataSync? sync;
 
   /// 启动时自动同步的结果。null 表示这次没同步（数据还新鲜）。
   final SyncReport? autoSyncReport;
@@ -185,12 +188,12 @@ class _HomeState extends State<_Home> {
 
   /// 设置页同步成功后重新加载数据（不重启 app）
   Future<void> _reload() async {
-    // 注意类型：_r.sync 是 DataSync?，而 load() 的参数在传了值时必须非空，
-    // 所以先取到局部变量，让类型提升生效。
+    // 先取成局部变量：Dart 的类型提升只对「局部变量」生效，
+    // 对 `_r.sync` 这种「对象的字段」不生效（会报 argument_type_not_assignable）。
+    // 提升之后，三元表达式的 yes 分支里 sync 已经是非空，可以直接传给 load()。
     final sync = _r.sync;
-    final data = sync == null
-        ? await const DataLoader().load()
-        : await const DataLoader().load(sync: sync);
+    final data =
+        sync == null ? await const DataLoader().load() : await const DataLoader().load(sync: sync);
     if (!mounted) return;
     setState(() {
       _r = _BootResult(

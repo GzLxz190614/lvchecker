@@ -443,6 +443,98 @@ def main() -> int:
                     f"下一行却在 `.add(`。改成普通 if 语句 + 逐个 add。"
                 )
 
+    # ---------------- 4. 把可空变量传给「非空字段」的命名参数 ----------------
+    #
+    # 对应真实错误：
+    #   error • The argument type 'DataSync?' can't be assigned to the
+    #           parameter type 'DataSync'. • lib/main.dart:93 • argument_type_not_assignable
+    #
+    # 判据是**字段类型本身是否可空**（`DataSync? sync` 可空、`DataSync sync` 非空），
+    # 与 `required` 无关 —— 一开始按 required 判断，方向就错了，
+    # 结果把可空字段误判成非空。而且 `required` 的检测在参数跨行时也会写错。
+    #
+    # 只处理「传入的是可空局部变量」这一种情况：这是最容易犯的
+    # （变量在某个分支被赋成 null，其它地方忘了它可能为 null）。
+    nullable_fields: dict[str, set[str]] = {}
+    non_null_fields: dict[str, set[str]] = {}
+    for f in files:
+        src = clean[f]
+        for m in re.finditer(
+            r"^(?:abstract\s+|sealed\s+|final\s+)?class\s+(\w+).*?\{", src, re.M | re.S
+        ):
+            tname = m.group(1)
+            end = _match_brace(src, m.end() - 1)
+            body = src[m.end():end]
+            nullable: set[str] = set()
+            non_null: set[str] = set()
+            for line in body.split("\n"):
+                s = line.strip()
+                if not s or s.startswith("//") or s.startswith("@"):
+                    continue
+                # 字段声明：`Type name;` / `Type? name;` / `Type name = ...`
+                fm = re.match(r"^(?:static\s+|final\s+|const\s+|late\s+|covariant\s+)*"
+                              r"([A-Z]\w*)(\??)\s+([a-z_]\w*)\s*[;=]", s)
+                if fm:
+                    if fm.group(2) == "?":
+                        nullable.add(fm.group(3))
+                    else:
+                        non_null.add(fm.group(3))
+                    continue
+                # 构造函数里的 this.x —— 可空性看同名字段（上面已收集）
+                for pm in re.finditer(r"\bthis\.([a-zA-Z_]\w*)", s):
+                    non_null.add(pm.group(1))  # 占位，后面用 field 的真值覆盖
+            nullable_fields[tname] = nullable
+            non_null_fields[tname] = non_null - nullable
+
+    nullable_locals: dict[Path, set[str]] = {}
+    nullable_decl = re.compile(r"(?:final|var|const|late)\s+([A-Z]\w*)\?\s+([a-z_]\w*)")
+    for f in files:
+        s: set[str] = set()
+        for m in nullable_decl.finditer(clean[f]):
+            s.add(m.group(2))
+        for m in re.finditer(r"^\s*([A-Z]\w*)\?\s+([a-z_]\w*)\s*[;=]", clean[f], re.M):
+            s.add(m.group(2))
+        nullable_locals[f] = s
+
+    # 名字 -> 类型（用于判断 `_BootResult(...)` 这种调用）
+    type_names = set(indexes.keys())
+    nullable_param_problems: list[str] = []
+    for f in files:
+        src = clean[f]
+        for tname in type_names:
+            bad = non_null_fields.get(tname)
+            null_ok = nullable_fields.get(tname)
+            if not bad and not null_ok:
+                continue
+            for m in re.finditer(rf"\b{tname}\s*\(", src):
+                depth, i, start = 0, m.end() - 1, m.end()
+                n = len(src)
+                while i < n:
+                    if src[i] == "(":
+                        depth += 1
+                    elif src[i] == ")":
+                        depth -= 1
+                        if depth == 0:
+                            break
+                    i += 1
+                inner = src[start:i]
+                line_no = src[: m.start()].count("\n") + 1
+                for arg in re.finditer(r"([a-zA-Z_]\w*)\s*:\s*([a-zA-Z_]\w*)\s*[,)]", inner):
+                    pname, vname = arg.group(1), arg.group(2)
+                    # 参数名要匹配到「非空字段」才算问题；可空字段随便传
+                    if null_ok and pname in null_ok:
+                        continue
+                    if not (bad and pname in bad):
+                        continue
+                    if vname in nullable_locals[f]:
+                        nullable_param_problems.append(
+                            f"  ✗ {f.relative_to(ROOT).as_posix()}:{line_no}  "
+                            f"{tname}({pname}: {vname}) —— {vname} 是可空变量，"
+                            f"但字段 {pname} 是非空类型（argument_type_not_assignable）"
+                        )
+
+    nullable_param_problems = sorted(set(nullable_param_problems))
+
     # ---------------- 输出 ----------------
     print(f"扫描 {len(files)} 个 dart 文件，{len(defs)} 个类型定义，"
           f"{len(var_types)} 个文件有可解析的变量类型\n")
@@ -469,6 +561,13 @@ def main() -> int:
         print("\n".join(spread_problems))
     else:
         print("✅ 没有语句位置的展开语法误用")
+
+    if nullable_param_problems:
+        ok = False
+        print("\n❌ 可空值传给了非空参数：")
+        print("\n".join(nullable_param_problems))
+    else:
+        print("✅ 没有把可空变量传给非空参数")
 
     return 0 if ok else 1
 
