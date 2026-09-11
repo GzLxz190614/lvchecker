@@ -41,7 +41,7 @@
         {
           "level": 4,
           "label": "4",
-          "from": null,
+          "from": "2026-09-11T10:00",
           "minDifficulty": "MASTER",
           "life": 1000,
           "judges": [
@@ -49,7 +49,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "user"
+          "source": "official"
         },
         {
           "level": 3,
