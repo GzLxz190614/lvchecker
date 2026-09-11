@@ -1,0 +1,8 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # 这个项目大量使用中文/日文字面量，注释也偏长，关掉几条噪音规则
+    avoid_print: false
+    prefer_single_quotes: true
+    sort_child_properties_last: false

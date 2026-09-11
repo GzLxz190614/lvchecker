@@ -42,7 +42,7 @@ dist/
 tools/_probe_*.py
 
 # ============================================================
-# Flutter / Dart —— M1 之后会用到
+# Flutter / Dart
 # ============================================================
 .dart_tool/
 .packages
@@ -54,15 +54,21 @@ build/
 *.iml
 *.lock.bak
 
-# Flutter 的 android/ 工程里只有这几项该忽略，其余要提交
+# android/ 整个目录都不提交。
+#
+# 它由 CI 里的 `flutter create --platforms=android` 用「与当前 Flutter 版本配套」
+# 的模板生成，然后 sed 改掉包名和 minSdk=29。这样仓库里不用维护
+# gradle / AGP / Kotlin / wrapper 四个版本号，也就不会因为版本不匹配导致 CI 红。
+# 详见 .github/workflows/build-apk.yml 的注释。
+android/
+
+# 万一以后改成提交 android/，这些仍然必须忽略：
 android/.gradle/
 android/local.properties
 android/key.properties
-android/**/gradle-wrapper.jar
 android/app/debug/
 android/app/profile/
 android/app/release/
-android/.idea/
 android/captures/
 
 # 签名文件 —— 绝不进仓库

@@ -1,0 +1,24 @@
+name: lvchecker
+description: "中二节奏 2027 连章（Linked VERSE）门解锁进度记录工具"
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  shared_preferences: ^2.3.2
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: false
+
+  assets:
+    # 数据层。这些路径是仓库根目录的 data/ 与 assets/img/，
+    # 不额外拷贝一份，避免出现「两份数据不一致」。
+    - data/
+    - assets/img/

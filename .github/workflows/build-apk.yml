@@ -1,0 +1,146 @@
+name: Build APK
+
+# 只在「手动触发」或「打 tag」时构建。
+# 刻意不配 on: push 到分支——否则每次推代码都烧 Actions 额度，
+# 失败还会发邮件。改数据/改代码随时推，不影响这里。
+on:
+  workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: '跳过 analyze/test（仅当测试本身出问题时用，快速出包）'
+        type: boolean
+        default: false
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write # 发 Release 需要
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # 锁定具体的 Flutter 版本，不用 channel: stable。
+      # 否则上游发新版可能让构建在最不方便的时候突然红。
+      # 要升级时改这一行并手动跑一次即可。
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.35.1'
+          channel: stable
+          cache: true
+
+      - name: Show toolchain versions
+        run: |
+          flutter --version
+          java -version
+
+      # ------------------------------------------------------------------
+      # 生成 Android 工程壳。
+      #
+      # 为什么不在仓库里提交 android/：
+      #   那需要我手写 gradle 版本、AGP 版本、Kotlin 版本、wrapper 四件套。
+      #   只要有一处和当前 Flutter 版本不匹配，CI 就会红，而且要反复试。
+      #   交给 flutter create 用「与当前 Flutter 版本配套」的模板生成，
+      #   是一次到位且零维护的做法。
+      #
+      # 为什么这样安全：
+      #   flutter create 只会补齐缺失的平台文件，**不会覆盖**已有的
+      #   lib/main.dart、pubspec.yaml、test/、data/、assets/。
+      #   通过下面的 Assert 步骤显式校验这一点。
+      # ------------------------------------------------------------------
+      - name: Generate Android project shell
+        run: flutter create --platforms=android --org io.github.gzlxz190614 .
+
+      - name: Assert existing sources were not overwritten
+        run: |
+          set -e
+          test -f lib/main.dart
+          test -f lib/pages/gate_pager.dart
+          test -f data/gates.json
+          test -f assets/img/music/51/jacket.png
+          grep -q '^name: lvchecker' pubspec.yaml
+          echo "OK: main.dart / data / assets / pubspec 均未被覆盖"
+
+      # ------------------------------------------------------------------
+      # 改包名并把 minSdk 抬到 29（Android 10）。
+      # Flutter 默认 minSdk 是 21，必须显式抬高才能保证你的常用机不变砖。
+      # 用宽容匹配（同时兼容 `= 值` 与 `值` 两种写法），避免模板格式变化导致漏改。
+      # ------------------------------------------------------------------
+      - name: Set applicationId and minSdk = 29
+        run: |
+          set -e
+          F=android/app/build.gradle.kts
+
+          # 包名：io.github.gzlxz190614.lvchecker
+          sed -i -E 's/^([[:space:]]*applicationId[[:space:]]*=[[:space:]]*).*$/\1"io.github.gzlxz190614.lvchecker"/' "$F"
+
+          # minSdk：先尝试替换既有的 minSdk 行
+          if grep -qE '^[[:space:]]*minSdk[[:space:]]*=' "$F"; then
+            sed -i -E 's/^([[:space:]]*minSdk[[:space:]]*=[[:space:]]*).*$/\1 29/' "$F"
+          else
+            # 没有就插到 defaultConfig { 之后
+            sed -i -E 's/^([[:space:]]*defaultConfig[[:space:]]*\{[[:space:]]*)$/\1\n        minSdk = 29/' "$F"
+          fi
+
+          echo '----- build.gradle.kts 关键行 -----'
+          grep -nE 'applicationId|minSdk|namespace|compileSdk|targetSdk' "$F" || true
+
+          echo '----- 断言：两项都改到了 -----'
+          grep -q 'io.github.gzlxz190614.lvchecker' "$F"
+          grep -qE 'minSdk[[:space:]]*=[[:space:]]*29' "$F"
+          echo "OK: applicationId 与 minSdk=29 已生效"
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      # analyze 只做提示，不阻断构建。
+      # 理由：lints 的 info/warning 不应该让「只想出个包」的构建失败，
+      # 但日志里保留下来方便事后排查。
+      - name: Analyze (non-blocking)
+        if: ${{ !inputs.skip_tests }}
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        continue-on-error: true
+
+      # test 是阻断的：模型解析错了会导致整个 app 显示错数据，必须拦住。
+      - name: Test
+        if: ${{ !inputs.skip_tests }}
+        run: flutter test
+
+      # 通用单包（不加 --split-per-abi），保证 Android 10 老机也能装。
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Show APK info
+        run: |
+          ls -lh build/app/outputs/flutter-apk/
+          du -h build/app/outputs/flutter-apk/app-release.apk
+
+      # 打 tag 时发 Release：Release 附件不计入 Actions 存储额度，
+      # 而且给出一个固定下载链接，手机上点开就能装。
+      - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: build/app/outputs/flutter-apk/app-release.apk
+          generate_release_notes: true
+
+      # 手动触发时传 Artifact，保留期调短以免吃掉存储额度。
+      - name: Upload artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lvchecker-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 7

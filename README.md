@@ -6,8 +6,51 @@
 
 站在机台前翻菜单找歌很不方便，还容易忘记哪首打过。这个 app 把每个门需要的曲目/角色/服装列成卡片，打过的点一下勾掉，自动记住进度。
 
-> ⚠️ **当前状态：数据层已完成（M0），App 尚未构建（M1 进行中）。**
-> 现在仓库里是数据与资源，还没有可安装的 APK。进度见下方「开发进度」。
+> ⚠️ **当前状态：数据层完成（M0），App 首次可用（M1）。**
+> 已经有可安装的 APK，但只实现了 ORIGIN 门；其余门会陆续补上。
+
+---
+
+## 安装 APK
+
+APK 由 GitHub Actions 在云端构建（**本地不需要装 Flutter 或 Android SDK**）。
+
+### 方式一：下载 Release（推荐）
+
+打 tag 后会自动发布到 Releases：
+
+```
+https://github.com/GzLxz190614/lvchecker/releases
+```
+
+手机浏览器直接点开下载安装即可。
+
+### 方式二：手动触发构建
+
+仓库页 → **Actions** → **Build APK** → **Run workflow**。
+构建完（约 5～10 分钟）在该次运行的 **Artifacts** 里下载 `lvchecker-apk`。
+
+> `workflow_dispatch` 有个 `skip_tests` 开关：万一 analyze/test 本身出问题卡住构建，
+> 勾上它能跳过检查直接出包。
+
+### 安装注意
+
+- APK 用调试签名，安装时需要允许「**未知来源应用**」
+- 兼容 **Android 10 及以上**（`minSdk = 29`）
+- 包名：`io.github.gzlxz190614.lvchecker`
+
+### 自己构建
+
+```bash
+flutter create --platforms=android --org io.github.gzlxz190614 .
+flutter pub get
+flutter build apk --release
+```
+
+> ⚠️ `android/` 目录**不在仓库里**，由上面第一条命令生成。
+> 这样做是为了避免在仓库里维护 gradle / AGP / Kotlin / wrapper 四个版本号——
+> 它们必须和 Flutter 版本严格配套，手写极易导致 CI 失败。
+> 详见 `.github/workflows/build-apk.yml` 的注释。
 
 ---
 
@@ -60,6 +103,15 @@ lvchecker/
 │   ├── build.py           从 condition/ 生成 data/ 与 assets/img/
 │   ├── preview.py         生成验收预览图（本地用）
 │   └── validate.py        数据完整性校验
+├── lib/                   ← Flutter 源码
+│   ├── main.dart
+│   ├── theme.dart
+│   ├── models/            entry.dart / gate.dart
+│   ├── data/              data_loader.dart / progress_store.dart / gate_status.dart
+│   ├── pages/             gate_pager.dart / gate_page.dart / settings_page.dart
+│   └── widgets/           item_card.dart / admonition.dart / boss_section.dart
+├── test/                  模型解析单测
+├── .github/workflows/     build-apk.yml（APK 只在这里构建）
 ├── DESIGN.md              设计文档（数据模型 / UI / CI / 全部决策）
 └── .gitignore
 ```
@@ -70,11 +122,7 @@ lvchecker/
 |---|---|
 | `condition/` | 从游戏解包出来的原始资源（谱面 `.c2s`、曲绘与立绘 `.dds`、定义 `.xml`）。**美术与谱面资源版权属于 SEGA，不适合在公开仓库二次分发。** |
 | `preview/` | 本地验收预览图，可用 `tools/preview.py` 随时重新生成 |
-
-所以本仓库只提交**派生结果**：`data/`（元数据 JSON）与 `assets/img/`（从 `.dds` 转出的 PNG）。
-两者都是为「记录进度」这一用途所必需的最小集合。
-
-**M1 之后**会加入 `lib/`（Flutter 源码）、`android/`、`pubspec.yaml`、`.github/workflows/build-apk.yml`。
+| `android/` | 由 CI 用 `flutter create` 按当前 Flutter 版本生成，避免手写 gradle 版本号 |
 
 ---
 
@@ -189,21 +237,27 @@ app 启动时后台尝试同步（失败则用本地缓存，首次运行用 APK
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | **M0** | 数据生成脚本 + `data/*.json` + 图片资源 | ✅ **完成** |
-| **M1** | Flutter 工程 + ORIGIN 门 + 打勾存档 + 翻页 | ⬜ 待开始 |
-| M2 | 其余 12 个门 | ⬜ |
-| M3 | 在线同步 + 设置页 | ⬜ |
+| **M1** | Flutter 工程 + ORIGIN 门 + 打勾存档 + 翻页 | ✅ **完成**（首次 APK） |
+| M2 | 其余 12 个门（items / auto / universe / manual） | 🚧 进行中 |
+| M3 | 在线同步 + 设置页完善 | ⬜ |
 | M4 | 落雪导入 | ⬜ |
-| M5 | AIR 段位 UI（等课程 XML） | ⬜ 待数据 |
-| M6 | 曲绘接入各卡片 | ⬜ |
+| M5 | AIR 段位课程 UI（等课程 XML） | ⬜ 待数据 |
+| M6 | 其余视觉打磨 | ⬜ |
 
-M0 验收材料由 `tools/preview.py` 生成到 `preview/`（**本地目录，不入库**）：
-`gates_overview.png`（14 页总览）、`page_origin.png`、`page_paradise.png`、`page_star.png`、`page_reward.png`。
+### M1 实现了什么
+
+- 每个门一页，**左右滑动切换**；顶部页码条可看到滑到哪、还剩几个门
+- 页面自上而下：门名 + 状态 → 解锁条件（默认折叠，可展开看游戏原文）→ 待完成卡片 → **BOSS（仅解锁后显示）**
+- 卡片「**点一下 = 已完成**」，半透明白遮罩 + 居中「已完成」，再点取消
+- 进度**立即落盘**（`shared_preferences`），只存手机本地
+- ORIGIN（30 首曲目清单）可完整使用；其余门也有页面，条件与条目都能看
+- 奖励乐曲页在前 13 门全解锁后才出现
 
 ### 已知缺口
 
 | 缺口 | 影响 | 应对 |
 |---|---|---|
-| **段位课程数据缺失** | AIR 门的段位 UI 无数据 | 先用占位符，UI 框架留好；拿到 XML 后重跑脚本即可，**不用重发 APK** |
+| **段位课程数据缺失** | AIR 门的段位 UI 无数据 | 先用占位符 + 手动确认；拿到 XML 后重跑脚本即可，**不用重发 APK** |
 | 国服门开放日期未知（除 ORIGIN/AIR） | 日期判断 | 显示「未更新」，**不猜日期** |
 | 国服缓和日期表未知 | 无法自动算当前 Link LEVEL | 用户手动选等级；JSON 留 `null` 等填 |
 | CRYSTAL 条件未知 | 无法给准确条件 | 标「条件待确认」+ 手动确认 |
