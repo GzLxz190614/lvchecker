@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2966,
+    "title": "月葬",
+    "artist": "黒魔 × rintaro soma",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE-X",
+    "levels": {
+      "basic": "5",
+      "advanced": "9",
+      "expert": "14.3",
+      "master": "15.5"
+    },
+    "hasUltima": false
+  }
+}

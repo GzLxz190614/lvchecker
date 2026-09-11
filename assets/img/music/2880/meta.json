@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2880,
+    "title": "輪廻玲々",
+    "artist": "suzu",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE",
+    "levels": {
+      "basic": "6",
+      "advanced": "11",
+      "expert": "14.3",
+      "master": "15.4"
+    },
+    "hasUltima": false
+  }
+}

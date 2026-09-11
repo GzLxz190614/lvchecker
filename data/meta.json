@@ -1,0 +1,822 @@
+{
+  "schemaVersion": 1,
+  "dataVersion": "2026.09.11-1",
+  "region": "cn",
+  "note": "全局条目元数据。gates.json / classes.json 通过 linkId 引用这里。",
+  "entries": {
+    "music:2838": {
+      "type": "music",
+      "id": 2838,
+      "title": "神鳴",
+      "artist": "Rígr feat. 光吉猛修",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE",
+      "image": "assets/img/music/2838/jacket.png",
+      "levels": {
+        "basic": "6",
+        "advanced": "10.5",
+        "expert": "14.5",
+        "master": "15.6"
+      },
+      "hasUltima": false
+    },
+    "music:2846": {
+      "type": "music",
+      "id": 2846,
+      "title": "Tru'nembra",
+      "artist": "Team Grimoire & 穴山大輔",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE",
+      "image": "assets/img/music/2846/jacket.png",
+      "levels": {
+        "basic": "5",
+        "advanced": "10",
+        "expert": "14.4",
+        "master": "15.6"
+      },
+      "hasUltima": false
+    },
+    "music:2858": {
+      "type": "music",
+      "id": 2858,
+      "title": "Everything Will Be One",
+      "artist": "void (Mournfinale)",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE",
+      "image": "assets/img/music/2858/jacket.png",
+      "levels": {
+        "basic": "6",
+        "advanced": "10",
+        "expert": "13.8",
+        "master": "15.4"
+      },
+      "hasUltima": false
+    },
+    "music:2869": {
+      "type": "music",
+      "id": 2869,
+      "title": "OUTRAGE",
+      "artist": "USAO vs DJ Myosuke",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE",
+      "image": "assets/img/music/2869/jacket.png",
+      "levels": {
+        "basic": "6",
+        "advanced": "10.4",
+        "expert": "14",
+        "master": "15.4"
+      },
+      "hasUltima": false
+    },
+    "music:2880": {
+      "type": "music",
+      "id": 2880,
+      "title": "輪廻玲々",
+      "artist": "suzu",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE",
+      "image": "assets/img/music/2880/jacket.png",
+      "levels": {
+        "basic": "6",
+        "advanced": "11",
+        "expert": "14.3",
+        "master": "15.4"
+      },
+      "hasUltima": false
+    },
+    "music:2891": {
+      "type": "music",
+      "id": 2891,
+      "title": "創 -汝ら新世界へ歩む者なり-",
+      "artist": "BlackY VS Yooh VS siromaru VS xi VS モリモリあつし",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE",
+      "image": "assets/img/music/2891/jacket.png",
+      "levels": {
+        "basic": "7",
+        "advanced": "12",
+        "expert": "14.8",
+        "master": "15.7"
+      },
+      "hasUltima": false
+    },
+    "music:2919": {
+      "type": "music",
+      "id": 2919,
+      "title": "轆轤首",
+      "artist": "かねこちはる",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE-X",
+      "image": "assets/img/music/2919/jacket.png",
+      "levels": {
+        "basic": "5",
+        "advanced": "9",
+        "expert": "13.9",
+        "master": "15.4"
+      },
+      "hasUltima": false
+    },
+    "music:2938": {
+      "type": "music",
+      "id": 2938,
+      "title": "Sweet & Sour",
+      "artist": "Sakuzyo or Sobrem",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE-X",
+      "image": "assets/img/music/2938/jacket.png",
+      "levels": {
+        "basic": "5",
+        "advanced": "10",
+        "expert": "14.4",
+        "master": "15.6"
+      },
+      "hasUltima": false
+    },
+    "music:2954": {
+      "type": "music",
+      "id": 2954,
+      "title": "Phantom Crisis",
+      "artist": "t+pazolite vs Yuta Imai",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE-X",
+      "image": "assets/img/music/2954/jacket.png",
+      "levels": {
+        "basic": "6",
+        "advanced": "11.9",
+        "expert": "14.1",
+        "master": "15.5"
+      },
+      "hasUltima": false
+    },
+    "music:2966": {
+      "type": "music",
+      "id": 2966,
+      "title": "月葬",
+      "artist": "黒魔 × rintaro soma",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE-X",
+      "image": "assets/img/music/2966/jacket.png",
+      "levels": {
+        "basic": "5",
+        "advanced": "9",
+        "expert": "14.3",
+        "master": "15.5"
+      },
+      "hasUltima": false
+    },
+    "music:2967": {
+      "type": "music",
+      "id": 2967,
+      "title": "YOUNITHM",
+      "artist": "大国奏音",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE-X",
+      "image": "assets/img/music/2967/jacket.png",
+      "levels": {
+        "basic": "8",
+        "advanced": "12.6",
+        "expert": "14.8",
+        "master": "15.5",
+        "ultima": "15.8"
+      },
+      "hasUltima": true
+    },
+    "music:2999": {
+      "type": "music",
+      "id": 2999,
+      "title": "Melodiniq",
+      "artist": "onoken a.k.a. owl＊tree",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE-X",
+      "image": "assets/img/music/2999/jacket.png",
+      "levels": {
+        "basic": "8.5",
+        "advanced": "13",
+        "expert": "14.9",
+        "master": "15.6",
+        "ultima": "16"
+      },
+      "hasUltima": true
+    },
+    "music:3000": {
+      "type": "music",
+      "id": 3000,
+      "title": "Linked Tune",
+      "artist": "水野健治",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. X-VERSE-X",
+      "image": "assets/img/music/3000/jacket.png",
+      "levels": {
+        "basic": "2",
+        "advanced": "6",
+        "expert": "10.7",
+        "master": "13.5"
+      },
+      "hasUltima": false
+    },
+    "music:51": {
+      "type": "music",
+      "id": 51,
+      "title": "My First Phone",
+      "artist": "cubesato",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/51/jacket.png"
+    },
+    "music:53": {
+      "type": "music",
+      "id": 53,
+      "title": "Teriqma",
+      "artist": "owl＊tree",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/53/jacket.png"
+    },
+    "music:59": {
+      "type": "music",
+      "id": 59,
+      "title": "Invitation",
+      "artist": "れるりり feat.ろん",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/59/jacket.png"
+    },
+    "music:63": {
+      "type": "music",
+      "id": 63,
+      "title": "Gate of Fate",
+      "artist": "Godspeed",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/63/jacket.png"
+    },
+    "music:64": {
+      "type": "music",
+      "id": 64,
+      "title": "今ぞ♡崇め奉れ☆オマエらよ！！～姫の秘メタル渇望～",
+      "artist": "あべにゅうぷろじぇくと feat.佐倉 紗織　produced by ave;new",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/64/jacket.png"
+    },
+    "music:65": {
+      "type": "music",
+      "id": 65,
+      "title": "Anemone",
+      "artist": "ESTi",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/65/jacket.png"
+    },
+    "music:67": {
+      "type": "music",
+      "id": 67,
+      "title": "昵懇レファレンス",
+      "artist": "halyosy",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/67/jacket.png"
+    },
+    "music:69": {
+      "type": "music",
+      "id": 69,
+      "title": "The wheel to the right",
+      "artist": "Sampling Masters MEGA",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/69/jacket.png"
+    },
+    "music:70": {
+      "type": "music",
+      "id": 70,
+      "title": "STAR",
+      "artist": "SEXY-SYNTHESIZER",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/70/jacket.png"
+    },
+    "music:71": {
+      "type": "music",
+      "id": 71,
+      "title": "Infantoon Fantasy",
+      "artist": "t+pazolite",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/71/jacket.png"
+    },
+    "music:74": {
+      "type": "music",
+      "id": 74,
+      "title": "リリーシア",
+      "artist": "TaNaBaTa",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/74/jacket.png"
+    },
+    "music:75": {
+      "type": "music",
+      "id": 75,
+      "title": "Counselor",
+      "artist": "DECO*27 feat.echo",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/75/jacket.png"
+    },
+    "music:76": {
+      "type": "music",
+      "id": 76,
+      "title": "luna blu",
+      "artist": "WASi303",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/76/jacket.png"
+    },
+    "music:79": {
+      "type": "music",
+      "id": 79,
+      "title": "ＧＯ！ＧＯ！ラブリズム♥",
+      "artist": "片霧烈火オンザみんマンション",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/79/jacket.png"
+    },
+    "music:80": {
+      "type": "music",
+      "id": 80,
+      "title": "Grab your sword",
+      "artist": "古代 祐三",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/80/jacket.png"
+    },
+    "music:82": {
+      "type": "music",
+      "id": 82,
+      "title": "Memories of Sun and Moon",
+      "artist": "Aiko Oi",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/82/jacket.png"
+    },
+    "music:95": {
+      "type": "music",
+      "id": 95,
+      "title": "砂漠のハンティングガール♡",
+      "artist": "海田 明里",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/95/jacket.png"
+    },
+    "music:100": {
+      "type": "music",
+      "id": 100,
+      "title": "After the rain",
+      "artist": "霜月はるか",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/100/jacket.png"
+    },
+    "music:101": {
+      "type": "music",
+      "id": 101,
+      "title": "Tango Rouge",
+      "artist": "Yoko Shimomura",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/101/jacket.png"
+    },
+    "music:105": {
+      "type": "music",
+      "id": 105,
+      "title": "overcome",
+      "artist": "景山 将太",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/105/jacket.png"
+    },
+    "music:107": {
+      "type": "music",
+      "id": 107,
+      "title": "We Gonna Journey",
+      "artist": "Queen P.A.L.",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/107/jacket.png"
+    },
+    "music:108": {
+      "type": "music",
+      "id": 108,
+      "title": "The ether",
+      "artist": "浜渦 正志",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/108/jacket.png"
+    },
+    "music:140": {
+      "type": "music",
+      "id": 140,
+      "title": "Guilty",
+      "artist": "MintJam",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/140/jacket.png"
+    },
+    "music:141": {
+      "type": "music",
+      "id": 141,
+      "title": "閃鋼のブリューナク",
+      "artist": "sasakure.UK",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/141/jacket.png"
+    },
+    "music:147": {
+      "type": "music",
+      "id": 147,
+      "title": "こころここから",
+      "artist": "ふわりP",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/147/jacket.png"
+    },
+    "music:148": {
+      "type": "music",
+      "id": 148,
+      "title": "Theme of SeelischTact",
+      "artist": "植松 伸夫",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/148/jacket.png"
+    },
+    "music:151": {
+      "type": "music",
+      "id": 151,
+      "title": "Alma",
+      "artist": "光田 康典",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/151/jacket.png"
+    },
+    "music:152": {
+      "type": "music",
+      "id": 152,
+      "title": "Gustav Battle",
+      "artist": "伊藤 賢治",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/152/jacket.png"
+    },
+    "music:163": {
+      "type": "music",
+      "id": 163,
+      "title": "幾四音-Ixion-",
+      "artist": "M.S.S Project",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/163/jacket.png"
+    },
+    "music:180": {
+      "type": "music",
+      "id": 180,
+      "title": "怒槌",
+      "artist": "光吉猛修",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. CHUNITHM",
+      "image": "assets/img/music/180/jacket.png"
+    },
+    "chara:24320": {
+      "type": "chara",
+      "id": 24320,
+      "title": "観音寺 にこる／Mermaid♡Moment",
+      "subtitle": "角色 · 需升到 RANK 15",
+      "image": "assets/img/chara/24320/image.png",
+      "works": "CHUNITHM VERSE"
+    },
+    "music:712": {
+      "type": "music",
+      "id": 712,
+      "title": "Climax",
+      "artist": "USAO",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. AMAZON",
+      "image": "assets/img/music/712/jacket.png"
+    },
+    "music:777": {
+      "type": "music",
+      "id": 777,
+      "title": "Killing Rhythm",
+      "artist": "DJ Myosuke",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. AMAZON PLUS",
+      "image": "assets/img/music/777/jacket.png"
+    },
+    "music:629": {
+      "type": "music",
+      "id": 629,
+      "title": "Candyland Symphony",
+      "artist": "Kai「Wonderland Wars」",
+      "genre": "VARIETY",
+      "works": "Wonderland Wars",
+      "image": "assets/img/music/629/jacket.png"
+    },
+    "music:788": {
+      "type": "music",
+      "id": 788,
+      "title": "Rebellion",
+      "artist": "Kai",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. AMAZON PLUS",
+      "image": "assets/img/music/788/jacket.png"
+    },
+    "music:384": {
+      "type": "music",
+      "id": 384,
+      "title": "キュアリアス光吉古牌　－祭－",
+      "artist": "光吉猛修「東方幻想麻雀」",
+      "genre": "東方Project",
+      "works": "Invalid",
+      "image": "assets/img/music/384/jacket.png"
+    },
+    "music:483": {
+      "type": "music",
+      "id": 483,
+      "title": "Burning Hearts ～炎のANGEL～",
+      "artist": "光吉猛修「バーニングレンジャー」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/483/jacket.png"
+    },
+    "music:2355": {
+      "type": "music",
+      "id": 2355,
+      "title": "「四季」より「冬」",
+      "artist": "光吉猛修「原曲:ヴィヴァルディ」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2355/jacket.png"
+    },
+    "music:2493": {
+      "type": "music",
+      "id": 2493,
+      "title": "マツケンサンバⅡ",
+      "artist": "松平健 [covered by 光吉猛修]",
+      "genre": "POPS & ANIME",
+      "works": "Invalid",
+      "image": "assets/img/music/2493/jacket.png"
+    },
+    "music:2050": {
+      "type": "music",
+      "id": 2050,
+      "title": "封焔の135秒",
+      "artist": "大国奏音",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2050/jacket.png"
+    },
+    "music:2354": {
+      "type": "music",
+      "id": 2354,
+      "title": "月の光",
+      "artist": "大国奏音「原曲:ドビュッシー」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2354/jacket.png"
+    },
+    "music:2704": {
+      "type": "music",
+      "id": 2704,
+      "title": "≠彡\"/了→",
+      "artist": "水野健治",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2704/jacket.png"
+    },
+    "music:407": {
+      "type": "music",
+      "id": 407,
+      "title": "混沌を越えし我らが神聖なる調律主を讃えよ",
+      "artist": "穴山大輔",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. AIR PLUS",
+      "image": "assets/img/music/407/jacket.png"
+    },
+    "music:2353": {
+      "type": "music",
+      "id": 2353,
+      "title": "幻想即興曲",
+      "artist": "穴山大輔「原曲:ショパン」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2353/jacket.png"
+    },
+    "avatar:6104401": {
+      "type": "avatar",
+      "id": 6104401,
+      "title": "淀川 沙音瑠の服",
+      "subtitle": "服装 · ウェア",
+      "image": "assets/img/avatar/6104401/tex.png",
+      "slot": "wear"
+    },
+    "avatar:6204401": {
+      "type": "avatar",
+      "id": 6204401,
+      "title": "淀川 沙音瑠の頭",
+      "subtitle": "头饰 · ヘッド",
+      "image": "assets/img/avatar/6204401/tex.png",
+      "slot": "head"
+    },
+    "avatar:6704401": {
+      "type": "avatar",
+      "id": 6704401,
+      "title": "淀川 沙音瑠のランドセル",
+      "subtitle": "背包 · バック",
+      "image": "assets/img/avatar/6704401/tex.png",
+      "slot": "back"
+    },
+    "music:2266": {
+      "type": "music",
+      "id": 2266,
+      "title": "I'm so Happy",
+      "artist": "Ryu☆",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2266/jacket.png"
+    },
+    "music:2326": {
+      "type": "music",
+      "id": 2326,
+      "title": "U&iVERSE -銀河鸞翔-",
+      "artist": "Kai VS 大国奏音 VS 水野健治",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2326/jacket.png"
+    },
+    "music:2327": {
+      "type": "music",
+      "id": 2327,
+      "title": "RELOAD",
+      "artist": "sky_delta",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2327/jacket.png"
+    },
+    "music:2556": {
+      "type": "music",
+      "id": 2556,
+      "title": "Mutation",
+      "artist": "Laur",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2556/jacket.png"
+    },
+    "music:2597": {
+      "type": "music",
+      "id": 2597,
+      "title": "Stardust:RAY",
+      "artist": "kanone vs. BlackY",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2597/jacket.png"
+    },
+    "mission:350": {
+      "type": "mission",
+      "id": 350,
+      "title": "2603_カイナン・メルヴィアス",
+      "subtitle": "Mission · 集 100 气球拿称号",
+      "image": null
+    },
+    "map:3020815": {
+      "type": "map",
+      "id": 3020815,
+      "title": "Secret AREA：LUMINOUS",
+      "subtitle": "隐藏地图 · 跑完即可",
+      "image": null
+    },
+    "music:2705": {
+      "type": "music",
+      "id": 2705,
+      "title": "メッちゅう殴打",
+      "artist": "STEAKA feat.山田じぇみ子",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. VERSE",
+      "image": "assets/img/music/2705/jacket.png"
+    },
+    "music:2712": {
+      "type": "music",
+      "id": 2712,
+      "title": "Theatore Creatore",
+      "artist": "Toby Fox & かめりあ",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. VERSE",
+      "image": "assets/img/music/2712/jacket.png"
+    },
+    "music:2802": {
+      "type": "music",
+      "id": 2802,
+      "title": "Crossmythos Rhapsodia",
+      "artist": "Acotto vs Potwi",
+      "genre": "ORIGINAL",
+      "works": "[ORIGINAL] Ver. VERSE",
+      "image": "assets/img/music/2802/jacket.png"
+    },
+    "music:2968": {
+      "type": "music",
+      "id": 2968,
+      "title": "PANDORA PARADOXXX",
+      "artist": "削除",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2968/jacket.png"
+    },
+    "music:2969": {
+      "type": "music",
+      "id": 2969,
+      "title": "μ3",
+      "artist": "水野健治 VS 穴山大輔",
+      "genre": "ゲキマイ",
+      "works": "Invalid",
+      "image": "assets/img/music/2969/jacket.png"
+    },
+    "music:2970": {
+      "type": "music",
+      "id": 2970,
+      "title": "†渚の小悪魔ラヴリィ～レイディオ†",
+      "artist": "夏色ビキニのPrim",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2970/jacket.png"
+    },
+    "music:2971": {
+      "type": "music",
+      "id": 2971,
+      "title": "聖者の息吹",
+      "artist": "世阿弥 vs Tatsh「グルーヴコースター」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2971/jacket.png"
+    },
+    "music:2972": {
+      "type": "music",
+      "id": 2972,
+      "title": "超MANJIラッシュ",
+      "artist": "Massive New Krew「WACCA」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2972/jacket.png"
+    },
+    "music:2973": {
+      "type": "music",
+      "id": 2973,
+      "title": "Lips XTC -Sorist Remix-",
+      "artist": "from PACA PACA PASSION Special",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2973/jacket.png"
+    },
+    "music:2974": {
+      "type": "music",
+      "id": 2974,
+      "title": "Marigold",
+      "artist": "M2U / Arranger: M2U, NICODE / Vocal: Guriri, M2U 「DEEMO」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2974/jacket.png"
+    },
+    "music:2975": {
+      "type": "music",
+      "id": 2975,
+      "title": "glory MAX -to the MAXimum-",
+      "artist": "TAK",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2975/jacket.png"
+    },
+    "music:2976": {
+      "type": "music",
+      "id": 2976,
+      "title": "DESTRUCTION 3,2,1",
+      "artist": "Normal1zer vs. Broken Nerdz「Phigros」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2976/jacket.png"
+    },
+    "music:2977": {
+      "type": "music",
+      "id": 2977,
+      "title": "Ré：Ré",
+      "artist": "モリモリあつし vs. uma「Muse Dash」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2977/jacket.png"
+    },
+    "music:2978": {
+      "type": "music",
+      "id": 2978,
+      "title": "ALTER EGO",
+      "artist": "Yuta Imai vs Qlarabelle「Arcaea」",
+      "genre": "VARIETY",
+      "works": "Invalid",
+      "image": "assets/img/music/2978/jacket.png"
+    }
+  }
+}

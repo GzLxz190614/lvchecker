@@ -1,0 +1,97 @@
+# ============================================================
+# 游戏资源数据 —— 仅本地保留，不进仓库
+# ============================================================
+# condition/ 是从游戏里解包出来的原始资源（谱面 .c2s、曲绘与立绘 .dds、定义 .xml）。
+# 这些美术与谱面资源版权属于 SEGA，不适合放在公开仓库里二次分发。
+# 本仓库只提交「派生结果」：data/（元数据 JSON）与 assets/img/（转换后的 PNG）。
+#
+# 注意：build.py 依赖 condition/ 才能重跑。克隆本仓库的人没有这份数据，
+#       脚本会直接退出（不会破坏已有的 data/）。详见 README「数据来源」一节。
+condition/
+
+# 本地生成的验收预览图，可由 tools/preview.py 重新生成，不必入库
+preview/
+
+# ============================================================
+# 个人数据 —— 绝对不要提交
+# ============================================================
+# lx_test.txt 是从落雪查分器拉下来的个人成绩单，包含好友码与全部游玩记录。
+# 本仓库是 public，提交它等于公开你的成绩数据。
+lx_test.txt
+*.personal.json
+lxns_token.txt
+
+# ============================================================
+# Python —— 工具脚本的运行产物
+# ============================================================
+__pycache__/
+*.py[cod]
+*$py.class
+.python-version
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+
+# 一次性探针脚本（临时排查用，不进仓库）
+tools/_probe_*.py
+
+# ============================================================
+# Flutter / Dart —— M1 之后会用到
+# ============================================================
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+*.lock.bak
+
+# Flutter 的 android/ 工程里只有这几项该忽略，其余要提交
+android/.gradle/
+android/local.properties
+android/key.properties
+android/**/gradle-wrapper.jar
+android/app/debug/
+android/app/profile/
+android/app/release/
+android/.idea/
+android/captures/
+
+# 签名文件 —— 绝不进仓库
+*.jks
+*.keystore
+key.properties
+
+# ============================================================
+# IDE / 编辑器
+# ============================================================
+.idea/
+.vscode/
+!.vscode/settings.json.example
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ============================================================
+# 构建产物
+# ============================================================
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+output-metadata.json
+
+condition
+preview

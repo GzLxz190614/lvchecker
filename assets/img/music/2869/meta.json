@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2869,
+    "title": "OUTRAGE",
+    "artist": "USAO vs DJ Myosuke",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE",
+    "levels": {
+      "basic": "6",
+      "advanced": "10.4",
+      "expert": "14",
+      "master": "15.4"
+    },
+    "hasUltima": false
+  }
+}

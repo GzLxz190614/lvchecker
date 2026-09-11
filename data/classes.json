@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "dataVersion": "placeholder",
+  "placeholder": true,
+  "region": "cn",
+  "note": "段位课程数据尚未提供（condition/2-air 为空）。以下为占位符，仅用于预览 UI。",
+  "gateId": "air",
+  "unlockRule": {
+    "type": "anyClassAllCourses",
+    "text": "完成任一 CLASS 内的所有组曲，即可获得缎带"
+  },
+  "classes": [
+    {
+      "key": "I",
+      "label": "I",
+      "level": 1,
+      "color": "#3D66F2",
+      "courses": [
+        {
+          "key": "I-1",
+          "title": "占位组曲 1",
+          "songs": [
+            {
+              "order": 1,
+              "linkId": "music:51",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "linkId": "music:53",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "linkId": "music:59",
+              "difficulty": "MASTER"
+            }
+          ]
+        },
+        {
+          "key": "I-2",
+          "title": "占位组曲 2",
+          "songs": [
+            {
+              "order": 1,
+              "linkId": "music:63",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 2,
+              "linkId": "music:65",
+              "difficulty": "MASTER"
+            },
+            {
+              "order": 3,
+              "linkId": "music:67",
+              "difficulty": "MASTER"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "II",
+      "label": "II",
+      "level": 2,
+      "color": "#0DB991",
+      "courses": []
+    },
+    {
+      "key": "III",
+      "label": "III",
+      "level": 3,
+      "color": "#F2AA00",
+      "courses": []
+    },
+    {
+      "key": "IV",
+      "label": "IV",
+      "level": 4,
+      "color": "#E13C29",
+      "courses": []
+    },
+    {
+      "key": "V",
+      "label": "V",
+      "level": 5,
+      "color": "#4A0973",
+      "courses": []
+    },
+    {
+      "key": "infinity",
+      "label": "∞",
+      "level": 0,
+      "color": "#FCDBEF",
+      "courses": []
+    }
+  ]
+}

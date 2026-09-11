@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2954,
+    "title": "Phantom Crisis",
+    "artist": "t+pazolite vs Yuta Imai",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE-X",
+    "levels": {
+      "basic": "6",
+      "advanced": "11.9",
+      "expert": "14.1",
+      "master": "15.5"
+    },
+    "hasUltima": false
+  }
+}

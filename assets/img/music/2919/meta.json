@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2919,
+    "title": "轆轤首",
+    "artist": "かねこちはる",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE-X",
+    "levels": {
+      "basic": "5",
+      "advanced": "9",
+      "expert": "13.9",
+      "master": "15.4"
+    },
+    "hasUltima": false
+  }
+}

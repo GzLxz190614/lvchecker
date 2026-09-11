@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2858,
+    "title": "Everything Will Be One",
+    "artist": "void (Mournfinale)",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE",
+    "levels": {
+      "basic": "6",
+      "advanced": "10",
+      "expert": "13.8",
+      "master": "15.4"
+    },
+    "hasUltima": false
+  }
+}

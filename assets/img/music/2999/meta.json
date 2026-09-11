@@ -1,0 +1,18 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2999,
+    "title": "Melodiniq",
+    "artist": "onoken a.k.a. owl＊tree",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE-X",
+    "levels": {
+      "basic": "8.5",
+      "advanced": "13",
+      "expert": "14.9",
+      "master": "15.6",
+      "ultima": "16"
+    },
+    "hasUltima": true
+  }
+}

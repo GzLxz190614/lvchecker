@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 3000,
+    "title": "Linked Tune",
+    "artist": "水野健治",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE-X",
+    "levels": {
+      "basic": "2",
+      "advanced": "6",
+      "expert": "10.7",
+      "master": "13.5"
+    },
+    "hasUltima": false
+  }
+}

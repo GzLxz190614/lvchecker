@@ -1,0 +1,44 @@
+# 统一换行符处理。
+# Windows 上 core.autocrlf 默认为 true，会让文本文件在检出时变成 CRLF，
+# 还会让 git 每次 diff 都报警告。这里显式固定，避免跨平台/跨机器差异。
+
+# ---- 默认：自动探测，二进制文件绝不被转换 ----
+* text=auto
+
+# ---- 明确按文本处理，统一 LF ----
+*.md        text eol=lf
+*.txt       text eol=lf
+*.py        text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.xml       text eol=lf
+*.dart      text eol=lf
+*.gradle    text eol=lf
+*.kts       text eol=lf
+*.properties text eol=lf
+*.gitignore text eol=lf
+.gitattributes text eol=lf
+
+# ---- 明确按二进制处理 ----
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.webp      binary
+*.dds       binary
+*.c2s       binary
+*.ttf       binary
+*.ttc       binary
+*.otf       binary
+*.jar       binary
+*.apk       binary
+*.aab       binary
+*.jks       binary
+*.keystore  binary
+
+# ---- Git 统计时把资源目录当生成物，不计入语言统计 ----
+assets/**   linguist-generated=true
+preview/**  linguist-generated=true
+
+# ---- GitHub 语言识别：这是 Dart 项目（M1 之后） ----
+*.dart      linguist-language=Dart

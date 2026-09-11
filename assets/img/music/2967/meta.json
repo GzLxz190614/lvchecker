@@ -1,0 +1,18 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2967,
+    "title": "YOUNITHM",
+    "artist": "大国奏音",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE-X",
+    "levels": {
+      "basic": "8",
+      "advanced": "12.6",
+      "expert": "14.8",
+      "master": "15.5",
+      "ultima": "15.8"
+    },
+    "hasUltima": true
+  }
+}

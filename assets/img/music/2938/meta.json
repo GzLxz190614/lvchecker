@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2938,
+    "title": "Sweet & Sour",
+    "artist": "Sakuzyo or Sobrem",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE-X",
+    "levels": {
+      "basic": "5",
+      "advanced": "10",
+      "expert": "14.4",
+      "master": "15.6"
+    },
+    "hasUltima": false
+  }
+}

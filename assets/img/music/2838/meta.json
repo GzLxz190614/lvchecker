@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2838,
+    "title": "神鳴",
+    "artist": "Rígr feat. 光吉猛修",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE",
+    "levels": {
+      "basic": "6",
+      "advanced": "10.5",
+      "expert": "14.5",
+      "master": "15.6"
+    },
+    "hasUltima": false
+  }
+}

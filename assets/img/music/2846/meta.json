@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2846,
+    "title": "Tru'nembra",
+    "artist": "Team Grimoire & 穴山大輔",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE",
+    "levels": {
+      "basic": "5",
+      "advanced": "10",
+      "expert": "14.4",
+      "master": "15.6"
+    },
+    "hasUltima": false
+  }
+}

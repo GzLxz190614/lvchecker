@@ -1,0 +1,17 @@
+{
+  "jacket.png": {
+    "type": "music",
+    "id": 2891,
+    "title": "創 -汝ら新世界へ歩む者なり-",
+    "artist": "BlackY VS Yooh VS siromaru VS xi VS モリモリあつし",
+    "genre": "ORIGINAL",
+    "works": "[ORIGINAL] Ver. X-VERSE",
+    "levels": {
+      "basic": "7",
+      "advanced": "12",
+      "expert": "14.8",
+      "master": "15.7"
+    },
+    "hasUltima": false
+  }
+}

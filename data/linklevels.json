@@ -1,0 +1,874 @@
+{
+  "schemaVersion": 1,
+  "dataVersion": "2026.09.11-1",
+  "region": "cn",
+  "note": "国服缓和周期未完全公布。已知的填日期，未知的留 null（不猜）。",
+  "defaultLevel": 5,
+  "judges": {
+    "JUSTICE": {
+      "damage": -5,
+      "color": "#FF6A00"
+    },
+    "ATTACK": {
+      "damage": -10,
+      "color": "#00FF00"
+    },
+    "MISS": {
+      "damage": -20,
+      "color": "#000000"
+    },
+    "JUSTICE_CRITICAL": {
+      "damage": -1,
+      "color": "#F6E80D"
+    }
+  },
+  "gates": {
+    "origin": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "air": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "star": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "amazon": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "crystal": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "paradise": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "new": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "sun": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "luminous": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "verse": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "xverse": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "reverse": {
+      "levels": [
+        {
+          "level": 5,
+          "label": "5",
+          "from": "2026-09-10T10:00",
+          "minDifficulty": "MASTER",
+          "life": 300,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "official"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 1000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 2000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "2",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 3000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ]
+    },
+    "universe": {
+      "levels": [
+        {
+          "level": 0,
+          "label": "∞",
+          "from": null,
+          "minDifficulty": "ULTIMA",
+          "life": 2000,
+          "judges": [
+            "JUSTICE_CRITICAL",
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        }
+      ],
+      "note": "解锁要求：通关 RE:VERSE 时剩余血量 ≥ 指定血量（按日期缓和）"
+    }
+  }
+}

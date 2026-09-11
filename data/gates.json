@@ -1,0 +1,564 @@
+{
+  "schemaVersion": 1,
+  "dataVersion": "2026.09.11-1",
+  "region": "cn",
+  "gameVersion": "中二节奏 2027 (CN1.40)",
+  "updatedAt": "2026-09-11",
+  "gates": [
+    {
+      "id": "origin",
+      "order": 1,
+      "stage": 1,
+      "name": "Linked GATE ORIGIN",
+      "boss": {
+        "linkId": "music:2838",
+        "title": "神鳴",
+        "artist": "Rígr feat. 光吉猛修",
+        "levels": {
+          "basic": "6",
+          "advanced": "10.5",
+          "expert": "14.5",
+          "master": "15.6"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": "2026-09-10T10:00",
+      "releaseStatus": "open",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "2026-09-10 更新后，把这 30 首各打一次（难度与分数不限）",
+      "conditionOriginal": "上面30首歌，全部打一次",
+      "prerequisites": [],
+      "tracking": "songs",
+      "requirement": {
+        "type": "playAll",
+        "songKeys": [
+          "music:51",
+          "music:53",
+          "music:59",
+          "music:63",
+          "music:64",
+          "music:65",
+          "music:67",
+          "music:69",
+          "music:70",
+          "music:71",
+          "music:74",
+          "music:75",
+          "music:76",
+          "music:79",
+          "music:80",
+          "music:82",
+          "music:95",
+          "music:100",
+          "music:101",
+          "music:105",
+          "music:107",
+          "music:108",
+          "music:140",
+          "music:141",
+          "music:147",
+          "music:148",
+          "music:151",
+          "music:152",
+          "music:163",
+          "music:180"
+        ]
+      }
+    },
+    {
+      "id": "air",
+      "order": 2,
+      "stage": 1,
+      "name": "Linked GATE AIR",
+      "boss": {
+        "linkId": "music:2846",
+        "title": "Tru'nembra",
+        "artist": "Team Grimoire & 穴山大輔",
+        "levels": {
+          "basic": "5",
+          "advanced": "10",
+          "expert": "14.4",
+          "master": "15.6"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": "2026-09-10T10:00",
+      "releaseStatus": "open",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "获得一个段位缎带。即把任一 CLASS（I / II / III / IV / V / ∞）内的所有组曲通关一遍（Extra 除外）",
+      "conditionOriginal": "获得一个段位缎带\n即，把当前任一等级（I，II，III，IV，V和∞）下的所有段位通关一遍即可获得，除了Extra等级",
+      "prerequisites": [],
+      "tracking": "class",
+      "requirement": {
+        "type": "anyClassAllCourses",
+        "dataFile": "data/classes.json"
+      }
+    },
+    {
+      "id": "star",
+      "order": 3,
+      "stage": 1,
+      "name": "Linked GATE STAR",
+      "boss": {
+        "linkId": "music:2858",
+        "title": "Everything Will Be One",
+        "artist": "void (Mournfinale)",
+        "levels": {
+          "basic": "6",
+          "advanced": "10",
+          "expert": "13.8",
+          "master": "15.4"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "从地图 VERSE ep.STAR 获得角色「観音寺 にこる／Mermaid♡Moment」，并升到 RANK 15",
+      "conditionOriginal": "从地图 VERSE ep.STAR 获得 角色観音寺 にこる／Mermaid♡Moment ，然后升到15级",
+      "prerequisites": [],
+      "tracking": "items",
+      "requirement": {
+        "type": "items",
+        "itemKeys": [
+          "chara:24320"
+        ]
+      }
+    },
+    {
+      "id": "amazon",
+      "order": 4,
+      "stage": 1,
+      "name": "Linked GATE AMAZON",
+      "boss": {
+        "linkId": "music:2869",
+        "title": "OUTRAGE",
+        "artist": "USAO vs DJ Myosuke",
+        "levels": {
+          "basic": "6",
+          "advanced": "10.4",
+          "expert": "14",
+          "master": "15.4"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "把 Climax 和 Killing Rhythm 加入收藏，再从收藏文件夹中各打一次",
+      "conditionOriginal": "添加至喜欢乐曲内，从喜欢乐曲文件夹内均游玩一次",
+      "prerequisites": [],
+      "tracking": "songs",
+      "requirement": {
+        "type": "playAll",
+        "songKeys": [
+          "music:712",
+          "music:777"
+        ]
+      }
+    },
+    {
+      "id": "crystal",
+      "order": 5,
+      "stage": 1,
+      "name": "Linked GATE CRYSTAL",
+      "boss": {
+        "linkId": "music:2880",
+        "title": "輪廻玲々",
+        "artist": "suzu",
+        "levels": {
+          "basic": "6",
+          "advanced": "11",
+          "expert": "14.3",
+          "master": "15.4"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "国服无队伍功能，解锁条件未知，需在机台确认后手动标记",
+      "conditionText": "国服解锁条件未知（日服需队伍功能，国服无此功能），请在机台确认后手动标记",
+      "conditionOriginal": "国服条件未知",
+      "prerequisites": [],
+      "tracking": "manual",
+      "requirement": {
+        "type": "manualConfirm"
+      }
+    },
+    {
+      "id": "paradise",
+      "order": 6,
+      "stage": 1,
+      "name": "Linked GATE PARADISE",
+      "boss": {
+        "linkId": "music:2891",
+        "title": "創 -汝ら新世界へ歩む者なり-",
+        "artist": "BlackY VS Yooh VS siromaru VS xi VS モリモリあつし",
+        "levels": {
+          "basic": "7",
+          "advanced": "12",
+          "expert": "14.8",
+          "master": "15.7"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "五位曲师（光吉猛修 / 穴山大輔 / Kai / 水野健治 / 大国奏音）各打一首他们作曲的乐曲，即最少需要打 5 首（每位曲师一首）",
+      "conditionOriginal": "五位曲师，从每个人自己作曲的所有乐曲中，各选一首乐曲打一次",
+      "prerequisites": [],
+      "tracking": "songs",
+      "requirement": {
+        "type": "playAnyOfEach",
+        "groups": [
+          {
+            "key": "Kai",
+            "songKeys": [
+              "music:629",
+              "music:788"
+            ]
+          },
+          {
+            "key": "光吉猛修",
+            "songKeys": [
+              "music:180",
+              "music:384",
+              "music:483",
+              "music:2355",
+              "music:2493"
+            ]
+          },
+          {
+            "key": "大国奏音",
+            "songKeys": [
+              "music:2050",
+              "music:2354"
+            ]
+          },
+          {
+            "key": "水野健治",
+            "songKeys": [
+              "music:2704"
+            ]
+          },
+          {
+            "key": "穴山大輔",
+            "songKeys": [
+              "music:407",
+              "music:2353"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "new",
+      "order": 7,
+      "stage": 1,
+      "name": "Linked GATE NEW",
+      "boss": {
+        "linkId": "music:2919",
+        "title": "轆轤首",
+        "artist": "かねこちはる",
+        "levels": {
+          "basic": "5",
+          "advanced": "9",
+          "expert": "13.9",
+          "master": "15.4"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "更新后从 Mission 获得 3 件「淀川 沙音瑠」服装（服 / 頭 / ランドセル），穿上后打一次",
+      "conditionOriginal": "从更新后的Mission中获得三个企鹅服装，给企鹅穿上\nウェア「淀川 沙音瑠の服」\nヘッド「淀川 沙音瑠の頭」\nバック「淀川 沙音瑠のランドセル」\n任务结束后可以在Net中购买",
+      "prerequisites": [],
+      "tracking": "items",
+      "requirement": {
+        "type": "items",
+        "itemKeys": [
+          "avatar:6104401",
+          "avatar:6204401",
+          "avatar:6704401"
+        ]
+      }
+    },
+    {
+      "id": "sun",
+      "order": 8,
+      "stage": 1,
+      "name": "Linked GATE SUN",
+      "boss": {
+        "linkId": "music:2938",
+        "title": "Sweet & Sour",
+        "artist": "Sakuzyo or Sobrem",
+        "levels": {
+          "basic": "5",
+          "advanced": "10",
+          "expert": "14.4",
+          "master": "15.6"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "2026-09-10 更新后，把这 5 首各打一次（难度与分数不限）",
+      "conditionOriginal": "所有乐曲游玩一遍即可",
+      "prerequisites": [],
+      "tracking": "songs",
+      "requirement": {
+        "type": "playAll",
+        "songKeys": [
+          "music:2266",
+          "music:2326",
+          "music:2327",
+          "music:2556",
+          "music:2597"
+        ]
+      }
+    },
+    {
+      "id": "luminous",
+      "order": 9,
+      "stage": 1,
+      "name": "Linked GATE LUMINOUS",
+      "boss": {
+        "linkId": "music:2954",
+        "title": "Phantom Crisis",
+        "artist": "t+pazolite vs Yuta Imai",
+        "levels": {
+          "basic": "6",
+          "advanced": "11.9",
+          "expert": "14.1",
+          "master": "15.5"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "当期 Mission 收集 100 个气球获得称号 MISSION still in progress，下局解锁隐藏地图 Secret AREA: LUMINOUS 并跑完",
+      "conditionOriginal": "在当期Mission中收集100个气球，可获得称号 MISSION still in progress\n下局游戏中会解锁隐藏地图 Secret Area: LUMINOUS\n完成地图即可\n\n当期Mission结束后，Rating高于5.00自动出现该隐藏地图",
+      "prerequisites": [],
+      "tracking": "items",
+      "requirement": {
+        "type": "items",
+        "itemKeys": [
+          "mission:350",
+          "map:3020815"
+        ]
+      }
+    },
+    {
+      "id": "verse",
+      "order": 10,
+      "stage": 1,
+      "name": "Linked GATE VERSE",
+      "boss": {
+        "linkId": "music:2966",
+        "title": "月葬",
+        "artist": "黒魔 × rintaro soma",
+        "levels": {
+          "basic": "5",
+          "advanced": "9",
+          "expert": "14.3",
+          "master": "15.5"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "从「推荐乐曲文件夹」中游玩 メッちゅう殴打 / Theatore Creatore / Crossmythos Rhapsodia 各一次",
+      "conditionOriginal": "从推荐乐曲文件夹中游玩这三首歌一次",
+      "prerequisites": [],
+      "tracking": "songs",
+      "requirement": {
+        "type": "playAll",
+        "songKeys": [
+          "music:2705",
+          "music:2712",
+          "music:2802"
+        ]
+      }
+    },
+    {
+      "id": "xverse",
+      "order": 11,
+      "stage": 2,
+      "name": "Linked GATE X-VERSE",
+      "boss": {
+        "linkId": "music:2967",
+        "title": "YOUNITHM",
+        "artist": "大国奏音",
+        "levels": {
+          "basic": "8",
+          "advanced": "12.6",
+          "expert": "14.8",
+          "master": "15.5",
+          "ultima": "15.8"
+        },
+        "hasUltima": true
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "通关前面 10 个门（ORIGIN～VERSE）后自动解锁",
+      "conditionOriginal": "通关前面10个门后自动解锁",
+      "prerequisites": [
+        "origin",
+        "air",
+        "star",
+        "amazon",
+        "crystal",
+        "paradise",
+        "new",
+        "sun",
+        "luminous",
+        "verse"
+      ],
+      "tracking": "auto",
+      "requirement": {
+        "type": "clearAllPrev"
+      }
+    },
+    {
+      "id": "reverse",
+      "order": 12,
+      "stage": 2,
+      "name": "Linked GATE RE:VERSE",
+      "boss": {
+        "linkId": "music:2967",
+        "title": "YOUNITHM",
+        "artist": "大国奏音",
+        "levels": {
+          "basic": "8",
+          "advanced": "12.6",
+          "expert": "14.8",
+          "master": "15.5",
+          "ultima": "15.8"
+        },
+        "hasUltima": true
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "通关 X-VERSE 后解锁地图 Secret AREA: MUSIC GAME EX。卡内每首乐曲都要通关课题曲才能获得，所以跑完地图拿全 11 首即等于全部游玩过一遍",
+      "conditionOriginal": "完成X-VERSE门后自动解锁地图 Secret AREA: MUSIC GAME EX ，完成地图，获得地图内所有歌曲即可",
+      "prerequisites": [
+        "xverse"
+      ],
+      "tracking": "songs",
+      "requirement": {
+        "type": "playAll",
+        "songKeys": [
+          "music:2968",
+          "music:2969",
+          "music:2970",
+          "music:2971",
+          "music:2972",
+          "music:2973",
+          "music:2974",
+          "music:2975",
+          "music:2976",
+          "music:2977",
+          "music:2978"
+        ]
+      },
+      "unresolved": "国服条件原文为「完成地图，获得地图内所有歌曲即可」，与日服「play all」不同。待用户确认是「需游玩」还是「拿到歌即可」。"
+    },
+    {
+      "id": "universe",
+      "order": 13,
+      "stage": 2,
+      "name": "Linked GATE UNIVERSE",
+      "boss": {
+        "linkId": "music:2999",
+        "title": "Melodiniq",
+        "artist": "onoken a.k.a. owl＊tree",
+        "levels": {
+          "basic": "8.5",
+          "advanced": "13",
+          "expert": "14.9",
+          "master": "15.6",
+          "ultima": "16"
+        },
+        "hasUltima": true
+      },
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "通关 RE:VERSE 时剩余血量 ≥ 指定血量（指定值按日期缓和）",
+      "conditionOriginal": "通关RE:VERSE时剩余血量大于等于指定血量即可",
+      "prerequisites": [
+        "reverse"
+      ],
+      "tracking": "universe",
+      "requirement": {
+        "type": "remainingHp",
+        "requiredHp": null,
+        "note": "通关 RE:VERSE 时剩余血量 ≥ 指定血量（按日期缓和）"
+      }
+    },
+    {
+      "id": "reward",
+      "order": 14,
+      "stage": 3,
+      "name": "奖励乐曲",
+      "kind": "reward",
+      "boss": {
+        "linkId": "music:3000",
+        "title": "Linked Tune",
+        "artist": "水野健治",
+        "levels": {
+          "basic": "2",
+          "advanced": "6",
+          "expert": "10.7",
+          "master": "13.5"
+        },
+        "hasUltima": false
+      },
+      "releaseDate": null,
+      "releaseStatus": "locked",
+      "conditionSource": "official",
+      "releaseNote": "",
+      "conditionText": "通关全部 13 个门后自动显示",
+      "conditionOriginal": "Linked Tune 为最后的奖励乐曲",
+      "prerequisites": [
+        "origin",
+        "air",
+        "star",
+        "amazon",
+        "crystal",
+        "paradise",
+        "new",
+        "sun",
+        "luminous",
+        "verse",
+        "xverse",
+        "reverse",
+        "universe"
+      ],
+      "tracking": "auto",
+      "requirement": {
+        "type": "clearAllPrev"
+      }
+    }
+  ]
+}
