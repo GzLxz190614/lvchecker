@@ -8,11 +8,27 @@ import 'package:path_provider/path_provider.dart';
 enum SyncOutcome { updated, unchanged, failed }
 
 class SyncResult {
-  const SyncResult({required this.file, required this.outcome, this.message});
+  const SyncResult({
+    required this.file,
+    required this.outcome,
+    this.message,
+    this.host,
+    this.dataVersion,
+  });
 
   final String file;
   final SyncOutcome outcome;
   final String? message;
+
+  /// 这次是**哪个源**提供的这个文件（失败时为 null）
+  final String? host;
+
+  /// 该文件里的 `dataVersion`。
+  ///
+  /// 为什么要记它：GitHub 和 Gitee 是两个仓库，很容易出现
+  /// 「GitHub 已经推了新数据、Gitee 还是旧的」。这时 Gitee 源是**通的**，
+  /// 只是内容旧——光看「成功/失败」根本看不出来，必须把版本号摆到界面上。
+  final String? dataVersion;
 
   bool get ok => outcome != SyncOutcome.failed;
 }
@@ -21,37 +37,50 @@ class SyncResult {
 class SyncReport {
   const SyncReport({
     required this.results,
-    required this.usedSource,
+    required this.usedSources,
     required this.finishedAt,
+    this.dataVersion,
   });
 
   final List<SyncResult> results;
 
-  /// 本次实际生效的源（宿主机名），全部失败时为 null
-  final String? usedSource;
+  /// 本次实际生效的源（宿主机名）。4 个文件可能来自不同的源，
+  /// 所以这里是一个集合而不是单个值——只取第一个会掩盖「部分文件回退了」这件事。
+  final Set<String> usedSources;
+
+  /// 本次同步后的数据版本（取所有成功文件里出现的版本）。
+  final String? dataVersion;
+
   final DateTime finishedAt;
 
   bool get allOk => results.every((r) => r.ok);
   int get updatedCount => results.where((r) => r.outcome == SyncOutcome.updated).length;
   int get failedCount => results.where((r) => r.outcome == SyncOutcome.failed).length;
 
+  bool get anySuccess => usedSources.isNotEmpty;
+
+  /// 是否有文件在这一轮失败了（部分失败时缓存里可能混着两个版本的数据）
+  bool get partial => anySuccess && failedCount > 0;
+
   String get summary {
-    if (usedSource == null) {
+    if (!anySuccess) {
       return '同步失败：$failedCount 个文件取不到（离线时用本机缓存继续工作）';
     }
-    return '同步完成（源：$usedSource），更新 $updatedCount 个文件'
+    final src = usedSources.length == 1 ? usedSources.first : usedSources.join('、');
+    final v = dataVersion == null ? '' : '，数据版本 $dataVersion';
+    return '同步完成（源：$src$v），更新 $updatedCount 个文件'
         '${failedCount > 0 ? '，$failedCount 个失败' : ''}';
   }
 }
 
-/// 热更新服务：从 GitHub 拉最新数据，缓存到本机。
+/// 热更新服务：从 GitHub / Gitee 拉最新数据，缓存到本机。
 ///
 /// 设计要点：
 /// - **多源回退**。实测 `raw.githubusercontent.com` 在部分网络下取不到，
 ///   而 jsDelivr CDN 可以，所以按顺序试，任一成功即用。
 /// - **只下载 JSON，不碰进度存档**。存档是 ProgressStore 的事，两者完全隔离。
 /// - **图片不参与热更新**。图片在 APK 里（pubspec 逐文件声明），
-///   因为 82 张图走网络得不偿失；热更新只更新数据（曲目、条件、日期、缓和表）。
+///   因为 160 张图走网络得不偿失；热更新只更新数据（曲目、条件、日期、缓和表、段位）。
 /// - **原子写入**：先写 .tmp 再改名，避免半途断网留下半个文件导致下次读崩。
 class DataSync {
   DataSync._(this._dir);
@@ -61,7 +90,7 @@ class DataSync {
   /// 要同步的文件名（都在 data/ 下）
   static const List<String> files = ['meta.json', 'gates.json', 'linklevels.json', 'classes.json'];
 
-  /// 数据源。
+  /// 数据源。**顺序就是优先级**：先 GitHub 系，最后 Gitee。
   ///
   /// 为什么要有两种类型：
   ///   实测在部分国内网络下，**githubusercontent 系域名整体不可达**
@@ -70,8 +99,9 @@ class DataSync {
   ///   所以额外加一条走 GitHub Contents API 的通路，它返回 base64 内容，
   ///   完全不碰 githubusercontent 域名。
   ///
-  ///   GitHub Pages（`*.github.io`）是另一个域名、另一套 CDN，也列在前面当主源，
-  ///   但它需要**先在仓库设置里启用一次**，否则 CI 发布不了（GITHUB_TOKEN 无权创建站点）。
+  ///   Gitee 放在最后：它是国内域名、基本必然可达，而且是**兜底**而不是主源。
+  ///   往前的每一条都是 GitHub 系（你自己在 GitHub 上开发和发 APK，数据以那边为准），
+  ///   只有前面都不通时才会用到 Gitee 镜像。
   static const List<DataSource> sources = [
     // ① Pages：最快，但需要先手动启用一次
     UrlSource('https://gzlxz190614.github.io/lvchecker/data/', 'GitHub Pages'),
@@ -81,6 +111,8 @@ class DataSync {
     UrlSource('https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/', 'jsDelivr'),
     UrlSource('https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/', 'raw.githubusercontent'),
     UrlSource('https://raw.githack.com/GzLxz190614/lvchecker/main/data/', 'raw.githack'),
+    // ⑥ Gitee 镜像（国内兜底）。见 GiteeSource 的说明。
+    GiteeSource('gzlxz190614/lvchecker', 'master', 'data', 'Gitee 镜像'),
   ];
 
   static const Duration _timeout = Duration(seconds: 12);
@@ -127,7 +159,8 @@ class DataSync {
   Future<SyncReport> sync() async {
     final client = http.Client();
     final results = <SyncResult>[];
-    String? usedSource;
+    final usedSources = <String>{};
+    final versions = <String>{};
 
     try {
       for (final name in files) {
@@ -149,22 +182,42 @@ class DataSync {
               continue;
             }
 
-            // 与现有缓存比较，内容相同就不必重写（避免无意义地刷新 modified 时间）
+            final remoteVer = decoded['dataVersion'] as String?;
+            if (remoteVer != null) versions.add(remoteVer);
+
             final target = cacheFile(name);
-            if (target.existsSync() && target.readAsStringSync() == text) {
-              results.add(SyncResult(file: name, outcome: SyncOutcome.unchanged));
-              usedSource ??= source.host;
-              done = true;
-              break;
+            final sameText = target.existsSync() && target.readAsStringSync() == text;
+
+            if (sameText) {
+              results.add(SyncResult(
+                file: name,
+                outcome: SyncOutcome.unchanged,
+                host: source.host,
+                dataVersion: remoteVer,
+              ));
+            } else {
+              // 与缓存里的版本号对比，区分「真的更新了」和「只是格式/换行变了」。
+              // 目的是让设置页显示的「已更新/无变化」反映**数据**有没有变，
+              // 而不是字节有没有变。
+              final cachedVer = _cachedVersion(name);
+              final outcome = (remoteVer != null && cachedVer == remoteVer)
+                  ? SyncOutcome.unchanged
+                  : SyncOutcome.updated;
+
+              // 原子写入：先 .tmp 再 rename
+              final tmp = File('${target.path}.tmp');
+              await tmp.writeAsString(text, flush: true);
+              await tmp.rename(target.path);
+
+              results.add(SyncResult(
+                file: name,
+                outcome: outcome,
+                host: source.host,
+                dataVersion: remoteVer,
+              ));
             }
 
-            // 原子写入：先 .tmp 再 rename
-            final tmp = File('${target.path}.tmp');
-            await tmp.writeAsString(text, flush: true);
-            await tmp.rename(target.path);
-
-            results.add(SyncResult(file: name, outcome: SyncOutcome.updated));
-            usedSource ??= source.host;
+            usedSources.add(source.host);
             done = true;
             break;
           } catch (e) {
@@ -186,13 +239,35 @@ class DataSync {
 
     return SyncReport(
       results: results,
-      usedSource: usedSource,
+      usedSources: usedSources,
       finishedAt: DateTime.now(),
+      // 多个文件版本不一致时不硬凑一个值，交给界面显示「不一致」
+      dataVersion: versions.length == 1 ? versions.first : null,
     );
   }
 
+  /// 读本机缓存里某个文件的 `dataVersion`（读不出来返回 null）
+  String? _cachedVersion(String name) {
+    final f = cacheFile(name);
+    if (!f.existsSync()) return null;
+    try {
+      final decoded = jsonDecode(f.readAsStringSync());
+      return decoded is Map ? decoded['dataVersion'] as String? : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// 本机缓存里各文件的版本号（给设置页显示「缓存里的数据版本」用）
+  Map<String, String?> cachedVersions() =>
+      {for (final f in files) f: _cachedVersion(f)};
+
   /// 把异常压成一眼能看懂的一句。DNS 不通是最常见的情况，单独说清楚。
   static String _shortError(Object e) {
+    // Gitee 的失败说明是我们自己拼的多行诊断，别被下面的长度截断切掉后半段
+    // （「哪条通路不通」正是关键信息）。
+    if (e is _GiteeUnreachable) return e.message;
+
     final s = e.toString();
     if (s.contains('Failed host lookup')) {
       final m = RegExp(r"Failed host lookup: '([^']+)'").firstMatch(s);
@@ -200,13 +275,19 @@ class DataSync {
     }
     if (s.contains('TimeoutException')) return '超时';
     if (s.contains('Connection refused')) return '连接被拒绝';
-    return s.length > 90 ? '${s.substring(0, 90)}…' : s;
+    // 去掉 Dart 异常类型前缀，能省一点宽度给真正有用的内容
+    final trimmed = s.replaceFirst(RegExp(r'^(SocketException|ClientException|HttpException):\s*'), '');
+    return trimmed.length > 90 ? '${trimmed.substring(0, 90)}…' : trimmed;
   }
 
   /// 逐个源做一次连通性测试，给设置页用。
   ///
   /// 目的：当所有源都失败时，能一眼看出**是全部域名都不通，还是只有某一个**。
   /// 探测的是 `gates.json`（体积小、必然存在）。
+  ///
+  /// 顺带把每个源返回的 `dataVersion` 也带出来。这是**发现两个仓库漂移的唯一手段**：
+  /// 如果 GitHub 显示 `2026.09.11-2` 而 Gitee 显示 `2026.09.10-1`，
+  /// 说明 Gitee 镜像忘了推——此时 Gitee 源是「通的但内容旧」，只看成功/失败看不出来。
   Future<List<SourceProbe>> probeSources() async {
     final client = http.Client();
     final out = <SourceProbe>[];
@@ -227,13 +308,16 @@ class DataSync {
             continue;
           }
           // 内容也得像样，避免把一次错误页当成「通」
-          final okJson = jsonDecode(text) is Map;
+          final decoded = jsonDecode(text);
+          final okJson = decoded is Map;
+          final ver = okJson ? decoded['dataVersion'] as String? : null;
           out.add(SourceProbe(
             host: source.host,
             label: source.label,
             ok: okJson,
             detail: okJson ? '正常' : '返回的不是 JSON',
             millis: sw.elapsedMilliseconds,
+            dataVersion: ver,
           ));
         } catch (e) {
           sw.stop();
@@ -269,6 +353,7 @@ class SourceProbe {
     required this.ok,
     required this.detail,
     required this.millis,
+    this.dataVersion,
   });
 
   final String host;
@@ -279,6 +364,9 @@ class SourceProbe {
   final bool ok;
   final String detail;
   final int millis;
+
+  /// 这个源返回的数据版本。用来发现「源通了但内容旧」的漂移。
+  final String? dataVersion;
 }
 
 /// 数据源。
@@ -381,3 +469,100 @@ class ApiSource extends DataSource {
     return t.startsWith('{');
   }
 }
+
+/// Gitee 仓库的 raw 源（国内兜底）。
+///
+/// 端点：`https://gitee.com/{owner}/{repo}/raw/{branch}/{dir}/{file}`
+///
+/// ⚠️ 两个必须知道的点（都来自 Gitee 官方帮助中心，已核实）：
+///
+/// 1. **公开仓库的 raw 会被强制重定向**到独立域名 `raw.giteeusercontent.com`。
+///    也就是说 `gitee.com/.../raw/...` 并不是真正的文件地址，只是一次跳转。
+///    为了让「哪个域名不通」这件事可诊断，这里**先把两条路都试一遍**：
+///    ① gitee.com 的 raw 端点（不跟随重定向）
+///    ② raw.giteeusercontent.com 的最终地址（直达）
+///    哪条通用哪条；两条都记进错误信息里。
+///
+/// 2. **没有 GitHub Contents API 那种匿名配额**（GitHub 是 60 次/小时/IP，
+///    在运营商 NAT 下很容易被别的用户耗光）。Gitee 的 raw 是普通 GET + CDN 缓存
+///    （Cache-Control 60~300 秒），所以同一个源可以被反复请求而不会「用着用着就 403」。
+///    这也是加 Gitee 的主要理由之一，不只是「换个域名试试」。
+class GiteeSource extends DataSource {
+  const GiteeSource(this.repo, this.branch, this.dir, super.label);
+
+  /// `owner/repo`
+  final String repo;
+  final String branch;
+  final String dir;
+
+  @override
+  String get host => 'gitee.com';
+
+  /// ① 会 302 到独立域名
+  Uri _redirectingUri(String fileName) =>
+      Uri.parse('https://gitee.com/$repo/raw/$branch/$dir/$fileName');
+
+  /// ② 重定向的落点（直连，省掉一次跳转）
+  Uri _directUri(String fileName) =>
+      Uri.parse('https://raw.giteeusercontent.com/$repo/raw/$branch/$dir/$fileName');
+
+  @override
+  Future<String?> fetch(http.Client client, String fileName, Duration timeout) async {
+    final problems = <String>[];
+
+    // ⚠️ Gitee 是**最后一个**源，所以它花的时间会直接加在同步总时长上
+    // （前面 5 个源每个都可能先超时 12 秒）。两段请求各分一半超时，
+    // 保证这一整个源的开销不超过调用方给的一份超时，不让最坏情况翻倍。
+    final half = Duration(milliseconds: timeout.inMilliseconds ~/ 2);
+    final sub = half.inMilliseconds >= 2000 ? half : timeout;
+
+    // ① 走 gitee.com。http 包默认跟随后端重定向，所以 302 会被自动吃掉：
+    //    成功就拿到内容，失败则抛出**提到 raw.giteeusercontent.com 的异常**——
+    //    这正好把「是国内域名不通还是那个独立域名不通」区分开了。
+    try {
+      final resp = await client.get(_redirectingUri(fileName)).timeout(sub);
+      if (resp.statusCode == 200) {
+        final text = utf8.decode(resp.bodyBytes);
+        if (ApiSource._looksLikeJsonObject(text)) return text;
+        problems.add('gitee.com 回的不是 JSON');
+      } else if (resp.statusCode == 404) {
+        problems.add('gitee.com 404（镜像过期？$branch 分支下没有 $dir/$fileName）');
+      } else {
+        problems.add('gitee.com ${resp.statusCode}');
+      }
+    } catch (e) {
+      problems.add('gitee.com ${DataSync._shortError(e)}');
+    }
+
+    // ② 直接打重定向的落点。这一步的价值在于：
+    //    把「重定向链路」排除掉，单独确认独立域名本身通不通。
+    try {
+      final resp = await client.get(_directUri(fileName)).timeout(sub);
+      if (resp.statusCode == 200) {
+        final text = utf8.decode(resp.bodyBytes);
+        if (ApiSource._looksLikeJsonObject(text)) return text;
+        problems.add('raw.giteeusercontent.com 回的不是 JSON');
+      } else {
+        problems.add('raw.giteeusercontent.com ${resp.statusCode}');
+      }
+    } catch (e) {
+      problems.add('raw.giteeusercontent.com ${DataSync._shortError(e)}');
+    }
+
+    // 两条都不行：把**两条通路各自的原因**都抛出去。
+    // 不能只 `return null`——那样 sync() 只会记一句「HTTP 非 200」，
+    // 而「Gitee 到底是 404（忘了推镜像）还是域名不通」正是排查时最想知道的事。
+    throw _GiteeUnreachable(problems.join(' / '));
+  }
+}
+
+/// 内部异常：Gitee 的两条通路都失败，message 里带着各自的原因。
+class _GiteeUnreachable implements Exception {
+  const _GiteeUnreachable(this.message);
+
+  final String message;
+
+  @override
+  String toString() => 'Gitee：$message';
+}
+

@@ -1034,14 +1034,21 @@ UI 同时显示两个状态：
 4. **朋友装 APK 后也能直接同步更新**
 5. 顺带解决了「朋友怎么下载 APK」——public 仓库的 Release 无需登录
 
-### 9.3 同步地址
+### 9.3 同步地址（**顺序即优先级，GitHub 优先、Gitee 兜底**）
 
-```
-https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/meta.json
-https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/gates.json
-https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/linklevels.json
-https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/classes.json
-```
+| # | 源 | 实际地址（以 `gates.json` 为例） | 备注 |
+|---|---|---|---|
+| 1 | GitHub Pages | `https://gzlxz190614.github.io/lvchecker/data/gates.json` | 需手动启用一次 Pages |
+| 2 | GitHub Contents API | `https://api.github.com/repos/GzLxz190614/lvchecker/contents/data/gates.json?ref=main` | 匿名 60 次/小时/IP |
+| 3 | jsDelivr | `https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/gates.json` | |
+| 4 | raw | `https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/gates.json` | 国内常被拦 |
+| 5 | githack | `https://raw.githack.com/GzLxz190614/lvchecker/main/data/gates.json` | 国内常被拦 |
+| 6 | **Gitee 镜像** | `https://gitee.com/gzlxz190614/lvchecker/raw/master/data/gates.json` → 302 → `https://raw.giteeusercontent.com/...` | 国内兜底，无配额 |
+
+同样的 4 个文件：`meta.json` / `gates.json` / `linklevels.json` / `classes.json`。
+
+> Gitee 那条会**先 302 到独立域名**，所以 `GiteeSource` 把两条路都试一遍，
+> 并把各自的原因都报出来——这样能区分「404 = 忘了推镜像」和「域名不通」。见 Q16。
 
 ### 9.4 同步逻辑
 
@@ -1060,7 +1067,14 @@ App 启动
 
 **不会发生的事**：同步**永远不会**碰 `ProgressStore`（用户的打勾记录）。数据更新和进度是完全隔离的两层。
 
-**手动同步按钮**：设置页一个「立即同步数据」按钮，显示上次同步时间、三个 JSON 的 `dataVersion`、以及失败原因。
+**手动同步按钮**：设置页一个「立即同步数据」按钮，显示上次同步时间、本地缓存的数据版本、
+每个文件的**来源与版本**、以及失败原因。
+
+**版本漂移检测**（Q16）：每个文件的结果都记录「哪个源提供的 + 那份数据的 `dataVersion`」。
+
+- 与缓存里的版本号**相同** → 记「无变化」，不写盘。所以 Gitee 上的旧镜像**不会**被当成新数据。
+- 设置页的连通性测试会列出**每个源返回的版本号**；出现两个不同版本就标红提示。
+  这是「某个仓库忘了推」唯一的可见信号——那种情况下源是通的、只是内容旧。
 
 **首次运行体验**：APK 内置的 JSON 就是我这次生成的那份，所以**装上就能用，不需要联网**。
 
@@ -1422,8 +1436,8 @@ lvchecker/
 │   │   ├── link_level.dart          # linklevels.json
 │   │   └── class_course.dart        # classes.json（含等级显示换算）
 │   ├── data/
-│   │   ├── data_loader.dart         # 内置 → 缓存 → 在线 三级加载
-│   │   ├── data_sync.dart           # 多源同步（UrlSource / ApiSource）
+│   │   ├── data_loader.dart         # 内置 → 缓存 两级加载
+│   │   ├── data_sync.dart           # 多源同步（UrlSource / ApiSource / GiteeSource）
 │   │   ├── gate_status.dart         # 每个门是否已解锁
 │   │   └── progress_store.dart      # 存档读写（SharedPreferences）
 │   ├── import/
@@ -1507,6 +1521,29 @@ SSH 没配好时：
 ssh-keygen -t ed25519 -C "2075614293@qq.com"
 cat ~/.ssh/id_ed25519.pub        # 贴到 GitHub → Settings → SSH and GPG keys
 ssh -T git@github.com            # 验证
+```
+
+**Gitee 镜像（国内兜底，见 Q16）**：
+
+```bash
+# 一次性添加。默认分支按 Gitee 建仓库时的选择填 master 或 main
+git remote add gitee git@gitee.com:gzlxz190614/lvchecker.git
+
+# Gitee 也用同一套 SSH key 就行；验证
+ssh -T git@gitee.com
+
+# 首次推全量
+git push -u gitee master
+```
+
+> 如果 Gitee 上仓库的默认分支是 `main` 而不是 `master`，就把上面和
+> `lib/data/data_sync.dart` 里 `GiteeSource('gzlxz190614/lvchecker', 'master', ...)`
+> 的第二个参数一起改成 `main`。两边必须一致，否则 app 会一直 404。
+
+之后每次改完数据：
+
+```bash
+git push origin main && git push gitee master
 ```
 
 ### 13.3 发版拿 APK
@@ -1651,6 +1688,44 @@ tools/validate.py         数据校验
 | Q13 | 要不要把图片内置进 APK？ | ✅ **已定稿**：要。**不用在线曲绘**，全部本地 dds→png |
 | Q14 | `source` 字段（原 `confirmed`）保留吗？ | ✅ **保留**，防止以后忘了哪条日期是猜的 |
 | ~~Q15~~ | ~~RE:VERSE 的 11 首要「打过」还是「拿到」？~~ | ✅ **已解决**（见下） |
+
+### Q16 结论：加 Gitee 镜像做国内兜底（GitHub 优先）
+
+**背景**：你手机上实测 `raw.githubusercontent.com` / `raw.githack.com` 全部 DNS 解析失败，
+jsDelivr 在助手侧可用但你手机上不通，只有 `github.com` 与 `api.github.com` 能解析。
+
+**核实过的事实**（都会影响方案选择）：
+
+| 事实 | 来源 | 影响 |
+|---|---|---|
+| Gitee 公开仓库的 raw **会被强制重定向**到独立域名 `raw.giteeusercontent.com` | [Gitee 帮助中心](https://help.gitee.com/repository/file-operate/raw) | 和 `raw.githubusercontent.com` 是**同构**的独立域名。所以「Gitee 通不通」本质上要测的是那个域名 |
+| Gitee **Pages 已下线** | [蓝点网](https://www.landian.news/archives/103754.html)、[php.cn](https://www.php.cn/faq/505484.html) | 不能拿它替代 GitHub Pages，只有 raw 一条路 |
+| GitHub Contents API 匿名限额 **60 次/小时/IP** | [GitHub Docs](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api) | 手机在运营商 NAT 后是共享 IP，4 文件/次很容易把额度磨光 → 这才是加 Gitee 的**主要**理由，不只是换域名 |
+| Gitee raw 是普通 GET + CDN 缓存（60~300 秒），无匿名配额 | 同上 Gitee 文档 | Gitee 源可以被反复请求而不会「用着用着就 403」 |
+
+**定稿**：
+
+1. **源顺序 GitHub 优先，Gitee 排最后**（第 6 位）。理由是数据以 GitHub 那份为准
+   （开发和发 APK 都在那边），Gitee 只做兜底。
+2. **Gitee 用独立 remote + 手动 `git push`，不配任何 CI 密钥。**
+   - 自动镜像需要存 `GITEE_TOKEN`，而 token 会过期，过期后表现为「镜像悄悄停了」——
+     这种静默腐烂比手动推的「忘了推」更难排查
+   - 手动推保持仓库「零密钥」的干净状态（这正是当前仓库的真实优势）
+3. **全仓库镜像**（含 `assets/img/` ~19 MB）。只镜像 `data/` 看似干净，但会把
+   「一条 push」变成「一个需要维护的同步动作」，把自动化的复杂度又请回来了。
+4. **必须做版本漂移检测**，否则两个仓库必然悄悄分叉。手段：
+   - `SyncResult` / `SourceProbe` 都带上源的 `dataVersion`
+   - 同步时比对缓存里的 `dataVersion`：版本相同就记「无变化」（所以旧镜像不会被当成新数据写入）
+   - 设置页显示「本地缓存」版本
+   - 连通性测试里若有多个不同版本，直接标红「各源数据版本不一致」——
+     这是「Gitee 忘了推」**唯一的可见信号**
+
+**明确不做**：`git remote set-url --add --push` 那种「一次推到两个仓库」的配法。
+它会让「一个失败 = 整体报错」，而另一个其实已经推成功，容易误导排查方向。
+
+**代码位置**：`lib/data/data_sync.dart` 的 `GiteeSource`（会分别试
+`gitee.com/.../raw/...` 与 `raw.giteeusercontent.com`，并把两条通路各自的原因都报出来，
+这样能区分「404 = 忘了推镜像」和「域名不通」）。
 
 ### Q15 结论：RE:VERSE 按「全部游玩过」处理
 

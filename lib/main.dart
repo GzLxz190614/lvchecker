@@ -82,7 +82,7 @@ class _BootState extends State<_Boot> {
                 results: const [
                   SyncResult(file: '(超时)', outcome: SyncOutcome.failed, message: '启动同步超时'),
                 ],
-                usedSource: null,
+                usedSources: const {},
                 finishedAt: DateTime.now(),
               ),
             );

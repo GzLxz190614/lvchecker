@@ -43,6 +43,23 @@ class _SettingsPageState extends State<SettingsPage> {
   SyncReport? _lastReport;
   List<SourceProbe>? _probes;
 
+  /// 本机缓存里各文件的 `dataVersion`。
+  ///
+  /// 缓存在 state 里而不是每次 build 都读盘：读盘是同步 IO，
+  /// 放在 build 里会在滑动时反复读 4 个文件。同步完成/清缓存后主动刷新一次即可。
+  Map<String, String?>? _cachedVersions;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshCachedVersions();
+  }
+
+  void _refreshCachedVersions() {
+    final sync = widget.sync;
+    _cachedVersions = sync == null ? null : sync.cachedVersions();
+  }
+
   @override
   Widget build(BuildContext context) {
     final conditionGates = widget.gates.where((g) => !g.isReward).toList();
@@ -119,7 +136,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final children = <Widget>[
       const Text(
-        '门的数据（曲目、解锁条件、开放日期、缓和表）都放在 GitHub 仓库的 data/*.json 里。'
+        '门的数据（曲目、解锁条件、开放日期、缓和表、段位课程）都放在仓库的 data/*.json 里。'
         '同步后即可更新这些内容，**不需要重装 APK**。\n'
         '图片不参与热更新（已打包在 APK 内）。',
         style: TextStyle(fontSize: 13, height: 1.6, color: AppTheme.textSecondary),
@@ -129,20 +146,42 @@ class _SettingsPageState extends State<SettingsPage> {
       _kv('缓存状态', sync == null ? '不可用（拿不到应用目录）' : (sync.hasCache ? '已有本机缓存' : '无缓存')),
     ];
 
+    // 本机缓存里的数据版本。
+    //
+    // 为什么要专门显示它：GitHub 和 Gitee 是**两个仓库**，很容易出现
+    // 「GitHub 推了新数据、Gitee 还是旧的」。这时 Gitee 源是通的、只是内容旧，
+    // 只看「成功/失败」根本看不出来。版本号摆在这里才能一眼发现漂移。
+    final versions = _cachedVersions;
+    if (versions != null && versions.isNotEmpty) {
+      final present = versions.values.whereType<String>().toSet();
+      String text;
+      if (present.isEmpty) {
+        text = '（数据里没有 dataVersion 字段）';
+      } else if (present.length == 1) {
+        text = present.first;
+      } else {
+        // 部分文件同步失败时会出现这种情况：缓存里混着两个版本。
+        text = '不一致：${present.join(' / ')}';
+      }
+      // 标签是「本地缓存」而不是「数据版本」：下面「关于」区块里的「数据版本」
+      // 指的是 **app 此刻实际在用**的那份（可能来自 APK 内置、也可能来自缓存），
+      // 两者含义不同，名字必须分开。
+      children.add(_kv('本地缓存', text));
+    }
+
     if (_lastReport != null) {
       final r = _lastReport!;
+      final good = r.anySuccess;
       children.add(const SizedBox(height: 10));
       children.add(
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: (r.usedSource == null ? AppTheme.warning : AppTheme.accent)
-                .withValues(alpha: 0.12),
+            color: (good ? AppTheme.accent : AppTheme.warning).withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(7),
             border: Border.all(
-              color: (r.usedSource == null ? AppTheme.warning : AppTheme.accent)
-                  .withValues(alpha: 0.35),
+              color: (good ? AppTheme.accent : AppTheme.warning).withValues(alpha: 0.35),
             ),
           ),
           child: Column(
@@ -153,7 +192,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 style: TextStyle(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
-                  color: r.usedSource == null ? AppTheme.warning : AppTheme.accent,
+                  color: good ? AppTheme.accent : AppTheme.warning,
                 ),
               ),
               const SizedBox(height: 4),
@@ -162,6 +201,14 @@ class _SettingsPageState extends State<SettingsPage> {
                   '· ${x.file}：${_outcomeLabel(x)}',
                   style: const TextStyle(fontSize: 11, color: AppTheme.textDim, height: 1.5),
                 ),
+              if (r.partial) ...[
+                const SizedBox(height: 6),
+                const Text(
+                  '⚠️ 有文件没同步成功，缓存里可能混着两个版本的数据。'
+                  '建议等网络稳定后重新同步一次。',
+                  style: TextStyle(fontSize: 11, color: AppTheme.warning, height: 1.5),
+                ),
+              ],
             ],
           ),
         ),
@@ -258,7 +305,10 @@ class _SettingsPageState extends State<SettingsPage> {
                               ],
                             ),
                             Text(
-                              p.ok ? '正常（${p.millis} ms）' : p.detail,
+                              p.ok
+                                  ? '正常（${p.millis} ms）'
+                                      '${p.dataVersion == null ? '' : ' · 数据版本 ${p.dataVersion}'}'
+                                  : p.detail,
                               style: const TextStyle(
                                   fontSize: 11, color: AppTheme.textFaint, height: 1.4),
                             ),
@@ -274,6 +324,16 @@ class _SettingsPageState extends State<SettingsPage> {
                 '此时热更新用不了，但 app 完全正常——会一直用 APK 内置数据。',
                 style: TextStyle(fontSize: 11, color: AppTheme.textFaint, height: 1.45),
               ),
+              // 跨源版本对比：发现「Gitee 镜像忘了推」这类漂移。
+              if (_probeVersions.length > 1) ...[
+                const SizedBox(height: 7),
+                Text(
+                  '⚠️ 各源的数据版本不一致：${_probeVersions.join('、')}。'
+                  '说明有仓库没推最新数据（常见于 Gitee 镜像忘推），'
+                  '同步会优先用排在前面的源。',
+                  style: const TextStyle(fontSize: 11, color: AppTheme.warning, height: 1.45),
+                ),
+              ],
             ],
           ),
         ),
@@ -303,14 +363,32 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   String _outcomeLabel(SyncResult r) {
+    final src = r.host == null ? '' : '（${r.host}${r.dataVersion == null ? '' : ' · ${r.dataVersion}'}）';
     switch (r.outcome) {
       case SyncOutcome.updated:
-        return '已更新';
+        return '已更新$src';
       case SyncOutcome.unchanged:
-        return '无变化';
+        return '无变化$src';
       case SyncOutcome.failed:
         return '失败（${r.message ?? '未知原因'}）';
     }
+  }
+
+  /// 各源返回的版本号，形如 `["2026.09.11-2（raw.x）", "2026.09.10-1（gitee.com）"]`。
+  ///
+  /// 长度 > 1 就说明**有仓库没推最新数据**。这是「Gitee 镜像忘推」唯一的可见信号：
+  /// 那种情况下 Gitee 源是通的、只是内容旧，看成功/失败完全看不出来。
+  List<String> get _probeVersions {
+    final probes = _probes;
+    if (probes == null) return const [];
+    final seen = <String>{};
+    final out = <String>[];
+    for (final p in probes) {
+      if (!p.ok || p.dataVersion == null) continue;
+      final key = '${p.dataVersion}（${p.host}）';
+      if (seen.add(key)) out.add(key);
+    }
+    return out;
   }
 
   Future<void> _doSync() async {
@@ -323,7 +401,7 @@ class _SettingsPageState extends State<SettingsPage> {
     } catch (e) {
       report = SyncReport(
         results: [SyncResult(file: '(异常)', outcome: SyncOutcome.failed, message: '$e')],
-        usedSource: null,
+        usedSources: const {},
         finishedAt: DateTime.now(),
       );
     }
@@ -331,6 +409,8 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       _syncing = false;
       _lastReport = report;
+      // 同步可能改了缓存内容，版本号要重新读一次
+      _refreshCachedVersions();
     });
     if (report.updatedCount > 0) {
       await widget.onDataRefreshed();
@@ -376,7 +456,10 @@ class _SettingsPageState extends State<SettingsPage> {
     await sync.clearCache();
     await widget.onDataRefreshed();
     if (!mounted) return;
-    setState(() => _lastReport = null);
+    setState(() {
+      _lastReport = null;
+      _refreshCachedVersions();
+    });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('已清除缓存，正在使用 APK 内置数据')),
     );

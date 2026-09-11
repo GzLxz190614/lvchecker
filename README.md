@@ -264,7 +264,7 @@ app 支持从[落雪查分器](https://maimai.lxns.net/)导入成绩，**辅助�
 启动时若本机缓存超过 12 小时，会在后台拉一次（**带 12 秒超时，绝不会卡住启动**）。
 设置页也有「立即同步数据」按钮，会显示每个文件的结果。
 
-**多源回退**（按优先级，任一成功即生效）：
+**多源回退**（按优先级，任一成功即生效。**GitHub 优先，Gitee 兜底**）：
 
 ```
 1. https://gzlxz190614.github.io/lvchecker/data/          ← GitHub Pages
@@ -272,17 +272,53 @@ app 支持从[落雪查分器](https://maimai.lxns.net/)导入成绩，**辅助�
 3. https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/
 4. https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/
 5. https://raw.githack.com/GzLxz190614/lvchecker/main/data/
+6. https://gitee.com/gzlxz190614/lvchecker/raw/master/data/  ← Gitee 镜像（国内兜底）
 ```
 
 > ⚠️ **关于「国内连不上」**：实测在部分国内网络下，`githubusercontent` 系域名整体不可达
 > （`raw.githubusercontent.com` / `raw.githack.com` / `cdn.jsdelivr.net` 全部 DNS 解析失败）。
-> 但 `github.com` 与 `api.github.com` 往往能解析，所以这里准备了三条不依赖 raw 域名的通路：
+> 所以准备了三条不依赖这些域名的通路：
 >
 > - **GitHub Pages**（`*.github.io`，另一个域名 + 另一套 CDN）
 > - **GitHub Contents API**（只用 `api.github.com`，内容走 base64 解码）
+> - **Gitee 镜像**（国内域名，基本必然可达）
 >
 > 全部源都不通时，**热更新用不了，但 app 完全正常**——会一直用 APK 内置数据。
 > 设置页有「测试各数据源的连通性」按钮，逐个显示哪个域名可用。
+
+### Gitee 镜像（国内兜底）
+
+仓库镜像在 <https://gitee.com/gzlxz190614/lvchecker>，内容与 GitHub 完全一致。
+
+**为什么要有它**：不只是「换个域名试试」。GitHub 的 Contents API 有**匿名 60 次/小时/IP**
+的限制（[官方文档](https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api)），
+手机在运营商 NAT 后面时这个 IP 是很多人共用的，**4 个文件一次同步就吃掉 4 次**，
+很容易「用着用着就 403」。Gitee 的 raw 是普通 GET + CDN 缓存，**没有这个配额问题**。
+
+**推送方式**：Gitee 是**独立 remote，手动推**，没有配任何 CI 密钥。
+
+```bash
+# 一次性添加 remote
+git remote add gitee git@gitee.com:gzlxz190614/lvchecker.git
+
+# 以后每次改完数据，两个都推
+git push origin main && git push gitee main
+```
+
+> ❌ **不要**用 `git remote set-url --add --push origin <gitee>` 的方式配「一次推两个」。
+> 那样只要有一个失败，`git push` 就整体报错，而另一个其实**已经推成功了** ——
+> 你会以为失败去重试，实际上是在做多余的事。两个独立 remote、失败一目了然。
+
+**漂移怎么发现**：两个仓库是独立的，很容易出现「GitHub 推了新数据、Gitee 还是旧的」。
+这时 Gitee 源是**通的、只是内容旧**，光看「成功/失败」根本看不出来。所以：
+
+- 设置页的「本地缓存」和「关于 → 数据版本」都会显示 `dataVersion`
+- 「测试各数据源的连通性」会显示**每个源返回的版本号**；只要有两个不同的版本，
+  就会直接标红提示「各源的数据版本不一致 → 有仓库没推最新数据」
+- 同步时会比对 `dataVersion`，版本没变就算「无变化」，所以旧镜像**不会**被当成新数据写进缓存
+
+> 如果 Gitee 上默认分支不是 `master`（比如建仓库时选过），要改
+> `lib/data/data_sync.dart` 里 `GiteeSource(...)` 的第二个参数。
 
 ### 启用 GitHub Pages（一次性，可选）
 
