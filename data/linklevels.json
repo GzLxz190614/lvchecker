@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-3",
+  "dataVersion": "2026.09.11-2",
   "region": "cn",
   "note": "国服缓和周期未完全公布。已知的填日期，未知的留 null（不猜）。每个门的开放日期与缓和周期各自独立，不共用。",
   "defaultLevel": 5,
@@ -41,7 +41,7 @@
         {
           "level": 4,
           "label": "4",
-          "from": "2026-09-11T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 1000,
           "judges": [
@@ -49,7 +49,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 3,

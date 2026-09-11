@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-3",
+  "dataVersion": "2026.09.11-2",
   "region": "cn",
   "gameVersion": "中二节奏 2027 (CN1.40)",
   "updatedAt": "2026-09-11",
@@ -113,8 +113,8 @@
         },
         "hasUltima": false
       },
-      "releaseDate": "2026-09-11T10:00",
-      "releaseStatus": "open",
+      "releaseDate": null,
+      "releaseStatus": "notYetOpen",
       "conditionSource": "official",
       "releaseNote": "",
       "conditionText": "从地图 VERSE ep.STAR 获得角色「観音寺 にこる／Mermaid♡Moment」，并升到 RANK 15",
