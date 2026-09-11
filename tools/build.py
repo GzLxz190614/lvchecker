@@ -543,51 +543,94 @@ def build_gates(boss_map: dict[str, dict]) -> list[dict]:
 # ---------------------------------------------------------------- linklevels
 
 def build_linklevels() -> dict:
-    levels = []
+    """生成各门的 Link LEVEL 缓和表。
+
+    关键点：**每个门有自己的开放日期和缓和周期，不能共用一份**。
+
+    已知的只有 ORIGIN 与 AIR（你的 condition/*/日期.txt 写了 2026/9/10），
+    所以：
+      - 这两个门的 V 档日期 = 该门开放时间
+      - 其余门尚未开放，releaseDate 为 null，缓和日期一律 null（不猜）
+      - IV~I 档的缓和日期全部未知 —— 日服的周期（ORIGIN 的 V 档 2025/7/16、
+        I 档 2025/8/14）比国服上线早一整年，照抄必然算错，所以留 null
+    """
+    # 门 id -> 该门开放时间（None = 未开放，日期未知）
+    gate_open: dict[str, str | None] = {
+        "origin": RELEASE_OPEN,
+        "air": RELEASE_OPEN,
+        "star": None,
+        "amazon": None,
+        "crystal": None,
+        "paradise": None,
+        "new": None,
+        "sun": None,
+        "luminous": None,
+        "verse": None,
+        "xverse": None,
+        "reverse": None,
+    }
+
+    base_levels = []
     for lv, diff, life, judges in LINK_LEVEL_TABLE:
-        levels.append({
+        base_levels.append({
             "level": lv,
             "label": str(lv),
-            "from": RELEASE_OPEN if lv == 5 else None,   # 只有 V 档的起始日期已知（= 开服日）
+            "from": None,               # 由下面按门填 V 档
             "minDifficulty": diff,
             "life": life,
             "judges": judges,
-            "source": "official" if lv == 5 else "user",
+            "source": "user",           # 默认「未知」，V 档已知的会改成 official
         })
+
+    gates: dict[str, dict] = {}
+    for gid, opened in gate_open.items():
+        levels = []
+        for tpl in base_levels:
+            t = dict(tpl)
+            if t["level"] == 5 and opened:
+                t["from"] = opened
+                t["source"] = "official"
+            levels.append(t)
+        if opened:
+            gates[gid] = {"levels": levels}
+        else:
+            gates[gid] = {
+                "levels": levels,
+                "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。",
+            }
+
+    # ---------------- UNIVERSE：剩余血量要求（多段，按日期缓和） ----------------
+    #
+    # 数值是占位。国服的具体血量门槛与缓和日期都还没公布，
+    # 所以日期全部留 null，source 标 user —— UI 会显示「缓和日期未公布」。
+    gates["universe"] = {
+        "levels": [
+            {"level": 3, "label": "∞（最严）", "from": None, "minDifficulty": "ULTIMA",
+             "life": 2000, "judges": ["JUSTICE_CRITICAL", "JUSTICE", "ATTACK", "MISS"],
+             "requiredHp": 1000, "source": "user"},
+            {"level": 2, "label": "缓和 I", "from": None, "minDifficulty": "ULTIMA",
+             "life": 2000, "judges": ["JUSTICE_CRITICAL", "JUSTICE", "ATTACK", "MISS"],
+             "requiredHp": 600, "source": "user"},
+            {"level": 1, "label": "缓和 II", "from": None, "minDifficulty": "MASTER",
+             "life": 5000, "judges": ["JUSTICE", "ATTACK", "MISS"],
+             "requiredHp": 300, "source": "user"},
+            {"level": 0, "label": "缓和 III", "from": None, "minDifficulty": "EXPERT",
+             "life": 5000, "judges": ["JUSTICE", "ATTACK", "MISS"],
+             "requiredHp": 1, "source": "user"},
+        ],
+        "note": "解锁条件：通关 RE:VERSE 时剩余血量 ≥ 指定值。该指定值按日期缓和；"
+                "当前血量门槛与缓和日期均为占位，待国服公布后更新。",
+    }
 
     return {
         "schemaVersion": SCHEMA_VERSION,
         "dataVersion": DATA_VERSION,
         "region": "cn",
-        "note": "国服缓和周期未完全公布。已知的填日期，未知的留 null（不猜）。",
+        "note": "国服缓和周期未完全公布。已知的填日期，未知的留 null（不猜）。"
+                "每个门的开放日期与缓和周期各自独立，不共用。",
         "defaultLevel": 5,
         "judges": JUDGES,
-        "gates": {
-            "origin": {"levels": levels},
-            "air": {"levels": levels},
-            "star": {"levels": levels},
-            "amazon": {"levels": levels},
-            "crystal": {"levels": levels},
-            "paradise": {"levels": levels},
-            "new": {"levels": levels},
-            "sun": {"levels": levels},
-            "luminous": {"levels": levels},
-            "verse": {"levels": levels},
-            "xverse": {"levels": levels},
-            "reverse": {"levels": levels},
-            "universe": {
-                "levels": [{
-                    "level": 0,
-                    "label": "∞",
-                    "from": None,
-                    "minDifficulty": "ULTIMA",
-                    "life": 2000,
-                    "judges": ["JUSTICE_CRITICAL", "JUSTICE", "ATTACK", "MISS"],
-                    "source": "user",
-                }],
-                "note": "解锁要求：通关 RE:VERSE 时剩余血量 ≥ 指定血量（按日期缓和）",
-            },
-        },
+        "gates": gates,
     }
 
 
@@ -786,8 +829,7 @@ def main() -> int:
     write_meta_sidecars()
 
     print("\n== 写 data/*.json ==")
-    meta_doc = {
-        "schemaVersion": SCHEMA_VERSION,
+    meta_doc = {        "schemaVersion": SCHEMA_VERSION,
         "dataVersion": DATA_VERSION,
         "region": "cn",
         "note": "全局条目元数据。gates.json / classes.json 通过 linkId 引用这里。",
@@ -809,6 +851,21 @@ def main() -> int:
         json.dumps(build_linklevels(), ensure_ascii=False, indent=2), encoding="utf-8")
     (DATA / "classes.json").write_text(
         json.dumps(build_classes_placeholder(), ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # ---- 重新生成 pubspec 的资源列表 ----
+    #
+    # 必须做，否则新增曲目后它的曲绘不会被打进 APK。
+    # Flutter 的 assets 声明不递归子目录，所以 pubspec 里是逐文件列表。
+    print("\n== 重新生成 pubspec 的资源列表 ==")
+    try:
+        import subprocess
+        gen = ROOT / "tools" / "gen_asset_list.py"
+        r = subprocess.run([sys.executable, str(gen)], capture_output=True, text=True, encoding="utf-8")
+        print("  " + (r.stdout or r.stderr).strip())
+        if r.returncode != 0:
+            warn("gen_asset_list.py 执行失败，pubspec 的资源列表可能已过期")
+    except Exception as e:  # noqa: BLE001
+        warn(f"无法调用 gen_asset_list.py：{e}")
 
     # ---- 汇总 ----
     print("\n== 汇总 ==")

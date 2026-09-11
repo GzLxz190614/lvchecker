@@ -1,3 +1,4 @@
+import '../models/class_course.dart';
 import '../models/gate.dart';
 import 'progress_store.dart';
 
@@ -23,6 +24,7 @@ GateStatus evaluateGate(
   Gate gate,
   ProgressStore store, {
   bool Function(String gateId)? prerequisiteUnlocked,
+  ClassData? classData,
 }) {
   switch (gate.tracking) {
     case TrackingKind.songs:
@@ -50,11 +52,28 @@ GateStatus evaluateGate(
       return GateStatus(unlocked: total > 0 && done == total, doneCount: done, totalCount: total);
 
     case TrackingKind.classes:
-      // AIR 门的解锁条件是「拿到一个缎带」，也就是任一 CLASS 内所有组曲通关。
-      // 段位课程清单还没拿到（等课程 XML），所以现在按**手动确认**判定，
-      // 否则这个门永远无法完成。等课程数据齐了再改成按组曲自动判定。
-      final done = store.isManualDone(gate.id);
-      return GateStatus(unlocked: done, doneCount: done ? 1 : 0, totalCount: 1);
+      // AIR 门的解锁条件是「拿到一个缎带」= **任一** CLASS 内所有组曲通关。
+      // 按段位组曲的勾选自动判定（不再用手动确认开关）。
+      if (classData == null || classData.tiers.isEmpty) {
+        return const GateStatus(unlocked: false, doneCount: 0, totalCount: 0);
+      }
+      final doneCourses = store.courseDoneOf(gate.id);
+      // 找「最接近完成」的那个等级来显示进度，这样一眼知道该补哪个
+      ClassTier? best;
+      var bestDone = -1;
+      for (final t in classData.tiers) {
+        final d = classData.doneIn(t, doneCourses);
+        if (d > bestDone) {
+          bestDone = d;
+          best = t;
+        }
+      }
+      final total = best?.courses.length ?? 0;
+      return GateStatus(
+        unlocked: classData.ribbonAchieved(doneCourses),
+        doneCount: bestDone < 0 ? 0 : bestDone,
+        totalCount: total,
+      );
 
     case TrackingKind.auto:
       // 前置门全部解锁即自动达成
@@ -77,13 +96,17 @@ GateStatus evaluateGate(
 ///
 /// 门数量固定且很少（14 个），直接迭代若干轮即可解析依赖，
 /// 不需要引入图算法。
-Map<String, GateStatus> evaluateAll(List<Gate> gates, ProgressStore store) {
+Map<String, GateStatus> evaluateAll(
+  List<Gate> gates,
+  ProgressStore store, {
+  ClassData? classData,
+}) {
   final result = <String, GateStatus>{};
 
   // 先算不依赖别的门的
   for (final g in gates) {
     if (g.tracking != TrackingKind.auto) {
-      result[g.id] = evaluateGate(g, store);
+      result[g.id] = evaluateGate(g, store, classData: classData);
     }
   }
   // auto 类型依赖前置门。按 order 升序迭代，最多跑 N 轮处理链式依赖
@@ -96,6 +119,7 @@ Map<String, GateStatus> evaluateAll(List<Gate> gates, ProgressStore store) {
         g,
         store,
         prerequisiteUnlocked: (id) => result[id]?.unlocked ?? false,
+        classData: classData,
       );
       final prev = result[g.id];
       if (prev == null || prev.unlocked != s.unlocked || prev.doneCount != s.doneCount) {

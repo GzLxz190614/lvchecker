@@ -614,7 +614,7 @@
       "id": 6104401,
       "title": "淀川 沙音瑠の服",
       "subtitle": "服装 · ウェア",
-      "image": "assets/img/avatar/6104401/tex.png",
+      "image": "assets/img/avatar/6104401/icon.png",
       "slot": "wear"
     },
     "avatar:6204401": {
@@ -622,7 +622,7 @@
       "id": 6204401,
       "title": "淀川 沙音瑠の頭",
       "subtitle": "头饰 · ヘッド",
-      "image": "assets/img/avatar/6204401/tex.png",
+      "image": "assets/img/avatar/6204401/icon.png",
       "slot": "head"
     },
     "avatar:6704401": {
@@ -630,7 +630,7 @@
       "id": 6704401,
       "title": "淀川 沙音瑠のランドセル",
       "subtitle": "背包 · バック",
-      "image": "assets/img/avatar/6704401/tex.png",
+      "image": "assets/img/avatar/6704401/icon.png",
       "slot": "back"
     },
     "music:2266": {

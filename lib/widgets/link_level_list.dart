@@ -76,6 +76,95 @@ DateTime? _parse(String? raw) {
 
 enum _TierState { past, current, notYet }
 
+/// 血量门槛表（UNIVERSE 门专用）。
+///
+/// 这是**独立于难度缓和**的另一套要求：通关 RE:VERSE 时剩余血量要 ≥ 指定值。
+/// UNIVERSE 门自己的门槛也按日期缓和，所以同样是多段。
+///
+/// 血量门槛越低越新（缓和方向是放宽），所以按 requiredHp 升序排列，
+/// 最小的一段视为最新。
+class HpRequirementList extends StatelessWidget {
+  const HpRequirementList({super.key, required this.tiers, this.note});
+
+  final List<HpTier> tiers;
+  final String? note;
+
+  @override
+  Widget build(BuildContext context) {
+    if (tiers.isEmpty) return const SizedBox.shrink();
+
+    final sorted = [...tiers]..sort((a, b) => a.requiredHp.compareTo(b.requiredHp));
+    final current = currentHpTier(sorted);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (note != null && note!.isNotEmpty) ...[
+          Text(note!, style: const TextStyle(fontSize: 12, color: AppTheme.textDim, height: 1.5)),
+          const SizedBox(height: 10),
+        ],
+        for (final t in sorted) _hpRow(t, identical(t, current)),
+        const SizedBox(height: 4),
+        const Text(
+          '血量门槛同样按日期缓和。日期未公布的档位不做推测。',
+          style: TextStyle(fontSize: 11, color: AppTheme.textFaint, height: 1.5),
+        ),
+      ],
+    );
+  }
+
+  Widget _hpRow(HpTier t, bool isCurrent) {
+    final from = _parse(t.from);
+    final fg = isCurrent ? AppTheme.textPrimary : AppTheme.textDim;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 7),
+      padding: const EdgeInsets.fromLTRB(11, 8, 11, 9),
+      decoration: BoxDecoration(
+        color: isCurrent ? AppTheme.surfaceHigh : AppTheme.surface,
+        borderRadius: BorderRadius.circular(7),
+        border: Border(
+          left: BorderSide(
+            color: isCurrent ? AppTheme.accent : const Color(0xFF3A3A4D),
+            width: isCurrent ? 3 : 2,
+          ),
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              t.label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isCurrent ? AppTheme.accent : fg,
+              ),
+            ),
+          ),
+          Text(
+            '剩余血量 ≥ ${t.requiredHp}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: isCurrent ? AppTheme.textPrimary : fg,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            from == null
+                ? '缓和日期未公布'
+                : '${from.year}-${_two(from.month)}-${_two(from.day)} 起',
+            style: const TextStyle(fontSize: 10.5, color: AppTheme.textFaint),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _two(int v) => v.toString().padLeft(2, '0');
+}
+
 class _TierRow extends StatelessWidget {
   const _TierRow({required this.tier, required this.state, required this.judges});
 
@@ -168,13 +257,6 @@ class _TierRow extends StatelessWidget {
                   colorHex: j?.colorHex ?? '#888888',
                 );
               }).toList(),
-            ),
-          ],
-          if (tier.requiredHp != null) ...[
-            const SizedBox(height: 6),
-            Text(
-              '通关时剩余血量 ≥ ${tier.requiredHp}',
-              style: TextStyle(fontSize: 12, color: fg, fontWeight: FontWeight.w600),
             ),
           ],
         ],

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "dataVersion": "2026.09.11-1",
   "region": "cn",
-  "note": "国服缓和周期未完全公布。已知的填日期，未知的留 null（不猜）。",
+  "note": "国服缓和周期未完全公布。已知的填日期，未知的留 null（不猜）。每个门的开放日期与缓和周期各自独立，不共用。",
   "defaultLevel": 5,
   "judges": {
     "JUSTICE": {
@@ -166,7 +166,7 @@
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -174,7 +174,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -228,14 +228,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "amazon": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -243,7 +244,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -297,14 +298,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "crystal": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -312,7 +314,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -366,14 +368,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "paradise": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -381,7 +384,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -435,14 +438,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "new": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -450,7 +454,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -504,14 +508,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "sun": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -519,7 +524,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -573,14 +578,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "luminous": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -588,7 +594,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -642,14 +648,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "verse": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -657,7 +664,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -711,14 +718,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "xverse": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -726,7 +734,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -780,14 +788,15 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "reverse": {
       "levels": [
         {
           "level": 5,
           "label": "5",
-          "from": "2026-09-10T10:00",
+          "from": null,
           "minDifficulty": "MASTER",
           "life": 300,
           "judges": [
@@ -795,7 +804,7 @@
             "ATTACK",
             "MISS"
           ],
-          "source": "official"
+          "source": "user"
         },
         {
           "level": 4,
@@ -849,13 +858,14 @@
           ],
           "source": "user"
         }
-      ]
+      ],
+      "note": "该门在国服尚未开放，开放日期与缓和周期都未公布，因此不填任何日期。"
     },
     "universe": {
       "levels": [
         {
-          "level": 0,
-          "label": "∞",
+          "level": 3,
+          "label": "∞（最严）",
           "from": null,
           "minDifficulty": "ULTIMA",
           "life": 2000,
@@ -865,10 +875,54 @@
             "ATTACK",
             "MISS"
           ],
+          "requiredHp": 1000,
+          "source": "user"
+        },
+        {
+          "level": 2,
+          "label": "缓和 I",
+          "from": null,
+          "minDifficulty": "ULTIMA",
+          "life": 2000,
+          "judges": [
+            "JUSTICE_CRITICAL",
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "requiredHp": 600,
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "缓和 II",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 5000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "requiredHp": 300,
+          "source": "user"
+        },
+        {
+          "level": 0,
+          "label": "缓和 III",
+          "from": null,
+          "minDifficulty": "EXPERT",
+          "life": 5000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "requiredHp": 1,
           "source": "user"
         }
       ],
-      "note": "解锁要求：通关 RE:VERSE 时剩余血量 ≥ 指定血量（按日期缓和）"
+      "note": "解锁条件：通关 RE:VERSE 时剩余血量 ≥ 指定值。该指定值按日期缓和；当前血量门槛与缓和日期均为占位，待国服公布后更新。"
     }
   }
 }

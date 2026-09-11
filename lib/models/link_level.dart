@@ -194,3 +194,45 @@ DateTime? _parse(String? raw) {
   final s = raw.trim();
   return DateTime.tryParse(s) ?? DateTime.tryParse('${s}T00:00');
 }
+
+/// 血量门槛的分段（UNIVERSE 门专用）。
+///
+/// 与难度缓和是两套独立的表：难度那条管「打什么难度、多少血、判定扣多少」，
+/// 这条管「通关时至少要剩多少血」。
+class HpTier {
+  const HpTier({required this.label, required this.requiredHp, this.from});
+
+  final String label;
+  final int requiredHp;
+  final String? from;
+
+  static HpTier fromLevel(LinkLevelTier t) => HpTier(
+        label: t.label,
+        requiredHp: t.requiredHp ?? 0,
+        from: t.from,
+      );
+}
+
+/// 从缓和表里抽出所有填了 `requiredHp` 的档位。
+List<HpTier> hpTiersOf(List<LinkLevelTier> tiers) {
+  final out = <HpTier>[];
+  for (final t in tiers) {
+    if (t.requiredHp != null) out.add(HpTier.fromLevel(t));
+  }
+  return out;
+}
+
+/// 当前生效的血量门槛（按 `from` 判断；都没公布日期则返回 null）
+HpTier? currentHpTier(List<HpTier> tiers, {DateTime? now}) {
+  final today = now ?? DateTime.now();
+  HpTier? best;
+  for (final t in tiers) {
+    final d = _parse(t.from);
+    if (d == null) continue;
+    if (d.isAfter(today)) continue;
+    // 门槛越低越新（缓和方向是放宽），所以取最小的 requiredHp
+    if (best == null || t.requiredHp < best.requiredHp) best = t;
+  }
+  return best;
+}
+

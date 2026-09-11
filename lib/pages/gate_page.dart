@@ -12,6 +12,7 @@ import '../widgets/admonition.dart';
 import '../widgets/boss_section.dart';
 import '../widgets/class_section.dart';
 import '../widgets/item_card.dart';
+import '../widgets/link_level_list.dart';
 
 /// 单个门的页面。
 ///
@@ -63,6 +64,7 @@ class GatePage extends StatelessWidget {
           status: status,
           statusOf: statusOf,
           classData: classData,
+          linkLevels: linkLevels,
         ),
         if (status.unlocked) BossSection(gate: gate, linkLevels: linkLevels),
       ],
@@ -238,6 +240,7 @@ class _Body extends StatelessWidget {
     required this.status,
     required this.statusOf,
     required this.classData,
+    required this.linkLevels,
   });
 
   final Gate gate;
@@ -246,6 +249,7 @@ class _Body extends StatelessWidget {
   final GateStatus status;
   final GateStatus Function(String gateId) statusOf;
   final ClassData classData;
+  final GateLinkLevels? linkLevels;
 
   @override
   Widget build(BuildContext context) {
@@ -260,12 +264,16 @@ class _Body extends StatelessWidget {
       case TrackingKind.auto:
         return _buildPrerequisites(context);
       case TrackingKind.remainingHp:
+        return _buildRemainingHp(context);
       case TrackingKind.manual:
         return _buildManualConfirm(context, hint: null);
     }
   }
 
-  /// AIR 门：段位课程区 + 手动确认（当前课程是占位数据，门的解锁以手动确认为准）
+  /// AIR 门：段位课程区。
+  ///
+  /// 解锁判定就是「任一 CLASS 内所有组曲通关」（见 gate_status.dart），
+  /// 所以这里不再放手动确认开关——课程本身的勾选就是达成方式。
   Widget _buildClasses(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -281,11 +289,29 @@ class _Body extends StatelessWidget {
           meta: meta,
           store: store,
         ),
-        const SizedBox(height: 18),
+      ],
+    );
+  }
+
+  /// UNIVERSE 门：剩余血量门槛（多段，按日期缓和）+ 手动确认开关。
+  ///
+  /// 「达成后标记」放在血量表**下面**，因为要先看到自己该达到多少血。
+  Widget _buildRemainingHp(BuildContext context) {
+    final tiers = hpTiersOf(linkLevels?.tiers ?? const []);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: '剩余血量要求',
+          trailing: status.unlocked ? '已达成' : '未达成',
+          trailingColor: status.unlocked ? AppTheme.accent : AppTheme.textDim,
+        ),
+        HpRequirementList(tiers: tiers, note: linkLevels?.note),
+        const SizedBox(height: 8),
         _buildManualConfirm(
           context,
-          hint: '课程的组曲勾选只是记录进度，方便你看清还差哪几组。\n'
-              '因为段位课程还是占位数据，AIR 门是否已解锁请以这个开关为准。',
+          hint: '通关 RE:VERSE 时，剩余血量需要达到上表当前生效的值才算通关门。\n'
+              '达成后打开下面的开关。',
         ),
       ],
     );

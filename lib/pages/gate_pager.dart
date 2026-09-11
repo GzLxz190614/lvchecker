@@ -61,7 +61,7 @@ class _GatePagerState extends State<GatePager> {
 
   @override
   Widget build(BuildContext context) {
-    final statuses = evaluateAll(widget.gates, widget.store);
+    final statuses = evaluateAll(widget.gates, widget.store, classData: widget.classData);
 
     final conditionGates = widget.gates.where((g) => !g.isReward).toList();
     final rewardGates = widget.gates.where((g) => g.isReward).toList();

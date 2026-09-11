@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-检查 pubspec.yaml 的资源声明与磁盘上的实际目录是否一致。
+校验 pubspec.yaml 里逐文件声明的资源列表与磁盘是否一致。
 
-为什么需要这个脚本：
-    实测教训——把资源声明写成 `assets/img/`（只一级）时，APK 里所有曲绘都读不到，
-    app 里满屏「图片丢失」，但编译完全成功。这种「编译过了但图全丢」的问题
-    在无法本地运行 app 的情况下极难发现。
-    所以这里做静态校验，把它挡在 CI 之前。
+为什么需要：
+    Flutter 的 assets 声明**不递归**子目录。声明 `assets/img/music/` 时，
+    `assets/img/music/51/jacket.png` 这类三级路径不会被 pack 进包。
+    症状是：编译成功、analyze 无 error、APK 能装，但运行时满屏「图片丢失」。
+    这个坑踩了两次，所以用静态校验把它挡在构建之前。
+
+校验三件事：
+    ① 声明的每个路径在磁盘上都存在
+    ② assets/img 下每个 PNG 都被声明了（漏声明 = APK 里没有这张图）
+    ③ data/ 下四个必需 JSON 都被声明了
 
 用法：
     python tools/check_assets.py
+    修复：python tools/gen_asset_list.py
 """
 
 from __future__ import annotations
@@ -26,101 +32,91 @@ try:
 except Exception:  # noqa: BLE001
     pass
 
+REQUIRED_DATA = ("meta.json", "gates.json", "linklevels.json", "classes.json")
+
 
 def declared_assets() -> list[str]:
-    """从 pubspec.yaml 里手工抓 flutter.assets 列表。
+    """抓 pubspec 里 flutter.assets 下的项目。
 
-    不引入 PyYAML 依赖——只需要取一段缩进列表，正则足够且不会因为
-    缩进风格变化而误判。
+    只取 `  assets:` 段之后的 `    - path` 行，不碰其它键。
     """
     text = (ROOT / "pubspec.yaml").read_text(encoding="utf-8")
     lines = text.split("\n")
 
     out: list[str] = []
     in_assets = False
-    base_indent = 0
     for line in lines:
         stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            continue
         if re.match(r"^\s*assets:\s*$", line):
             in_assets = True
-            base_indent = len(line) - len(line.lstrip())
             continue
         if in_assets:
-            indent = len(line) - len(line.lstrip())
-            if indent <= base_indent:
-                in_assets = False
+            if not stripped or stripped.startswith("#"):
                 continue
-            m = re.match(r"^\s*-\s*(\S+)\s*$", line)
+            m = re.match(r"^\s{4,}-\s*(\S+)\s*$", line)
             if m:
                 out.append(m.group(1))
+                continue
+            # 遇到别的键（缩进更浅）就结束
+            if re.match(r"^\s{0,4}\S", line):
+                in_assets = False
     return out
 
 
 def main() -> int:
     declared = declared_assets()
     if not declared:
-        print("❌ pubspec.yaml 里找不到 flutter.assets 声明")
+        print("❌ pubspec.yaml 里找不到 assets 列表")
         return 1
 
-    print(f"pubspec 声明了 {len(declared)} 项资源：")
-    for d in declared:
-        print(f"  {d}")
+    print(f"pubspec 声明了 {len(declared)} 项资源")
 
     problems: list[str] = []
     warnings: list[str] = []
 
-    # ① data/ 必须至少覆盖 meta.json 与 gates.json
-    data_dir = ROOT / "data"
-    if "data/" in declared:
-        for required in ("meta.json", "gates.json", "linklevels.json", "classes.json"):
-            if not (data_dir / required).exists():
-                problems.append(f"  ✗ data/{required} 不存在（app 运行时会加载失败）")
-    else:
-        warnings.append("  · pubspec 没有声明 'data/'，app 将找不到 gates.json / meta.json")
+    # ① 声明的路径是否存在
+    on_disk = set()
+    for a in declared:
+        p = ROOT / a
+        if not p.exists():
+            problems.append(f"  ✗ 声明了 '{a}' 但磁盘上不存在")
+        else:
+            on_disk.add(a)
 
-    # ② assets/img/* 必须逐个列出二级子目录
+    # ② 每个 PNG 是否都声明了
     img_root = ROOT / "assets" / "img"
     if img_root.exists():
-        on_disk = sorted(p.name for p in img_root.iterdir() if p.is_dir())
-        for sub in on_disk:
-            want = f"assets/img/{sub}/"
-            if want not in declared:
-                problems.append(
-                    f"  ✗ {want} 在磁盘上存在但 pubspec 没声明 —— "
-                    f"这个目录下的图在 app 里会全部显示「图片丢失」"
-                )
+        pngs = {p.relative_to(ROOT).as_posix() for p in img_root.rglob("*.png")}
+        missing = sorted(pngs - set(declared))
+        if missing:
+            problems.append(
+                f"  ✗ {len(missing)} 个 PNG 没有在 pubspec 里声明"
+                f"（这些图不会进 APK，app 里会显示「图片丢失」）："
+            )
+            for m in missing[:8]:
+                problems.append(f"      {m}")
+            if len(missing) > 8:
+                problems.append(f"      …… 还有 {len(missing) - 8} 个")
+            problems.append("    修复：python tools/gen_asset_list.py")
+        print(f"  磁盘上 PNG：{len(pngs)} 个，全部已声明" if not missing else f"  磁盘上 PNG：{len(pngs)} 个")
 
-        # ③ 反向：声明了但磁盘上没有
-        for d in declared:
-            if d.startswith("assets/img/"):
-                if not (ROOT / d).exists():
-                    problems.append(f"  ✗ pubspec 声明的 '{d}' 在磁盘上不存在")
+    # ③ data/ 必需文件
+    for name in REQUIRED_DATA:
+        rel = f"data/{name}"
+        if (ROOT / rel).exists() and rel not in declared:
+            problems.append(f"  ✗ {rel} 存在但没声明（app 加载数据会失败）")
 
-        # ④ 有多少个 id 子目录（只是信息，用于提醒新增时要补声明）
-        for sub in on_disk:
-            n = sum(1 for p in (img_root / sub).iterdir() if p.is_dir())
-            print(f"    assets/img/{sub}/ 下有 {n} 个 id 目录")
-
-    # ⑤ 每个 id 目录里应该有图（music/avatar）或至少 meta.json
-    missing_meta: list[str] = []
-    for sub in ("music", "avatar"):
-        d = img_root / sub
-        if not d.exists():
-            continue
-        for id_dir in sorted(p for p in d.iterdir() if p.is_dir()):
-            if not (id_dir / "meta.json").exists():
-                missing_meta.append(f"assets/img/{sub}/{id_dir.name}/meta.json")
-    if missing_meta:
-        warnings.append(f"  · {len(missing_meta)} 个 id 目录缺 meta.json（不影响 app，但不利于维护）")
+    # ④ 声明了但没用到（提示）
+    ids_in_use = {a.split("/")[2] for a in declared if a.startswith("assets/img/music/") and len(a.split("/")) > 3}
+    if ids_in_use:
+        print(f"  music 目录：{len(ids_in_use)} 首")
 
     print()
     if problems:
         print("❌ 资源声明有问题：")
         print("\n".join(problems))
     else:
-        print("✅ 资源声明与磁盘目录一致")
+        print("✅ 资源声明完整且与磁盘一致")
 
     if warnings:
         print("\n⚠️ 提示：")

@@ -102,6 +102,19 @@ jobs:
           grep -qE 'minSdk[[:space:]]*=[[:space:]]*29' "$F"
           echo "OK: applicationId 与 minSdk=29 已生效"
 
+      # 应用显示名。flutter create 会把 label 设成项目名（lvchecker），
+      # 这里改成要显示的名字。桌面图标下面和系统设置里看到的就是它。
+      - name: Set app display name
+        run: |
+          set -e
+          M=android/app/src/main/AndroidManifest.xml
+          sed -i -E 's/(android:label=")[^"]*(")/\1Linked VERSE Checker\2/' "$M"
+          echo '----- AndroidManifest 关键行 -----'
+          grep -nE 'android:label|package=' "$M" || true
+          echo '----- 断言 -----'
+          grep -q 'android:label="Linked VERSE Checker"' "$M"
+          echo "OK: 显示名已设为 Linked VERSE Checker"
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -111,6 +124,8 @@ jobs:
       - name: Static checks (dart / assets / classes)
         run: |
           set -e
+          # 先按磁盘现状重建资源列表，再校验（避免「加了图但忘了声明」漏过）
+          python3 tools/gen_asset_list.py
           python3 tools/check_dart.py
           python3 tools/check_assets.py
           python3 tools/check_classes.py

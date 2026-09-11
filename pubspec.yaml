@@ -15,38 +15,115 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^4.0.0
-  # 从 icon.png 生成各尺寸的 Android 启动图标（在 CI 里跑，本地不需要）
+  # 从仓库根目录的 icon.png 生成各密度的 Android 启动图标。
+  # 由 CI 执行 `dart run flutter_launcher_icons`，本地无需 Flutter。
   flutter_launcher_icons: ^0.14.1
 
 flutter:
   # 必须为 true。
   # 代码里用了 Icons.*（chevron_right / check_circle / settings_outlined 等），
-  # 这些字形来自 MaterialIcons 字体。设为 false 时编译器不会报错，
-  # 但运行时所有图标会显示成空白方块——这种「编译过但看起来坏了」的坑很难查。
+  # 这些字形来自 MaterialIcons 字体。设为 false 时编译器不报错，
+  # 但运行时所有图标会变成空白方块——这种「编译过但看起来坏了」的坑很难查。
   uses-material-design: true
 
   # ------------------------------------------------------------------
-  # 资源声明。
+  # 资源列表：**必须逐文件列出**，不能只写目录。
   #
-  # ⚠️ 这里**必须逐个列出子目录**，不能只写 `assets/img/`。
+  # Flutter 的 assets 声明不递归子目录：声明 `assets/img/music/` 时，
+  # `assets/img/music/51/jacket.png` 这类三级路径不会被 pack 进包。  # 结果是编译成功、analyze 无 error、运行时却满屏「图片丢失」。
   #
-  # 实测教训：只声明 `assets/img/` 时，APK 里所有曲绘都读不到，
-  # app 里满屏「图片丢失」。原因见下面这条 issue 描述的 Flutter 名单生成行为，
-  # 它不会稳定地把多级嵌套目录里的文件都收进来。
-  # 显式列出后，每个目录里散落的 PNG 与 meta.json 都会被收进 APK。
-  #
-  # 代价是：build.py 生成新的 id 目录后，要往这里补一行。
-  # tools/check_assets.py 会检查「pubspec 声明」与「磁盘上实际目录」是否一致，
-  # 不一致就报错，避免再次出现「编译过了但图全丢」。
+  # 下面这段由 tools/gen_asset_list.py 生成（tools/build.py 也会调用），
+  # 请勿手动编辑。新增曲目后重跑 tools/build.py 即可。
   # ------------------------------------------------------------------
   assets:
-    - data/
-    - assets/img/music/
-    - assets/img/chara/
-    - assets/img/avatar/
+    - data/classes.json
+    - data/gates.json
+    - data/linklevels.json
+    - data/meta.json
+    - assets/img/avatar/6104401/icon.png
+    - assets/img/avatar/6104401/tex.png
+    - assets/img/avatar/6204401/icon.png
+    - assets/img/avatar/6204401/tex.png
+    - assets/img/avatar/6704401/icon.png
+    - assets/img/avatar/6704401/tex.png
+    - assets/img/chara/24320/image.png
+    - assets/img/music/100/jacket.png
+    - assets/img/music/101/jacket.png
+    - assets/img/music/105/jacket.png
+    - assets/img/music/107/jacket.png
+    - assets/img/music/108/jacket.png
+    - assets/img/music/140/jacket.png
+    - assets/img/music/141/jacket.png
+    - assets/img/music/147/jacket.png
+    - assets/img/music/148/jacket.png
+    - assets/img/music/151/jacket.png
+    - assets/img/music/152/jacket.png
+    - assets/img/music/163/jacket.png
+    - assets/img/music/180/jacket.png
+    - assets/img/music/2050/jacket.png
+    - assets/img/music/2266/jacket.png
+    - assets/img/music/2326/jacket.png
+    - assets/img/music/2327/jacket.png
+    - assets/img/music/2353/jacket.png
+    - assets/img/music/2354/jacket.png
+    - assets/img/music/2355/jacket.png
+    - assets/img/music/2493/jacket.png
+    - assets/img/music/2556/jacket.png
+    - assets/img/music/2597/jacket.png
+    - assets/img/music/2704/jacket.png
+    - assets/img/music/2705/jacket.png
+    - assets/img/music/2712/jacket.png
+    - assets/img/music/2802/jacket.png
+    - assets/img/music/2838/jacket.png
+    - assets/img/music/2846/jacket.png
+    - assets/img/music/2858/jacket.png
+    - assets/img/music/2869/jacket.png
+    - assets/img/music/2880/jacket.png
+    - assets/img/music/2891/jacket.png
+    - assets/img/music/2919/jacket.png
+    - assets/img/music/2938/jacket.png
+    - assets/img/music/2954/jacket.png
+    - assets/img/music/2966/jacket.png
+    - assets/img/music/2967/jacket.png
+    - assets/img/music/2968/jacket.png
+    - assets/img/music/2969/jacket.png
+    - assets/img/music/2970/jacket.png
+    - assets/img/music/2971/jacket.png
+    - assets/img/music/2972/jacket.png
+    - assets/img/music/2973/jacket.png
+    - assets/img/music/2974/jacket.png
+    - assets/img/music/2975/jacket.png
+    - assets/img/music/2976/jacket.png
+    - assets/img/music/2977/jacket.png
+    - assets/img/music/2978/jacket.png
+    - assets/img/music/2999/jacket.png
+    - assets/img/music/3000/jacket.png
+    - assets/img/music/384/jacket.png
+    - assets/img/music/407/jacket.png
+    - assets/img/music/483/jacket.png
+    - assets/img/music/51/jacket.png
+    - assets/img/music/53/jacket.png
+    - assets/img/music/59/jacket.png
+    - assets/img/music/629/jacket.png
+    - assets/img/music/63/jacket.png
+    - assets/img/music/64/jacket.png
+    - assets/img/music/65/jacket.png
+    - assets/img/music/67/jacket.png
+    - assets/img/music/69/jacket.png
+    - assets/img/music/70/jacket.png
+    - assets/img/music/71/jacket.png
+    - assets/img/music/712/jacket.png
+    - assets/img/music/74/jacket.png
+    - assets/img/music/75/jacket.png
+    - assets/img/music/76/jacket.png
+    - assets/img/music/777/jacket.png
+    - assets/img/music/788/jacket.png
+    - assets/img/music/79/jacket.png
+    - assets/img/music/80/jacket.png
+    - assets/img/music/82/jacket.png
+    - assets/img/music/95/jacket.png
 
-# 启动图标：从仓库根目录的 icon.png 生成各密度的 mipmap。
-# CI 里执行 `dart run flutter_launcher_icons` 即可，本地无需 Flutter。
+# 启动图标配置（见上面的 flutter_launcher_icons 依赖）。
 flutter_launcher_icons:
   android: true
   ios: false
