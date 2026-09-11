@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../data/gate_status.dart';
 import '../data/progress_store.dart';
+// MetaTable 定义在这个文件里，一定要导入。
+// （之前我按「未使用」把它删掉过一次，结果 MetaTable 变成未定义类型——
+//  analyze 报 undefined_class，test 阶段直接编译失败。）
+import '../models/entry.dart';
 import '../models/gate.dart';
 import '../theme.dart';
 import 'gate_page.dart';
@@ -32,7 +36,7 @@ class GatePager extends StatefulWidget {
 }
 
 class _GatePagerState extends State<GatePager> {
-  late PageController _controller = PageController();
+  final PageController _controller = PageController();
 
   @override
   void initState() {

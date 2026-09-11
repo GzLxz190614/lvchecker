@@ -99,5 +99,10 @@ desktop.ini
 *.class
 output-metadata.json
 
+# 本地专用目录 —— 都不进仓库
+# condition/：游戏解包原始资源（.c2s 谱面 / .dds 图 / .xml 定义），版权属 SEGA
+# preview/  ：验收预览图，可由 tools/preview.py 重新生成
+# action_logs/：CI 日志下载，临时排查用，会随每次运行增长
 condition
 preview
+action_logs
