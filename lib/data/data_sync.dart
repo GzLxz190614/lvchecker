@@ -112,7 +112,12 @@ class DataSync {
     UrlSource('https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/', 'raw.githubusercontent'),
     UrlSource('https://raw.githack.com/GzLxz190614/lvchecker/main/data/', 'raw.githack'),
     // ⑥ Gitee 镜像（国内兜底）。见 GiteeSource 的说明。
-    GiteeSource('gzlxz190614/lvchecker', 'master', 'data', 'Gitee 镜像'),
+    //
+    // ⚠️ 分支名是 **main**，不是 Gitee 传统的 master。
+    //    Gitee 建仓库时默认是 master，但这个仓库已经在网页上把默认分支改成 main 了，
+    //    实测 `raw.giteeusercontent.com/.../raw/main/data/gates.json` 返回 200 + 正确的 dataVersion。
+    //    如果哪天在 Gitee 上又改了默认分支名，**这里必须同步改**，否则 app 会一直 404。
+    GiteeSource('gzlxz190614/lvchecker', 'main', 'data', 'Gitee 镜像'),
   ];
 
   static const Duration _timeout = Duration(seconds: 12);
@@ -474,16 +479,21 @@ class ApiSource extends DataSource {
 ///
 /// 端点：`https://gitee.com/{owner}/{repo}/raw/{branch}/{dir}/{file}`
 ///
-/// ⚠️ 两个必须知道的点（都来自 Gitee 官方帮助中心，已核实）：
+/// ⚠️ 三个必须知道的点：
 ///
-/// 1. **公开仓库的 raw 会被强制重定向**到独立域名 `raw.giteeusercontent.com`。
+/// 1. **公开仓库的 raw 会被强制重定向**到独立域名 `raw.giteeusercontent.com`
+///    （[Gitee 帮助中心](https://help.gitee.com/repository/file-operate/raw) 明确写了，也实测确认）。
 ///    也就是说 `gitee.com/.../raw/...` 并不是真正的文件地址，只是一次跳转。
 ///    为了让「哪个域名不通」这件事可诊断，这里**先把两条路都试一遍**：
-///    ① gitee.com 的 raw 端点（不跟随重定向）
+///    ① gitee.com 的 raw 端点（http 包会自动跟随重定向）
 ///    ② raw.giteeusercontent.com 的最终地址（直达）
 ///    哪条通用哪条；两条都记进错误信息里。
 ///
-/// 2. **没有 GitHub Contents API 那种匿名配额**（GitHub 是 60 次/小时/IP，
+/// 2. **分支名跟 Gitee 仓库的默认分支走**。这个仓库用的是 `main`
+///    （Gitee 建仓库的传统默认是 `master`，但这里在网页上改过）。
+///    分支名写错的表现是稳定的 404，不是「偶尔失败」——所以排查时先确认这个。
+///
+/// 3. **没有 GitHub Contents API 那种匿名配额**（GitHub 是 60 次/小时/IP，
 ///    在运营商 NAT 下很容易被别的用户耗光）。Gitee 的 raw 是普通 GET + CDN 缓存
 ///    （Cache-Control 60~300 秒），所以同一个源可以被反复请求而不会「用着用着就 403」。
 ///    这也是加 Gitee 的主要理由之一，不只是「换个域名试试」。

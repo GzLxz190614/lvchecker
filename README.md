@@ -272,7 +272,7 @@ app 支持从[落雪查分器](https://maimai.lxns.net/)导入成绩，**辅助�
 3. https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/
 4. https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/
 5. https://raw.githack.com/GzLxz190614/lvchecker/main/data/
-6. https://gitee.com/gzlxz190614/lvchecker/raw/master/data/  ← Gitee 镜像（国内兜底）
+6. https://gitee.com/gzlxz190614/lvchecker/raw/main/data/    ← Gitee 镜像（国内兜底）
 ```
 
 > ⚠️ **关于「国内连不上」**：实测在部分国内网络下，`githubusercontent` 系域名整体不可达
@@ -305,9 +305,15 @@ git remote add gitee git@gitee.com:gzlxz190614/lvchecker.git
 git push origin main && git push gitee main
 ```
 
+两个仓库的默认分支名都是 `main`，所以命令是对称的。
+
 > ❌ **不要**用 `git remote set-url --add --push origin <gitee>` 的方式配「一次推两个」。
 > 那样只要有一个失败，`git push` 就整体报错，而另一个其实**已经推成功了** ——
 > 你会以为失败去重试，实际上是在做多余的事。两个独立 remote、失败一目了然。
+>
+> ❌ **也不要**用 `git config branch.main.merge refs/heads/main` 之类的方式去「绑定」上游。
+> `branch.<name>.merge` 同时就是**上游分支**的定义，改了它会让 `git pull` 和不带参数的
+> `git push` 都跑到 Gitee 去。显式写 `git push gitee main` 最不容易出错。
 
 **漂移怎么发现**：两个仓库是独立的，很容易出现「GitHub 推了新数据、Gitee 还是旧的」。
 这时 Gitee 源是**通的、只是内容旧**，光看「成功/失败」根本看不出来。所以：
@@ -317,8 +323,9 @@ git push origin main && git push gitee main
   就会直接标红提示「各源的数据版本不一致 → 有仓库没推最新数据」
 - 同步时会比对 `dataVersion`，版本没变就算「无变化」，所以旧镜像**不会**被当成新数据写进缓存
 
-> 如果 Gitee 上默认分支不是 `master`（比如建仓库时选过），要改
-> `lib/data/data_sync.dart` 里 `GiteeSource(...)` 的第二个参数。
+> 如果 Gitee 上默认分支不是 `main`（比如当初建仓库时用了 `master`），要改
+> `lib/data/data_sync.dart` 里 `GiteeSource('gzlxz190614/lvchecker', 'main', ...)`
+> 的第二个参数。**分支名写错的表现是稳定的 404，不是偶尔失败**，所以排查时先确认这个。
 
 ### 启用 GitHub Pages（一次性，可选）
 

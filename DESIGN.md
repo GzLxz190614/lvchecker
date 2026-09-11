@@ -1043,10 +1043,14 @@ UI 同时显示两个状态：
 | 3 | jsDelivr | `https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/gates.json` | |
 | 4 | raw | `https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/gates.json` | 国内常被拦 |
 | 5 | githack | `https://raw.githack.com/GzLxz190614/lvchecker/main/data/gates.json` | 国内常被拦 |
-| 6 | **Gitee 镜像** | `https://gitee.com/gzlxz190614/lvchecker/raw/master/data/gates.json` → 302 → `https://raw.giteeusercontent.com/...` | 国内兜底，无配额 |
+| 6 | **Gitee 镜像** | `https://gitee.com/gzlxz190614/lvchecker/raw/main/data/gates.json` → 302 → `https://raw.giteeusercontent.com/...` | 国内兜底，无配额 |
 
 同样的 4 个文件：`meta.json` / `gates.json` / `linklevels.json` / `classes.json`。
 
+> **分支名是 `main`**（Gitee 建仓库的传统默认是 `master`，但这个仓库在网页上改过）。
+> 实测 `raw.giteeusercontent.com/gzlxz190614/lvchecker/raw/main/data/gates.json`
+> 返回 200 且 `dataVersion` 正确。分支名写错的表现是**稳定的 404**，不是偶尔失败。
+>
 > Gitee 那条会**先 302 到独立域名**，所以 `GiteeSource` 把两条路都试一遍，
 > 并把各自的原因都报出来——这样能区分「404 = 忘了推镜像」和「域名不通」。见 Q16。
 
@@ -1526,25 +1530,36 @@ ssh -T git@github.com            # 验证
 **Gitee 镜像（国内兜底，见 Q16）**：
 
 ```bash
-# 一次性添加。默认分支按 Gitee 建仓库时的选择填 master 或 main
+# 一次性添加
 git remote add gitee git@gitee.com:gzlxz190614/lvchecker.git
 
-# Gitee 也用同一套 SSH key 就行；验证
+# Gitee 也用同一套 SSH key；首次连接会问 fingerprint，答 yes
 ssh -T git@gitee.com
 
 # 首次推全量
-git push -u gitee master
+git push -u gitee main
 ```
 
-> 如果 Gitee 上仓库的默认分支是 `main` 而不是 `master`，就把上面和
-> `lib/data/data_sync.dart` 里 `GiteeSource('gzlxz190614/lvchecker', 'master', ...)`
-> 的第二个参数一起改成 `main`。两边必须一致，否则 app 会一直 404。
+> 两个仓库的默认分支名**都是 `main`**（Gitee 侧在网页上改过默认分支）。
+> 如果哪天又改回 `master`，`lib/data/data_sync.dart` 里
+> `GiteeSource('gzlxz190614/lvchecker', 'main', ...)` 的第二个参数必须一起改，
+> 否则 app 会一直 404。
 
 之后每次改完数据：
 
 ```bash
-git push origin main && git push gitee master
+git push origin main && git push gitee main
 ```
+
+> ⚠️ 两个「别这么干」：
+>
+> - `git remote set-url --add --push origin <gitee>`：一个失败 = 整体报错，
+>   而另一个其实已经推成功，会误导排查方向。
+> - `git config branch.main.merge refs/heads/main` 之类去「绑定」上游：
+>   `branch.<name>.merge` **同时就是上游分支的定义**，改了会让 `git pull`
+>   和不带参数的 `git push` 都跑到 Gitee 去。
+>
+> 显式写 `git push gitee main` 最不容易出错。
 
 ### 13.3 发版拿 APK
 
