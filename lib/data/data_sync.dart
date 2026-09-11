@@ -61,23 +61,26 @@ class DataSync {
   /// 要同步的文件名（都在 data/ 下）
   static const List<String> files = ['meta.json', 'gates.json', 'linklevels.json', 'classes.json'];
 
-  /// 源的顺序就是优先级，第一个可用即生效。
+  /// 数据源。
   ///
-  /// 为什么第一个是 GitHub Pages：
-  ///   实测在部分国内网络下，**GitHub 系域名整体不可达**——
-  ///   raw.githubusercontent.com / raw.githack.com / cdn.jsdelivr.net 全部 DNS 解析失败。
-  ///   而 `*.github.io` 是**另一个域名**，走的是另一套 CDN，在很多这类网络下能通。
-  ///   所以数据会由 CI 额外发布一份到 Pages（见 .github/workflows/publish-pages.yml）。
+  /// 为什么要有两种类型：
+  ///   实测在部分国内网络下，**githubusercontent 系域名整体不可达**
+  ///   （raw.githubusercontent.com / raw.githack.com 以及 jsDelivr 全部 DNS 解析失败）。
+  ///   但 `github.com` 本身与 **`api.github.com` 能解析**——
+  ///   所以额外加一条走 GitHub Contents API 的通路，它返回 base64 内容，
+  ///   完全不碰 githubusercontent 域名。
   ///
-  ///   注意 Pages 只能 serve 仓库根目录或 /docs，而数据在 data/ 下，
-  ///   所以发布时把文件**平铺**到 Pages 根路径，URL 就是 .../lvchecker/data/meta.json。
-  ///
-  /// 仓库是 public，所有源都不需要 token。
-  static const List<String> sources = [
-    'https://gzlxz190614.github.io/lvchecker/data/',
-    'https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/',
-    'https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/',
-    'https://raw.githack.com/GzLxz190614/lvchecker/main/data/',
+  ///   GitHub Pages（`*.github.io`）是另一个域名、另一套 CDN，也列在前面当主源，
+  ///   但它需要**先在仓库设置里启用一次**，否则 CI 发布不了（GITHUB_TOKEN 无权创建站点）。
+  static const List<DataSource> sources = [
+    // ① Pages：最快，但需要先手动启用一次
+    UrlSource('https://gzlxz190614.github.io/lvchecker/data/', 'GitHub Pages'),
+    // ② GitHub Contents API：走 api.github.com，绕开被封的 raw 域名
+    ApiSource('GzLxz190614/lvchecker', 'main', 'data', 'GitHub API'),
+    // ③ ~ ⑤ 常见 CDN 与 raw（部分地区可用）
+    UrlSource('https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/', 'jsDelivr'),
+    UrlSource('https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/', 'raw.githubusercontent'),
+    UrlSource('https://raw.githack.com/GzLxz190614/lvchecker/main/data/', 'raw.githack'),
   ];
 
   static const Duration _timeout = Duration(seconds: 12);
@@ -131,21 +134,18 @@ class DataSync {
         var done = false;
         final errors = <String>[];
 
-        for (final base in sources) {
-          final url = '$base$name';
-          final host = Uri.parse(url).host;
+        for (final source in sources) {
           try {
-            final resp = await client.get(Uri.parse(url)).timeout(_timeout);
-            if (resp.statusCode != 200) {
-              errors.add('$host: HTTP ${resp.statusCode}');
+            final text = await source.fetch(client, name, _timeout);
+            if (text == null) {
+              errors.add('${source.host}: 取不到（HTTP 非 200）');
               continue;
             }
 
             // 校验：必须是能解析的 JSON 对象，否则可能存在中间层错误页
-            final text = utf8.decode(resp.bodyBytes);
             final decoded = jsonDecode(text);
             if (decoded is! Map) {
-              errors.add('$host: 返回的不是 JSON 对象');
+              errors.add('${source.host}: 返回的不是 JSON 对象');
               continue;
             }
 
@@ -153,7 +153,7 @@ class DataSync {
             final target = cacheFile(name);
             if (target.existsSync() && target.readAsStringSync() == text) {
               results.add(SyncResult(file: name, outcome: SyncOutcome.unchanged));
-              usedSource ??= host;
+              usedSource ??= source.host;
               done = true;
               break;
             }
@@ -164,11 +164,11 @@ class DataSync {
             await tmp.rename(target.path);
 
             results.add(SyncResult(file: name, outcome: SyncOutcome.updated));
-            usedSource ??= host;
+            usedSource ??= source.host;
             done = true;
             break;
           } catch (e) {
-            errors.add('$host: ${_shortError(e)}');
+            errors.add('${source.host}: ${_shortError(e)}');
           }
         }
 
@@ -206,28 +206,40 @@ class DataSync {
   /// 逐个源做一次连通性测试，给设置页用。
   ///
   /// 目的：当所有源都失败时，能一眼看出**是全部域名都不通，还是只有某一个**。
-  /// 探测的是 `data/gates.json`（体积小、必然存在）。
+  /// 探测的是 `gates.json`（体积小、必然存在）。
   Future<List<SourceProbe>> probeSources() async {
     final client = http.Client();
     final out = <SourceProbe>[];
     try {
-      for (final base in sources) {
-        final url = '${base}gates.json';
-        final host = Uri.parse(url).host;
+      for (final source in sources) {
         final sw = Stopwatch()..start();
         try {
-          final resp = await client.get(Uri.parse(url)).timeout(const Duration(seconds: 8));
+          final text = await source.fetch(client, 'gates.json', const Duration(seconds: 8));
           sw.stop();
+          if (text == null) {
+            out.add(SourceProbe(
+              host: source.host,
+              label: source.label,
+              ok: false,
+              detail: '取不到（HTTP 非 200）',
+              millis: sw.elapsedMilliseconds,
+            ));
+            continue;
+          }
+          // 内容也得像样，避免把一次错误页当成「通」
+          final okJson = jsonDecode(text) is Map;
           out.add(SourceProbe(
-            host: host,
-            ok: resp.statusCode == 200,
-            detail: resp.statusCode == 200 ? '正常' : 'HTTP ${resp.statusCode}',
+            host: source.host,
+            label: source.label,
+            ok: okJson,
+            detail: okJson ? '正常' : '返回的不是 JSON',
             millis: sw.elapsedMilliseconds,
           ));
         } catch (e) {
           sw.stop();
           out.add(SourceProbe(
-            host: host,
+            host: source.host,
+            label: source.label,
             ok: false,
             detail: _shortError(e),
             millis: sw.elapsedMilliseconds,
@@ -253,13 +265,119 @@ class DataSync {
 class SourceProbe {
   const SourceProbe({
     required this.host,
+    required this.label,
     required this.ok,
     required this.detail,
     required this.millis,
   });
 
   final String host;
+
+  /// 显示名（例如「GitHub API」），比域名好认
+  final String label;
+
   final bool ok;
   final String detail;
   final int millis;
+}
+
+/// 数据源。
+abstract class DataSource {
+  const DataSource(this.label);
+
+  /// 显示用名字（设置页的连通性列表里会显示）
+  final String label;
+
+  /// 用于显示的主机名
+  String get host;
+
+  /// 取某个文件的内容；失败抛异常
+  Future<String?> fetch(http.Client client, String fileName, Duration timeout);
+}
+
+/// 直接的 URL 模板源：`<base><fileName>`
+class UrlSource extends DataSource {
+  const UrlSource(this.base, super.label);
+
+  final String base;
+
+  @override
+  String get host => Uri.parse(base).host;
+
+  @override
+  Future<String?> fetch(http.Client client, String fileName, Duration timeout) async {
+    final resp = await client.get(Uri.parse('$base$fileName')).timeout(timeout);
+    if (resp.statusCode != 200) return null;
+    return utf8.decode(resp.bodyBytes);
+  }
+}
+
+/// GitHub Contents API 源。
+///
+/// 端点：`https://api.github.com/repos/{owner}/{repo}/contents/{dir}/{file}?ref={branch}`
+///
+/// 好处是**只用 api.github.com 一个域名**，不碰被封的 githubusercontent 系。
+/// 代价是未认证请求有速率限制（每小时 60 次），本 app 每次同步只发 4 个请求，
+/// 且只在缓存过期或你手动点同步时才发，够用。
+///
+/// 取内容有两条路，**先试纯文本，失败再解 base64**：
+///   ① 请求头 `Accept: application/vnd.github.raw` —— 直接拿到文件原文
+///   ② 默认响应 —— 内容在 `content` 字段里，是 base64
+/// 实测 api.github.com 偶尔会返回 504（GitHub 侧临时故障），
+/// 所以两条路都留着，任一条成功即可。
+class ApiSource extends DataSource {
+  const ApiSource(this.repo, this.branch, this.dir, super.label);
+
+  final String repo;
+  final String branch;
+  final String dir;
+
+  @override
+  String get host => 'api.github.com';
+
+  Uri _uri(String fileName) =>
+      Uri.parse('https://api.github.com/repos/$repo/contents/$dir/$fileName?ref=$branch');
+
+  static const Map<String, String> _jsonHeaders = {
+    'Accept': 'application/vnd.github+json',
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  @override
+  Future<String?> fetch(http.Client client, String fileName, Duration timeout) async {
+    final uri = _uri(fileName);
+
+    // ① 直接要 raw 原文
+    try {
+      final rawResp = await client.get(
+        uri,
+        headers: const {
+          'Accept': 'application/vnd.github.raw',
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
+      ).timeout(timeout);
+      if (rawResp.statusCode == 200) {
+        final text = utf8.decode(rawResp.bodyBytes);
+        if (_looksLikeJsonObject(text)) return text;
+      }
+    } catch (_) {
+      // 落到下面走 base64
+    }
+
+    // ② 退回 base64
+    final resp = await client.get(uri, headers: _jsonHeaders).timeout(timeout);
+    if (resp.statusCode != 200) return null;
+    final body = jsonDecode(utf8.decode(resp.bodyBytes));
+    if (body is! Map) return null;
+    final content = body['content'];
+    if (content is! String) return null;
+    // GitHub 的 base64 带换行，解码前要去掉空白
+    final cleaned = content.replaceAll(RegExp(r'\s'), '');
+    return utf8.decode(base64Decode(cleaned));
+  }
+
+  static bool _looksLikeJsonObject(String text) {
+    final t = text.trimLeft();
+    return t.startsWith('{');
+  }
 }

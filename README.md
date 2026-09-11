@@ -228,25 +228,40 @@ app 支持从[落雪查分器](https://maimai.lxns.net/)导入成绩，**辅助�
 
 ```
 1. https://gzlxz190614.github.io/lvchecker/data/          ← GitHub Pages
-2. https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/
-3. https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/
-4. https://raw.githack.com/GzLxz190614/lvchecker/main/data/
+2. https://api.github.com/repos/.../contents/data/...     ← Contents API
+3. https://cdn.jsdelivr.net/gh/GzLxz190614/lvchecker@main/data/
+4. https://raw.githubusercontent.com/GzLxz190614/lvchecker/main/data/
+5. https://raw.githack.com/GzLxz190614/lvchecker/main/data/
 ```
 
-> ⚠️ **为什么第一个是 GitHub Pages**：实测在部分国内网络下，GitHub 系域名**整体不可达**
+> ⚠️ **关于「国内连不上」**：实测在部分国内网络下，`githubusercontent` 系域名整体不可达
 > （`raw.githubusercontent.com` / `raw.githack.com` / `cdn.jsdelivr.net` 全部 DNS 解析失败）。
-> 而 `*.github.io` 是**另一个域名、走另一套 CDN**，在很多这类网络下能通。
-> 数据由 `.github/workflows/publish-pages.yml` 在每次 `data/` 变更时自动发布。
+> 但 `github.com` 与 `api.github.com` 往往能解析，所以这里准备了三条不依赖 raw 域名的通路：
 >
-> 如果全部源都不通，**热更新就用不了**，但 app 完全正常——会一直用 APK 内置数据。
-> 设置页有「测试各数据源的连通性」按钮，可以逐个看出哪条通路可用。
+> - **GitHub Pages**（`*.github.io`，另一个域名 + 另一套 CDN）
+> - **GitHub Contents API**（只用 `api.github.com`，内容走 base64 解码）
+>
+> 全部源都不通时，**热更新用不了，但 app 完全正常**——会一直用 APK 内置数据。
+> 设置页有「测试各数据源的连通性」按钮，逐个显示哪个域名可用。
+
+### 启用 GitHub Pages（一次性，可选）
+
+Pages 让热更新更快，但需要**手动启用一次**（`GITHUB_TOKEN` 无权创建 Pages 站点，
+所以 CI 里的 `enablement: true` 也会失败，报 `Resource not accessible by integration`）：
+
+1. 打开 `Settings` → `Pages`
+2. `Source` 选 **GitHub Actions**
+3. 保存
+
+启用后，`data/` 每次变更都会由 `.github/workflows/publish-pages.yml` 自动发布。
+**不启用也没关系**——Contents API 那条通路不依赖 Pages。
 
 ### 排查同步问题
 
 设置页 → 数据同步：
 
 - 「立即同步数据」会列出**每个文件**的结果；失败时会把**每个源各自的原因**都写出来
-  （DNS 解析失败 / 超时 / HTTP 状态码），而不是只留最后一个。
+  （域名解析失败 / 超时 / HTTP 状态码），而不是只留最后一个。
 - 「测试各数据源的连通性」逐个源探测，一眼看出是全部域名都不通，还是只有某一个。
 
 ---
