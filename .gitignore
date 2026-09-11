@@ -106,3 +106,6 @@ output-metadata.json
 condition
 preview
 action_logs
+
+# git commit -F 用的提交信息临时文件（用完即删，避免被 git add -A 带进仓库）
+.commitmsg.tmp
