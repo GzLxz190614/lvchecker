@@ -89,8 +89,24 @@ void main() {
 
     test('真的不是日期的字符串返回 null（不能瞎猜）', () {
       expect(parseLocalDate('未公布'), isNull);
-      expect(parseLocalDate('2026/09/10'), isNull);
-      expect(parseLocalDate('2026-13-45'), isNull);
+      expect(parseLocalDate('2026/09/10'), isNull, reason: '斜杠不是 ISO 格式');
+      expect(parseLocalDate('2026-09'), isNull, reason: '缺日子');
+      expect(parseLocalDate('abc'), isNull);
+    });
+
+    test('超出范围的数字会被 DateTime 进位，而不是返回 null', () {
+      // ⚠️ 这条一开始我写错了：我以为 '2026-13-45' 会解析失败，
+      //    实测 `DateTime.tryParse` **不校验范围，直接进位** ——
+      //    13 月 45 日变成次年的 2 月 14 日。
+      //
+      //    这里记录真实行为，而不是我想当然的行为。
+      //    对本项目无实际影响：日期都是我们自己生成的，格式可控；
+      //    而且这种输入只可能来自手工改 JSON 时写错，属于「写错了要自己发现」。
+      final d = parseLocalDate('2026-13-45');
+      expect(d, isNotNull, reason: 'Dart 会进位而不是报错');
+      expect(d!.year, 2027, reason: '13 月 45 日 = 次年 2 月 14 日');
+      expect(d.month, 2);
+      expect(d.day, 14);
     });
 
     test('首尾空白会被忽略', () {

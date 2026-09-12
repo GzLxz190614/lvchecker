@@ -58,8 +58,14 @@ Future<ScrollPosition> _pumpAndSettleLayout(WidgetTester tester, String text) as
 }
 
 /// 动画时长上限是 9000ms（见 MarqueeText 的 clamp）。
-/// 要在测试里走完一个单程，模拟时间必须超过它，所以这里用 200 帧 × 50ms = 10s。
-const int _frames = 200;
+///
+/// 采样窗口必须覆盖**两个完整单程**才稳：动画是布局后才启动的，
+/// 起点比 `pumpWidget` 晚一帧，而往返要跑完「去 + 回」才会回到起点。
+/// 一开始只采 10 秒（≈1.1 个单程），于是断言「回到过起点」失败在
+/// nearest=1.55 —— 样本不够，不是代码不对。
+///
+/// 20 秒 ≈ 2.2 个单程，足够看到「到达尾部」和「回到起点」两件事。
+const int _frames = 400;
 const Duration _step = Duration(milliseconds: 50);
 
 /// 跑马灯里那个真正绘制文字的 RenderBox。
