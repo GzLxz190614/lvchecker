@@ -62,12 +62,19 @@ class LxnsCredentials {
     }
   }
 
-  static Future<void> clearToken() async {
+  /// 删除密钥。返回**是否删干净了**（读回来确认为空）。
+  ///
+  /// 为什么要读回来确认，而不是删完就当成功：平台通道失败时 `delete` 可能
+  /// 抛异常（被吞掉）也可能静默无效。如果这时界面报「已删除」，你下次导入
+  /// 却发现密钥还在，就会以为「删不掉」—— 不如当场告诉你没删掉。
+  static Future<bool> clearToken() async {
     try {
       await _storage.delete(key: _key);
     } catch (_) {
-      // 删不掉也没什么可做的；下次读到的还是旧值，用户可以覆盖保存
+      // 吞掉异常，但下面用 readToken 确认结果
     }
+    final left = await readToken();
+    return left == null;
   }
 
   /// 显示用的打码形式：只留前 4 位和后 4 位。

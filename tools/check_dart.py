@@ -308,8 +308,9 @@ def _balance_error(src: str) -> tuple[int, int, str]:
     i = 0
     n = len(src)
     quote: str | None = None
-    # 记录「这个 { 是插值进来的」——出栈时不匹配也不算错，
-    # 因为插值在 strip_comments 之后仍保留原样，但缩进/换行处理可能不完美。
+    # 进入字符串插值 `${` 时，把当时的字符串状态压这里；配对的 `}` 弹出来恢复。
+    # 空列表 = 栈顶那个 `{` 不是插值的（是普通代码块），别乱恢复。
+    quote_stack: list[str | None] = []
     in_string_start = 0
 
     def bump(ch: str) -> None:
@@ -361,6 +362,10 @@ def _balance_error(src: str) -> tuple[int, int, str]:
                         line, col + 1,
                         f"'{c}' 与第 {oline} 行第 {ocol} 列的 '{opener}' 不匹配",
                     )
+                # 如果这个 `}` 关的是一个字符串插值，就回到那个字符串里继续扫。
+                # 靠 quote_stack 有没有东西来判断栈顶是不是插值 `{`。
+                if c == "}" and quote_stack:
+                    quote = quote_stack.pop()
                 bump(c)
                 i += 1
                 continue
@@ -381,10 +386,22 @@ def _balance_error(src: str) -> tuple[int, int, str]:
             i += 1
             continue
         if c == "$" and i + 1 < n and src[i + 1] == "{":
-            # 字符串插值里的表达式：当代码处理
+            # 字符串插值：进入**代码模式**解析里面的表达式。
+            #
+            # ⚠️ 必须同时保存当前字符串状态（quote_stack）并清空 `quote`。
+            #    之前只 push 了 `{` 而没清 `quote`，于是插值体会继续被当成
+            #    字符串内容扫描 —— 它末尾的 `}` 因为「在字符串里」被当成普通字符，
+            #    那个 `{` 就永远留在栈上，稍后遇到 `)` 就报「不匹配」。
+            #    这个假阳性让每条 `${...}` 都误报，等于这条检查形同虚设。
+            #
+            #    恢复时机是配对的 `}`（见上面的 ")]}" 分支）：
+            #    弹出时若栈顶存的是字符串状态，就说明这个 `}` 关的是插值，
+            #    于是回到那个字符串里继续扫。
             bump(c)
             bump(src[i + 1])
             stack.append(("{", line, col + 1))
+            quote_stack.append(quote)
+            quote = None
             i += 2
             continue
         bump(c)

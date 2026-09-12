@@ -507,10 +507,10 @@ class _SettingsPageState extends State<SettingsPage> {
             OutlinedButton.icon(
               onPressed: _lxnsBusy ? null : () => _forgetToken(context),
               icon: const Icon(Icons.delete_outline, size: 17),
-              label: const Text('清除'),
+              label: const Text('删除密钥'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppTheme.textDim,
-                side: const BorderSide(color: AppTheme.border),
+                foregroundColor: const Color(0xFFE57373),
+                side: const BorderSide(color: Color(0xFF5A2A2A)),
                 minimumSize: const Size.fromHeight(40),
               ),
             ),
@@ -650,12 +650,48 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
+  /// 删除已保存的密钥。
+  ///
+  /// 二次确认是必须的：删掉就得回查分器网页重新生成、再复制粘贴一遍，
+  /// 而清除按钮就在「更换密钥」旁边，误触代价不小。
+  ///
+  /// ⚠️ 这里只删**本机保存的密钥**，不会去查分器上注销那个密钥 ——
+  ///    真要作废密钥得去查分器网页操作。这一点必须在弹窗里说清楚，
+  ///    否则容易误以为「删了就安全了」。
   Future<void> _forgetToken(BuildContext context) async {
-    await LxnsCredentials.clearToken();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surfaceHigh,
+        title: const Text('删除本机保存的密钥？', style: TextStyle(fontSize: 16)),
+        content: const Text(
+          '删除后本机不再保存密钥，想再用查分器导入就得重新填写一遍。\n\n'
+          '⚠️ 这只删本机的，**查分器那边的密钥不会失效** —— '
+          '要作废它请去查分器网页「账号详情」里操作。\n\n'
+          '进度勾选不受影响。',
+          style: TextStyle(fontSize: 13, height: 1.55, color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('删除', style: TextStyle(color: Color(0xFFE57373))),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    final gone = await LxnsCredentials.clearToken();
     await _refreshTokenState();
     if (!context.mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('已清除密钥')),
+      SnackBar(
+        content: Text(gone ? '已删除本机保存的密钥' : '删除失败：密钥仍然存在，请再试一次'),
+      ),
     );
   }
 
