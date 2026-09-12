@@ -187,6 +187,8 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
         final overflow = _measure(constraints.maxWidth);
         final available = constraints.maxWidth;
 
+        // 文字本体：**不裁剪、不加约束**，按自己的固有宽度绘制成一个长条。
+        // 移动它靠 Transform.translate，露出哪一段由外层容器裁剪决定。
         final text = AnimatedBuilder(
           animation: _c,
           builder: (context, _) => Transform.translate(
@@ -205,21 +207,34 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
           return Align(alignment: Alignment.centerLeft, child: text);
         }
 
-        // ⚠️ 这里的宽度必须是**可用宽度**，不能让它收缩到文字宽度。
+        // ⚠️⚠️ 为什么用 OverflowBox 而不是 Align（这个 bug 修过两次，第二次仍没修好）
         //
-        // 之前的写法是 `SizedBox(height: lineHeight, child: ClipRect(child: Align(...)))`，
-        // 只限了高度没限宽度，而 `Align` 在**有界**约束下会收缩到子项的固有宽度
-        // （只有在无界约束下才扩展到最大）。于是 ClipRect 被撑成了整段文字的宽度，
-        // 裁剪框跟着文字一起平移 —— 表现就是「字在动，但右边永远是空白，
-        // 看不到被遮挡的部分」。给 SizedBox 显式定宽之后，裁剪框才会固定在
-        // 可用宽度上，文字在里面平移，右边的字才会真正露出来。
+        // 第一版是 `SizedBox(height:) + ClipRect(Align(child: text))`；
+        // 第二版加了 `SizedBox(width: available)`，**现象完全没变**。
         //
-        // 高度不用手写：maxLines: 1 + softWrap: false 保证渲染就是一行，
-        // 高度由子项决定（写死反而可能和实际行高差一点，导致上下被切）。
+        // 原因是「文字最终按多宽布局」取决于 Align / ClipRect 内部的约束传递细节，
+        // 而那是 Flutter 内部行为 —— 这个项目**没有本地 Flutter 环境**，
+        // 我只能靠推断。推断错了两次，每次都要你装一次 APK 才知道结果。
+        //
+        // 所以这次换成不依赖任何传递行为的写法：
+        //
+        //   SizedBox(width: 可用宽度)        ← 裁剪框宽度**钉死**
+        //     └ ClipRect                     ← 按这个宽度裁剪
+        //         └ OverflowBox(maxWidth: ∞)  ← 明确告诉文字「你可以比裁剪框宽」
+        //             └ Transform.translate   ← 在框内平移
+        //
+        // `maxWidth: double.infinity` 是关键：无论 Flutter 怎么传递约束，
+        // 文字都会被允许按固有宽度布局成完整的一行。
+        // 之前那两版里文字很可能被挤成「可用宽度」→ 它一开始就是残缺的，
+        // 平移只是在移动一段本来就缺了尾巴的文字，右边当然永远是空白。
         return SizedBox(
           width: available,
           child: ClipRect(
-            child: Align(alignment: Alignment.centerLeft, child: text),
+            child: OverflowBox(
+              alignment: Alignment.centerLeft,
+              maxWidth: double.infinity,
+              child: text,
+            ),
           ),
         );
       },
