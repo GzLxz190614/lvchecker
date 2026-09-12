@@ -17,6 +17,10 @@
   这两种情况的共同点是：**编译期完全看不出来**，只有装到手机上才满屏「图片丢失」。
   所以在这里静态挡掉。
 
+⚠️ 本脚本**需要 Pillow**，没装就直接失败（不降级）。
+   原因见下面 ① 的注释：验不了却静默通过，等于假绿勾。
+   CI 里由 `Set up Python imaging (Pillow)` 那一步负责装。
+
 用法：
     python tools/check_image_format.py
 """
@@ -63,7 +67,14 @@ def main() -> int:
         import PIL
         from PIL import Image, features
     except ImportError as e:
+        # 这里**故意不降级**：本脚本存在的意义就是确认「图片能被正确读写」，
+        # 没有 Pillow 就什么都验不了，静默通过等于给一个假绿勾。
+        #
+        # （CI 里由 `Set up Python imaging (Pillow)` 那一步装好；
+        #  本地跑之前 pip install Pillow 即可。）
         print(f"❌ 没有装 Pillow：{e}")
+        print("   这个检查需要它能读图片才能判断扩展名与实际格式是否一致。")
+        print("   修复：python -m pip install 'Pillow>=10'")
         return 1
 
     ext = IMG_EXT.lower()

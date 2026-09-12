@@ -151,10 +151,30 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
+      # 装 Pillow：工具脚本用它读写图片（见 tools/check_image_format.py）。
+      #
+      # 为什么 CI 需要它：仓库里的图是**已生成**的（工作流不重新生成图片），
+      # 但 check_image_format.py 要打开图片、读出真实格式，才能发现
+      # 「扩展名 .webp 实际是 PNG」这类问题 —— 那种问题编译期不报错，
+      # 只有装到手机才满屏「图片丢失」。
+      #
+      # 顺带也保证了「这个仓库随时可以重新生成图片」：如果哪天源码要重建，
+      # 不会因为 CI 里没有 Pillow 才发现。
+      #
+      # 装它大概几秒，相对于整个构建可以忽略。
+      - name: Set up Python imaging (Pillow)
+        run: |
+          set -e
+          python3 -m pip install --quiet --upgrade pip
+          python3 -m pip install --quiet "Pillow>=10"
+          python3 -c "import PIL, PIL.features; print('Pillow', PIL.__version__)"
+          python3 -c "import PIL.features, sys; sys.exit(0 if PIL.features.check('webp') else 1)"
+          echo "OK: Pillow 可用且支持 WebP"
+
       # ------------------------------------------------------------------
       # 本地检查（因为无法在本地跑 flutter，这些静态校验就放在 CI 里）
       # ------------------------------------------------------------------
-      - name: Static checks (dart / assets / classes)
+      - name: Static checks (dart / assets / classes / image format)
         run: |
           set -e
           # 先按磁盘现状重建资源列表，再校验（避免「加了图但忘了声明」漏过）
