@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-2",
+  "dataVersion": "2026.09.11-3",
   "region": "cn",
   "note": "全局条目元数据。gates.json / classes.json 通过 linkId 引用这里。",
   "entries": {
@@ -11,7 +11,7 @@
       "artist": "Rígr feat. 光吉猛修",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE",
-      "image": "assets/img/music/2838/jacket.png",
+      "image": "assets/img/music/2838/jacket.webp",
       "levels": {
         "basic": "6",
         "advanced": "10.5",
@@ -27,7 +27,7 @@
       "artist": "Team Grimoire & 穴山大輔",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE",
-      "image": "assets/img/music/2846/jacket.png",
+      "image": "assets/img/music/2846/jacket.webp",
       "levels": {
         "basic": "5",
         "advanced": "10",
@@ -43,7 +43,7 @@
       "artist": "void (Mournfinale)",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE",
-      "image": "assets/img/music/2858/jacket.png",
+      "image": "assets/img/music/2858/jacket.webp",
       "levels": {
         "basic": "6",
         "advanced": "10",
@@ -59,7 +59,7 @@
       "artist": "USAO vs DJ Myosuke",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE",
-      "image": "assets/img/music/2869/jacket.png",
+      "image": "assets/img/music/2869/jacket.webp",
       "levels": {
         "basic": "6",
         "advanced": "10.4",
@@ -75,7 +75,7 @@
       "artist": "suzu",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE",
-      "image": "assets/img/music/2880/jacket.png",
+      "image": "assets/img/music/2880/jacket.webp",
       "levels": {
         "basic": "6",
         "advanced": "11",
@@ -91,7 +91,7 @@
       "artist": "BlackY VS Yooh VS siromaru VS xi VS モリモリあつし",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE",
-      "image": "assets/img/music/2891/jacket.png",
+      "image": "assets/img/music/2891/jacket.webp",
       "levels": {
         "basic": "7",
         "advanced": "12",
@@ -107,7 +107,7 @@
       "artist": "かねこちはる",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE-X",
-      "image": "assets/img/music/2919/jacket.png",
+      "image": "assets/img/music/2919/jacket.webp",
       "levels": {
         "basic": "5",
         "advanced": "9",
@@ -123,7 +123,7 @@
       "artist": "Sakuzyo or Sobrem",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE-X",
-      "image": "assets/img/music/2938/jacket.png",
+      "image": "assets/img/music/2938/jacket.webp",
       "levels": {
         "basic": "5",
         "advanced": "10",
@@ -139,7 +139,7 @@
       "artist": "t+pazolite vs Yuta Imai",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE-X",
-      "image": "assets/img/music/2954/jacket.png",
+      "image": "assets/img/music/2954/jacket.webp",
       "levels": {
         "basic": "6",
         "advanced": "11.9",
@@ -155,7 +155,7 @@
       "artist": "黒魔 × rintaro soma",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE-X",
-      "image": "assets/img/music/2966/jacket.png",
+      "image": "assets/img/music/2966/jacket.webp",
       "levels": {
         "basic": "5",
         "advanced": "9",
@@ -171,7 +171,7 @@
       "artist": "大国奏音",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE-X",
-      "image": "assets/img/music/2967/jacket.png",
+      "image": "assets/img/music/2967/jacket.webp",
       "levels": {
         "basic": "8",
         "advanced": "12.6",
@@ -188,7 +188,7 @@
       "artist": "onoken a.k.a. owl＊tree",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE-X",
-      "image": "assets/img/music/2999/jacket.png",
+      "image": "assets/img/music/2999/jacket.webp",
       "levels": {
         "basic": "8.5",
         "advanced": "13",
@@ -205,7 +205,7 @@
       "artist": "水野健治",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. X-VERSE-X",
-      "image": "assets/img/music/3000/jacket.png",
+      "image": "assets/img/music/3000/jacket.webp",
       "levels": {
         "basic": "2",
         "advanced": "6",
@@ -221,7 +221,7 @@
       "artist": "cubesato",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/51/jacket.png"
+      "image": "assets/img/music/51/jacket.webp"
     },
     "music:53": {
       "type": "music",
@@ -230,7 +230,7 @@
       "artist": "owl＊tree",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/53/jacket.png"
+      "image": "assets/img/music/53/jacket.webp"
     },
     "music:59": {
       "type": "music",
@@ -239,7 +239,7 @@
       "artist": "れるりり feat.ろん",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/59/jacket.png"
+      "image": "assets/img/music/59/jacket.webp"
     },
     "music:63": {
       "type": "music",
@@ -248,7 +248,7 @@
       "artist": "Godspeed",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/63/jacket.png"
+      "image": "assets/img/music/63/jacket.webp"
     },
     "music:64": {
       "type": "music",
@@ -257,7 +257,7 @@
       "artist": "あべにゅうぷろじぇくと feat.佐倉 紗織　produced by ave;new",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/64/jacket.png"
+      "image": "assets/img/music/64/jacket.webp"
     },
     "music:65": {
       "type": "music",
@@ -266,7 +266,7 @@
       "artist": "ESTi",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/65/jacket.png"
+      "image": "assets/img/music/65/jacket.webp"
     },
     "music:67": {
       "type": "music",
@@ -275,7 +275,7 @@
       "artist": "halyosy",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/67/jacket.png"
+      "image": "assets/img/music/67/jacket.webp"
     },
     "music:69": {
       "type": "music",
@@ -284,7 +284,7 @@
       "artist": "Sampling Masters MEGA",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/69/jacket.png"
+      "image": "assets/img/music/69/jacket.webp"
     },
     "music:70": {
       "type": "music",
@@ -293,7 +293,7 @@
       "artist": "SEXY-SYNTHESIZER",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/70/jacket.png"
+      "image": "assets/img/music/70/jacket.webp"
     },
     "music:71": {
       "type": "music",
@@ -302,7 +302,7 @@
       "artist": "t+pazolite",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/71/jacket.png"
+      "image": "assets/img/music/71/jacket.webp"
     },
     "music:74": {
       "type": "music",
@@ -311,7 +311,7 @@
       "artist": "TaNaBaTa",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/74/jacket.png"
+      "image": "assets/img/music/74/jacket.webp"
     },
     "music:75": {
       "type": "music",
@@ -320,7 +320,7 @@
       "artist": "DECO*27 feat.echo",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/75/jacket.png"
+      "image": "assets/img/music/75/jacket.webp"
     },
     "music:76": {
       "type": "music",
@@ -329,7 +329,7 @@
       "artist": "WASi303",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/76/jacket.png"
+      "image": "assets/img/music/76/jacket.webp"
     },
     "music:79": {
       "type": "music",
@@ -338,7 +338,7 @@
       "artist": "片霧烈火オンザみんマンション",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/79/jacket.png"
+      "image": "assets/img/music/79/jacket.webp"
     },
     "music:80": {
       "type": "music",
@@ -347,7 +347,7 @@
       "artist": "古代 祐三",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/80/jacket.png"
+      "image": "assets/img/music/80/jacket.webp"
     },
     "music:82": {
       "type": "music",
@@ -356,7 +356,7 @@
       "artist": "Aiko Oi",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/82/jacket.png"
+      "image": "assets/img/music/82/jacket.webp"
     },
     "music:95": {
       "type": "music",
@@ -365,7 +365,7 @@
       "artist": "海田 明里",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/95/jacket.png"
+      "image": "assets/img/music/95/jacket.webp"
     },
     "music:100": {
       "type": "music",
@@ -374,7 +374,7 @@
       "artist": "霜月はるか",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/100/jacket.png"
+      "image": "assets/img/music/100/jacket.webp"
     },
     "music:101": {
       "type": "music",
@@ -383,7 +383,7 @@
       "artist": "Yoko Shimomura",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/101/jacket.png"
+      "image": "assets/img/music/101/jacket.webp"
     },
     "music:105": {
       "type": "music",
@@ -392,7 +392,7 @@
       "artist": "景山 将太",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/105/jacket.png"
+      "image": "assets/img/music/105/jacket.webp"
     },
     "music:107": {
       "type": "music",
@@ -401,7 +401,7 @@
       "artist": "Queen P.A.L.",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/107/jacket.png"
+      "image": "assets/img/music/107/jacket.webp"
     },
     "music:108": {
       "type": "music",
@@ -410,7 +410,7 @@
       "artist": "浜渦 正志",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/108/jacket.png"
+      "image": "assets/img/music/108/jacket.webp"
     },
     "music:140": {
       "type": "music",
@@ -419,7 +419,7 @@
       "artist": "MintJam",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/140/jacket.png"
+      "image": "assets/img/music/140/jacket.webp"
     },
     "music:141": {
       "type": "music",
@@ -428,7 +428,7 @@
       "artist": "sasakure.UK",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/141/jacket.png"
+      "image": "assets/img/music/141/jacket.webp"
     },
     "music:147": {
       "type": "music",
@@ -437,7 +437,7 @@
       "artist": "ふわりP",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/147/jacket.png"
+      "image": "assets/img/music/147/jacket.webp"
     },
     "music:148": {
       "type": "music",
@@ -446,7 +446,7 @@
       "artist": "植松 伸夫",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/148/jacket.png"
+      "image": "assets/img/music/148/jacket.webp"
     },
     "music:151": {
       "type": "music",
@@ -455,7 +455,7 @@
       "artist": "光田 康典",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/151/jacket.png"
+      "image": "assets/img/music/151/jacket.webp"
     },
     "music:152": {
       "type": "music",
@@ -464,7 +464,7 @@
       "artist": "伊藤 賢治",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/152/jacket.png"
+      "image": "assets/img/music/152/jacket.webp"
     },
     "music:163": {
       "type": "music",
@@ -473,7 +473,7 @@
       "artist": "M.S.S Project",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/163/jacket.png"
+      "image": "assets/img/music/163/jacket.webp"
     },
     "music:180": {
       "type": "music",
@@ -482,14 +482,14 @@
       "artist": "光吉猛修",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CHUNITHM",
-      "image": "assets/img/music/180/jacket.png"
+      "image": "assets/img/music/180/jacket.webp"
     },
     "chara:24320": {
       "type": "chara",
       "id": 24320,
       "title": "観音寺 にこる／Mermaid♡Moment",
       "subtitle": "角色 · 需升到 RANK 15",
-      "image": "assets/img/chara/24320/image.png",
+      "image": "assets/img/chara/24320/image.webp",
       "works": "CHUNITHM VERSE"
     },
     "music:712": {
@@ -499,7 +499,7 @@
       "artist": "USAO",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. AMAZON",
-      "image": "assets/img/music/712/jacket.png"
+      "image": "assets/img/music/712/jacket.webp"
     },
     "music:777": {
       "type": "music",
@@ -508,7 +508,7 @@
       "artist": "DJ Myosuke",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. AMAZON PLUS",
-      "image": "assets/img/music/777/jacket.png"
+      "image": "assets/img/music/777/jacket.webp"
     },
     "music:629": {
       "type": "music",
@@ -517,7 +517,7 @@
       "artist": "Kai「Wonderland Wars」",
       "genre": "VARIETY",
       "works": "Wonderland Wars",
-      "image": "assets/img/music/629/jacket.png"
+      "image": "assets/img/music/629/jacket.webp"
     },
     "music:788": {
       "type": "music",
@@ -526,7 +526,7 @@
       "artist": "Kai",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. AMAZON PLUS",
-      "image": "assets/img/music/788/jacket.png"
+      "image": "assets/img/music/788/jacket.webp"
     },
     "music:384": {
       "type": "music",
@@ -535,7 +535,7 @@
       "artist": "光吉猛修「東方幻想麻雀」",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/384/jacket.png"
+      "image": "assets/img/music/384/jacket.webp"
     },
     "music:483": {
       "type": "music",
@@ -544,7 +544,7 @@
       "artist": "光吉猛修「バーニングレンジャー」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/483/jacket.png"
+      "image": "assets/img/music/483/jacket.webp"
     },
     "music:2355": {
       "type": "music",
@@ -553,7 +553,7 @@
       "artist": "光吉猛修「原曲:ヴィヴァルディ」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2355/jacket.png"
+      "image": "assets/img/music/2355/jacket.webp"
     },
     "music:2493": {
       "type": "music",
@@ -562,7 +562,7 @@
       "artist": "松平健 [covered by 光吉猛修]",
       "genre": "POPS & ANIME",
       "works": "Invalid",
-      "image": "assets/img/music/2493/jacket.png"
+      "image": "assets/img/music/2493/jacket.webp"
     },
     "music:2050": {
       "type": "music",
@@ -571,7 +571,7 @@
       "artist": "大国奏音",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2050/jacket.png"
+      "image": "assets/img/music/2050/jacket.webp"
     },
     "music:2354": {
       "type": "music",
@@ -580,7 +580,7 @@
       "artist": "大国奏音「原曲:ドビュッシー」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2354/jacket.png"
+      "image": "assets/img/music/2354/jacket.webp"
     },
     "music:2704": {
       "type": "music",
@@ -589,7 +589,7 @@
       "artist": "水野健治",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2704/jacket.png"
+      "image": "assets/img/music/2704/jacket.webp"
     },
     "music:407": {
       "type": "music",
@@ -598,7 +598,7 @@
       "artist": "穴山大輔",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. AIR PLUS",
-      "image": "assets/img/music/407/jacket.png"
+      "image": "assets/img/music/407/jacket.webp"
     },
     "music:2353": {
       "type": "music",
@@ -607,14 +607,14 @@
       "artist": "穴山大輔「原曲:ショパン」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2353/jacket.png"
+      "image": "assets/img/music/2353/jacket.webp"
     },
     "avatar:6104401": {
       "type": "avatar",
       "id": 6104401,
       "title": "淀川 沙音瑠の服",
       "subtitle": "服装 · ウェア",
-      "image": "assets/img/avatar/6104401/icon.png",
+      "image": "assets/img/avatar/6104401/tex.webp",
       "slot": "wear"
     },
     "avatar:6204401": {
@@ -622,7 +622,7 @@
       "id": 6204401,
       "title": "淀川 沙音瑠の頭",
       "subtitle": "头饰 · ヘッド",
-      "image": "assets/img/avatar/6204401/icon.png",
+      "image": "assets/img/avatar/6204401/tex.webp",
       "slot": "head"
     },
     "avatar:6704401": {
@@ -630,7 +630,7 @@
       "id": 6704401,
       "title": "淀川 沙音瑠のランドセル",
       "subtitle": "背包 · バック",
-      "image": "assets/img/avatar/6704401/icon.png",
+      "image": "assets/img/avatar/6704401/tex.webp",
       "slot": "back"
     },
     "music:2266": {
@@ -640,7 +640,7 @@
       "artist": "Ryu☆",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2266/jacket.png"
+      "image": "assets/img/music/2266/jacket.webp"
     },
     "music:2326": {
       "type": "music",
@@ -649,7 +649,7 @@
       "artist": "Kai VS 大国奏音 VS 水野健治",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2326/jacket.png"
+      "image": "assets/img/music/2326/jacket.webp"
     },
     "music:2327": {
       "type": "music",
@@ -658,7 +658,7 @@
       "artist": "sky_delta",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2327/jacket.png"
+      "image": "assets/img/music/2327/jacket.webp"
     },
     "music:2556": {
       "type": "music",
@@ -667,7 +667,7 @@
       "artist": "Laur",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2556/jacket.png"
+      "image": "assets/img/music/2556/jacket.webp"
     },
     "music:2597": {
       "type": "music",
@@ -676,7 +676,7 @@
       "artist": "kanone vs. BlackY",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2597/jacket.png"
+      "image": "assets/img/music/2597/jacket.webp"
     },
     "mission:350": {
       "type": "mission",
@@ -699,7 +699,7 @@
       "artist": "STEAKA feat.山田じぇみ子",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. VERSE",
-      "image": "assets/img/music/2705/jacket.png"
+      "image": "assets/img/music/2705/jacket.webp"
     },
     "music:2712": {
       "type": "music",
@@ -708,7 +708,7 @@
       "artist": "Toby Fox & かめりあ",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. VERSE",
-      "image": "assets/img/music/2712/jacket.png"
+      "image": "assets/img/music/2712/jacket.webp"
     },
     "music:2802": {
       "type": "music",
@@ -717,7 +717,7 @@
       "artist": "Acotto vs Potwi",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. VERSE",
-      "image": "assets/img/music/2802/jacket.png"
+      "image": "assets/img/music/2802/jacket.webp"
     },
     "music:2968": {
       "type": "music",
@@ -726,7 +726,7 @@
       "artist": "削除",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2968/jacket.png"
+      "image": "assets/img/music/2968/jacket.webp"
     },
     "music:2969": {
       "type": "music",
@@ -735,7 +735,7 @@
       "artist": "水野健治 VS 穴山大輔",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2969/jacket.png"
+      "image": "assets/img/music/2969/jacket.webp"
     },
     "music:2970": {
       "type": "music",
@@ -744,7 +744,7 @@
       "artist": "夏色ビキニのPrim",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2970/jacket.png"
+      "image": "assets/img/music/2970/jacket.webp"
     },
     "music:2971": {
       "type": "music",
@@ -753,7 +753,7 @@
       "artist": "世阿弥 vs Tatsh「グルーヴコースター」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2971/jacket.png"
+      "image": "assets/img/music/2971/jacket.webp"
     },
     "music:2972": {
       "type": "music",
@@ -762,7 +762,7 @@
       "artist": "Massive New Krew「WACCA」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2972/jacket.png"
+      "image": "assets/img/music/2972/jacket.webp"
     },
     "music:2973": {
       "type": "music",
@@ -771,7 +771,7 @@
       "artist": "from PACA PACA PASSION Special",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2973/jacket.png"
+      "image": "assets/img/music/2973/jacket.webp"
     },
     "music:2974": {
       "type": "music",
@@ -780,7 +780,7 @@
       "artist": "M2U / Arranger: M2U, NICODE / Vocal: Guriri, M2U 「DEEMO」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2974/jacket.png"
+      "image": "assets/img/music/2974/jacket.webp"
     },
     "music:2975": {
       "type": "music",
@@ -789,7 +789,7 @@
       "artist": "TAK",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2975/jacket.png"
+      "image": "assets/img/music/2975/jacket.webp"
     },
     "music:2976": {
       "type": "music",
@@ -798,7 +798,7 @@
       "artist": "Normal1zer vs. Broken Nerdz「Phigros」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2976/jacket.png"
+      "image": "assets/img/music/2976/jacket.webp"
     },
     "music:2977": {
       "type": "music",
@@ -807,7 +807,7 @@
       "artist": "モリモリあつし vs. uma「Muse Dash」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2977/jacket.png"
+      "image": "assets/img/music/2977/jacket.webp"
     },
     "music:2978": {
       "type": "music",
@@ -816,7 +816,7 @@
       "artist": "Yuta Imai vs Qlarabelle「Arcaea」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2978/jacket.png"
+      "image": "assets/img/music/2978/jacket.webp"
     },
     "music:106": {
       "type": "music",
@@ -825,7 +825,7 @@
       "artist": "Cranky feat.おもしろ三国志",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. PLUS",
-      "image": "assets/img/music/106/jacket.png"
+      "image": "assets/img/music/106/jacket.webp"
     },
     "music:135": {
       "type": "music",
@@ -834,7 +834,7 @@
       "artist": "削除",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/135/jacket.png"
+      "image": "assets/img/music/135/jacket.webp"
     },
     "music:145": {
       "type": "music",
@@ -843,7 +843,7 @@
       "artist": "イロドリミドリ",
       "genre": "イロドリミドリ",
       "works": "Invalid",
-      "image": "assets/img/music/145/jacket.png"
+      "image": "assets/img/music/145/jacket.webp"
     },
     "music:157": {
       "type": "music",
@@ -852,7 +852,7 @@
       "artist": "ギガ",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/157/jacket.png"
+      "image": "assets/img/music/157/jacket.webp"
     },
     "music:179": {
       "type": "music",
@@ -861,7 +861,7 @@
       "artist": "ピノキオピー",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/179/jacket.png"
+      "image": "assets/img/music/179/jacket.webp"
     },
     "music:200": {
       "type": "music",
@@ -870,7 +870,7 @@
       "artist": "イロドリミドリ",
       "genre": "イロドリミドリ",
       "works": "Invalid",
-      "image": "assets/img/music/200/jacket.png"
+      "image": "assets/img/music/200/jacket.webp"
     },
     "music:201": {
       "type": "music",
@@ -879,7 +879,7 @@
       "artist": "t+pazolite",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. PLUS",
-      "image": "assets/img/music/201/jacket.png"
+      "image": "assets/img/music/201/jacket.webp"
     },
     "music:226": {
       "type": "music",
@@ -888,7 +888,7 @@
       "artist": "t+pazolite",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/226/jacket.png"
+      "image": "assets/img/music/226/jacket.webp"
     },
     "music:303": {
       "type": "music",
@@ -897,7 +897,7 @@
       "artist": "Tomoko Sasaki「NiGHTS～星降る夜の物語～」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/303/jacket.png"
+      "image": "assets/img/music/303/jacket.webp"
     },
     "music:330": {
       "type": "music",
@@ -906,7 +906,7 @@
       "artist": "イロドリミドリ",
       "genre": "イロドリミドリ",
       "works": "Invalid",
-      "image": "assets/img/music/330/jacket.png"
+      "image": "assets/img/music/330/jacket.webp"
     },
     "music:376": {
       "type": "music",
@@ -915,7 +915,7 @@
       "artist": "CIRCRUSH",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/376/jacket.png"
+      "image": "assets/img/music/376/jacket.webp"
     },
     "music:455": {
       "type": "music",
@@ -924,7 +924,7 @@
       "artist": "電気式華憐音楽集団",
       "genre": "POPS & ANIME",
       "works": "Invalid",
-      "image": "assets/img/music/455/jacket.png"
+      "image": "assets/img/music/455/jacket.webp"
     },
     "music:549": {
       "type": "music",
@@ -933,7 +933,7 @@
       "artist": "幽閉サテライト",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/549/jacket.png"
+      "image": "assets/img/music/549/jacket.webp"
     },
     "music:574": {
       "type": "music",
@@ -942,7 +942,7 @@
       "artist": "パトリシア・オブ・エンド(CV：高森奈津美)、黒木 未知(CV：仙台エリ)、夕莉 シャチ(CV：浅川悠)、明日原 ユウキ(CV：種﨑敦美)「ノラと皇女と野良猫ハート」",
       "genre": "POPS & ANIME",
       "works": "ノラと皇女と野良猫ハート",
-      "image": "assets/img/music/574/jacket.png"
+      "image": "assets/img/music/574/jacket.webp"
     },
     "music:583": {
       "type": "music",
@@ -951,7 +951,7 @@
       "artist": "電気式華憐音楽集団",
       "genre": "POPS & ANIME",
       "works": "Invalid",
-      "image": "assets/img/music/583/jacket.png"
+      "image": "assets/img/music/583/jacket.webp"
     },
     "music:599": {
       "type": "music",
@@ -960,7 +960,7 @@
       "artist": "Carotte☆（ripple＆めらみぽっぷ）",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/599/jacket.png"
+      "image": "assets/img/music/599/jacket.webp"
     },
     "music:656": {
       "type": "music",
@@ -969,7 +969,7 @@
       "artist": "Orangestar",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/656/jacket.png"
+      "image": "assets/img/music/656/jacket.webp"
     },
     "music:698": {
       "type": "music",
@@ -978,7 +978,7 @@
       "artist": "dawn-system",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. AMAZON",
-      "image": "assets/img/music/698/jacket.png"
+      "image": "assets/img/music/698/jacket.webp"
     },
     "music:738": {
       "type": "music",
@@ -987,7 +987,7 @@
       "artist": "キノシタ feat. 音街ウナ",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/738/jacket.png"
+      "image": "assets/img/music/738/jacket.webp"
     },
     "music:744": {
       "type": "music",
@@ -996,7 +996,7 @@
       "artist": "Pizuya's Cell",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/744/jacket.png"
+      "image": "assets/img/music/744/jacket.webp"
     },
     "music:765": {
       "type": "music",
@@ -1005,7 +1005,7 @@
       "artist": "SoundDrive「龍が如く５　夢、叶えし者」",
       "genre": "VARIETY",
       "works": "龍が如く",
-      "image": "assets/img/music/765/jacket.png"
+      "image": "assets/img/music/765/jacket.webp"
     },
     "music:785": {
       "type": "music",
@@ -1014,7 +1014,7 @@
       "artist": "RD-Sounds feat.中恵光城",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. AMAZON PLUS",
-      "image": "assets/img/music/785/jacket.png"
+      "image": "assets/img/music/785/jacket.webp"
     },
     "music:787": {
       "type": "music",
@@ -1023,7 +1023,7 @@
       "artist": "黒沢ダイスケ",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. AMAZON PLUS",
-      "image": "assets/img/music/787/jacket.png"
+      "image": "assets/img/music/787/jacket.webp"
     },
     "music:797": {
       "type": "music",
@@ -1032,7 +1032,7 @@
       "artist": "盛るP",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/797/jacket.png"
+      "image": "assets/img/music/797/jacket.webp"
     },
     "music:802": {
       "type": "music",
@@ -1041,7 +1041,7 @@
       "artist": "曲：kz(livetune)／歌：オンゲキシューターズ",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/802/jacket.png"
+      "image": "assets/img/music/802/jacket.webp"
     },
     "music:895": {
       "type": "music",
@@ -1050,7 +1050,7 @@
       "artist": "Junk",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/895/jacket.png"
+      "image": "assets/img/music/895/jacket.webp"
     },
     "music:930": {
       "type": "music",
@@ -1059,7 +1059,7 @@
       "artist": "Silver Forest",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/930/jacket.png"
+      "image": "assets/img/music/930/jacket.webp"
     },
     "music:935": {
       "type": "music",
@@ -1068,7 +1068,7 @@
       "artist": "はるまきごはん feat.めらみぽっぷ",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CRYSTAL PLUS",
-      "image": "assets/img/music/935/jacket.png"
+      "image": "assets/img/music/935/jacket.webp"
     },
     "music:949": {
       "type": "music",
@@ -1077,7 +1077,7 @@
       "artist": "Clean Tears feat.kukuri",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CRYSTAL PLUS",
-      "image": "assets/img/music/949/jacket.png"
+      "image": "assets/img/music/949/jacket.webp"
     },
     "music:971": {
       "type": "music",
@@ -1086,7 +1086,7 @@
       "artist": "ETIA.",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. CRYSTAL PLUS",
-      "image": "assets/img/music/971/jacket.png"
+      "image": "assets/img/music/971/jacket.webp"
     },
     "music:974": {
       "type": "music",
@@ -1095,7 +1095,7 @@
       "artist": "曲：ヒゲドライバー／歌：藤沢 柚子(CV：久保田 梨沙)",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/974/jacket.png"
+      "image": "assets/img/music/974/jacket.webp"
     },
     "music:1017": {
       "type": "music",
@@ -1104,7 +1104,7 @@
       "artist": "sasakure.UK VS 穴山大輔",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. PARADISE",
-      "image": "assets/img/music/1017/jacket.png"
+      "image": "assets/img/music/1017/jacket.webp"
     },
     "music:1035": {
       "type": "music",
@@ -1113,7 +1113,7 @@
       "artist": "Cranky feat.おもしろ三国志",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. PARADISE",
-      "image": "assets/img/music/1035/jacket.png"
+      "image": "assets/img/music/1035/jacket.webp"
     },
     "music:1059": {
       "type": "music",
@@ -1122,7 +1122,7 @@
       "artist": "Yooh",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/1059/jacket.png"
+      "image": "assets/img/music/1059/jacket.webp"
     },
     "music:1091": {
       "type": "music",
@@ -1131,7 +1131,7 @@
       "artist": "しーけー",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/1091/jacket.png"
+      "image": "assets/img/music/1091/jacket.webp"
     },
     "music:1098": {
       "type": "music",
@@ -1140,7 +1140,7 @@
       "artist": "おもしろ三国志",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/1098/jacket.png"
+      "image": "assets/img/music/1098/jacket.webp"
     },
     "music:2036": {
       "type": "music",
@@ -1149,7 +1149,7 @@
       "artist": "Æsir「Cytus Ⅱ」",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2036/jacket.png"
+      "image": "assets/img/music/2036/jacket.webp"
     },
     "music:2129": {
       "type": "music",
@@ -1158,7 +1158,7 @@
       "artist": "ジミーサムP",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/2129/jacket.png"
+      "image": "assets/img/music/2129/jacket.webp"
     },
     "music:2138": {
       "type": "music",
@@ -1167,7 +1167,7 @@
       "artist": "わかどり",
       "genre": "VARIETY",
       "works": "Invalid",
-      "image": "assets/img/music/2138/jacket.png"
+      "image": "assets/img/music/2138/jacket.webp"
     },
     "music:2208": {
       "type": "music",
@@ -1176,7 +1176,7 @@
       "artist": "とろまる",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. NEW PLUS",
-      "image": "assets/img/music/2208/jacket.png"
+      "image": "assets/img/music/2208/jacket.webp"
     },
     "music:2251": {
       "type": "music",
@@ -1185,7 +1185,7 @@
       "artist": "暁Records",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/2251/jacket.png"
+      "image": "assets/img/music/2251/jacket.webp"
     },
     "music:2263": {
       "type": "music",
@@ -1194,7 +1194,7 @@
       "artist": "ピノキオピー",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/2263/jacket.png"
+      "image": "assets/img/music/2263/jacket.webp"
     },
     "music:2272": {
       "type": "music",
@@ -1203,7 +1203,7 @@
       "artist": "Sound piercer “Espitz”",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2272/jacket.png"
+      "image": "assets/img/music/2272/jacket.webp"
     },
     "music:2274": {
       "type": "music",
@@ -1212,7 +1212,7 @@
       "artist": "遼遼 feat.あじっこ",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. SUN",
-      "image": "assets/img/music/2274/jacket.png"
+      "image": "assets/img/music/2274/jacket.webp"
     },
     "music:2317": {
       "type": "music",
@@ -1221,7 +1221,7 @@
       "artist": "いよわ",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/2317/jacket.png"
+      "image": "assets/img/music/2317/jacket.webp"
     },
     "music:2381": {
       "type": "music",
@@ -1230,7 +1230,7 @@
       "artist": "HARDCORE TANO*C & エリザベス（CV:大西沙織）「WACCA」",
       "genre": "VARIETY",
       "works": "WACCA",
-      "image": "assets/img/music/2381/jacket.png"
+      "image": "assets/img/music/2381/jacket.webp"
     },
     "music:2384": {
       "type": "music",
@@ -1239,7 +1239,7 @@
       "artist": "Laur「WACCA」",
       "genre": "VARIETY",
       "works": "WACCA",
-      "image": "assets/img/music/2384/jacket.png"
+      "image": "assets/img/music/2384/jacket.webp"
     },
     "music:2385": {
       "type": "music",
@@ -1248,7 +1248,7 @@
       "artist": "\"漆黒\"の堕天使《Gram》†Versus† \"聖刻\"の熾天使《Gram》「WACCA」",
       "genre": "VARIETY",
       "works": "WACCA",
-      "image": "assets/img/music/2385/jacket.png"
+      "image": "assets/img/music/2385/jacket.webp"
     },
     "music:2388": {
       "type": "music",
@@ -1257,7 +1257,7 @@
       "artist": "Aiobahn feat. KOTOKO「NEEDY GIRL OVERDOSE」",
       "genre": "POPS & ANIME",
       "works": "NEEDY GIRL OVERDOSE",
-      "image": "assets/img/music/2388/jacket.png"
+      "image": "assets/img/music/2388/jacket.webp"
     },
     "music:2406": {
       "type": "music",
@@ -1266,7 +1266,7 @@
       "artist": "cubesato",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. SUN PLUS",
-      "image": "assets/img/music/2406/jacket.png"
+      "image": "assets/img/music/2406/jacket.webp"
     },
     "music:2410": {
       "type": "music",
@@ -1275,7 +1275,7 @@
       "artist": "Kobaryo「WACCA」",
       "genre": "VARIETY",
       "works": "WACCA",
-      "image": "assets/img/music/2410/jacket.png"
+      "image": "assets/img/music/2410/jacket.webp"
     },
     "music:2412": {
       "type": "music",
@@ -1284,7 +1284,7 @@
       "artist": "幽閉サテライト",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/2412/jacket.png"
+      "image": "assets/img/music/2412/jacket.webp"
     },
     "music:2435": {
       "type": "music",
@@ -1293,7 +1293,7 @@
       "artist": "いよわ　feat.星界",
       "genre": "niconico",
       "works": "音楽的同位体プロジェクト",
-      "image": "assets/img/music/2435/jacket.png"
+      "image": "assets/img/music/2435/jacket.webp"
     },
     "music:2452": {
       "type": "music",
@@ -1302,7 +1302,7 @@
       "artist": "なみぐる",
       "genre": "niconico",
       "works": "東北ずん子",
-      "image": "assets/img/music/2452/jacket.png"
+      "image": "assets/img/music/2452/jacket.webp"
     },
     "music:2468": {
       "type": "music",
@@ -1311,7 +1311,7 @@
       "artist": "森羅万象",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/2468/jacket.png"
+      "image": "assets/img/music/2468/jacket.webp"
     },
     "music:2475": {
       "type": "music",
@@ -1320,7 +1320,7 @@
       "artist": "TAG VS Kai",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. SUN PLUS",
-      "image": "assets/img/music/2475/jacket.png"
+      "image": "assets/img/music/2475/jacket.webp"
     },
     "music:2503": {
       "type": "music",
@@ -1329,7 +1329,7 @@
       "artist": "Aiobahn feat. KOTOKO「NEEDY GIRL OVERDOSE」",
       "genre": "POPS & ANIME",
       "works": "NEEDY GIRL OVERDOSE",
-      "image": "assets/img/music/2503/jacket.png"
+      "image": "assets/img/music/2503/jacket.webp"
     },
     "music:2509": {
       "type": "music",
@@ -1338,7 +1338,7 @@
       "artist": "海茶・多良レイト",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/2509/jacket.png"
+      "image": "assets/img/music/2509/jacket.webp"
     },
     "music:2523": {
       "type": "music",
@@ -1347,7 +1347,7 @@
       "artist": "あやぽんず＊ feat.ビートまりお × まろん",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/2523/jacket.png"
+      "image": "assets/img/music/2523/jacket.webp"
     },
     "music:2524": {
       "type": "music",
@@ -1356,7 +1356,7 @@
       "artist": "まろん × COOL&CREATE",
       "genre": "東方Project",
       "works": "Invalid",
-      "image": "assets/img/music/2524/jacket.png"
+      "image": "assets/img/music/2524/jacket.webp"
     },
     "music:2537": {
       "type": "music",
@@ -1365,7 +1365,7 @@
       "artist": "Blacklolita",
       "genre": "VARIETY",
       "works": "Diverse System",
-      "image": "assets/img/music/2537/jacket.png"
+      "image": "assets/img/music/2537/jacket.webp"
     },
     "music:2539": {
       "type": "music",
@@ -1374,7 +1374,7 @@
       "artist": "cosMo＠暴走P",
       "genre": "VARIETY",
       "works": "Diverse System",
-      "image": "assets/img/music/2539/jacket.png"
+      "image": "assets/img/music/2539/jacket.webp"
     },
     "music:2540": {
       "type": "music",
@@ -1383,7 +1383,7 @@
       "artist": "Hommarju",
       "genre": "VARIETY",
       "works": "Diverse System",
-      "image": "assets/img/music/2540/jacket.png"
+      "image": "assets/img/music/2540/jacket.webp"
     },
     "music:2542": {
       "type": "music",
@@ -1392,7 +1392,7 @@
       "artist": "Cosmograph「勝利の女神：NIKKE」",
       "genre": "VARIETY",
       "works": "勝利の女神：NIKKE",
-      "image": "assets/img/music/2542/jacket.png"
+      "image": "assets/img/music/2542/jacket.webp"
     },
     "music:2546": {
       "type": "music",
@@ -1401,7 +1401,7 @@
       "artist": "タケノコ少年 feat. 周央サンゴ（にじさんじ）「Muse Dash」",
       "genre": "VARIETY",
       "works": "Muse Dash",
-      "image": "assets/img/music/2546/jacket.png"
+      "image": "assets/img/music/2546/jacket.webp"
     },
     "music:2554": {
       "type": "music",
@@ -1410,7 +1410,7 @@
       "artist": "MisoilePunch♪",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2554/jacket.png"
+      "image": "assets/img/music/2554/jacket.webp"
     },
     "music:2560": {
       "type": "music",
@@ -1419,7 +1419,7 @@
       "artist": "cubesato",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/2560/jacket.png"
+      "image": "assets/img/music/2560/jacket.webp"
     },
     "music:2566": {
       "type": "music",
@@ -1428,7 +1428,7 @@
       "artist": "雄之助 feat.ねんね",
       "genre": "ORIGINAL",
       "works": "[ORIGINAL] Ver. LUMINOUS",
-      "image": "assets/img/music/2566/jacket.png"
+      "image": "assets/img/music/2566/jacket.webp"
     },
     "music:2585": {
       "type": "music",
@@ -1437,7 +1437,7 @@
       "artist": "UNISON SQUARE GARDEN「ブルーロック」",
       "genre": "POPS & ANIME",
       "works": "ブルーロック",
-      "image": "assets/img/music/2585/jacket.png"
+      "image": "assets/img/music/2585/jacket.webp"
     },
     "music:2632": {
       "type": "music",
@@ -1446,7 +1446,7 @@
       "artist": "なみぐる feat.ずんだもん",
       "genre": "niconico",
       "works": "Invalid",
-      "image": "assets/img/music/2632/jacket.png"
+      "image": "assets/img/music/2632/jacket.webp"
     },
     "music:2657": {
       "type": "music",
@@ -1455,7 +1455,7 @@
       "artist": "いよわ",
       "genre": "niconico",
       "works": "いよわ",
-      "image": "assets/img/music/2657/jacket.png"
+      "image": "assets/img/music/2657/jacket.webp"
     },
     "music:8198": {
       "type": "music",
@@ -1464,7 +1464,7 @@
       "artist": "Chu☆",
       "genre": "POPS & ANIME",
       "works": "Invalid",
-      "image": "assets/img/music/8198/jacket.png"
+      "image": "assets/img/music/8198/jacket.webp"
     },
     "music:8227": {
       "type": "music",
@@ -1473,7 +1473,7 @@
       "artist": "Noah",
       "genre": "ORIGINAL",
       "works": "Invalid",
-      "image": "assets/img/music/8227/jacket.png"
+      "image": "assets/img/music/8227/jacket.webp"
     },
     "music:8252": {
       "type": "music",
@@ -1482,7 +1482,7 @@
       "artist": "曲：本多友紀（Arte Refact）／歌：日向 千夏(CV：岡咲 美保)",
       "genre": "ゲキマイ",
       "works": "Invalid",
-      "image": "assets/img/music/8252/jacket.png"
+      "image": "assets/img/music/8252/jacket.webp"
     },
     "music:8281": {
       "type": "music",
@@ -1491,7 +1491,7 @@
       "artist": "Potwi",
       "genre": "ORIGINAL",
       "works": "Invalid",
-      "image": "assets/img/music/8281/jacket.png"
+      "image": "assets/img/music/8281/jacket.webp"
     },
     "music:8282": {
       "type": "music",
@@ -1500,7 +1500,7 @@
       "artist": "NAOKI underground",
       "genre": "ORIGINAL",
       "works": "Invalid",
-      "image": "assets/img/music/8282/jacket.png"
+      "image": "assets/img/music/8282/jacket.webp"
     }
   }
 }

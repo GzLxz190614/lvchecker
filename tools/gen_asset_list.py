@@ -28,6 +28,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 PUBSPEC = ROOT / "pubspec.yaml"
 
+# 图片扩展名从 build.py 取，避免两处各写一份而漂移
+# （format 改过一次：PNG → WebP，就是为了省 15 MB）
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:
+    from build import IMG_EXT  # type: ignore
+except Exception:  # noqa: BLE001
+    IMG_EXT = "webp"
+
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 except Exception:  # noqa: BLE001
@@ -35,7 +43,7 @@ except Exception:  # noqa: BLE001
 
 
 def collect_assets() -> list[str]:
-    """要打进 APK 的文件：data/ 下的 JSON + assets/img 下所有 PNG。"""
+    """要打进 APK 的文件：data/ 下的 JSON + assets/img 下所有图片。"""
     out: list[str] = []
 
     data_dir = ROOT / "data"
@@ -45,7 +53,7 @@ def collect_assets() -> list[str]:
 
     img_root = ROOT / "assets" / "img"
     if img_root.exists():
-        for p in sorted(img_root.rglob("*.png")):
+        for p in sorted(img_root.rglob(f"*.{IMG_EXT}")):
             out.append(p.relative_to(ROOT).as_posix())
 
     return out
@@ -87,13 +95,14 @@ flutter:
   # 资源列表：**必须逐文件列出**，不能只写目录。
   #
   # Flutter 的 assets 声明不递归子目录：声明 `assets/img/music/` 时，
-  # `assets/img/music/51/jacket.png` 这类三级路径不会被 pack 进包。  # 结果是编译成功、analyze 无 error、运行时却满屏「图片丢失」。
+  # `assets/img/music/51/jacket.{ext}` 这类三级路径不会被 pack 进包。
+  # 结果是编译成功、analyze 无 error、运行时却满屏「图片丢失」。
   #
   # 下面这段由 tools/gen_asset_list.py 生成（tools/build.py 也会调用），
   # 请勿手动编辑。新增曲目后重跑 tools/build.py 即可。
   # ------------------------------------------------------------------
   assets:
-'''
+'''.replace("{ext}", IMG_EXT)
 
 TAIL = '''
 # 启动图标配置（见上面的 flutter_launcher_icons 依赖）。
@@ -122,8 +131,8 @@ def main() -> int:
     PUBSPEC.write_text(text, encoding="utf-8")
 
     n_data = sum(1 for a in assets if a.startswith("data/"))
-    n_png = sum(1 for a in assets if a.endswith(".png"))
-    print(f"已生成 pubspec.yaml：{len(assets)} 个资源（data {n_data} 个 / PNG {n_png} 个）")
+    n_img = sum(1 for a in assets if a.endswith(f".{IMG_EXT}"))
+    print(f"已生成 pubspec.yaml：{len(assets)} 个资源（data {n_data} 个 / {IMG_EXT} {n_img} 个）")
     return 0
 
 

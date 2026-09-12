@@ -10,8 +10,13 @@
 // 同时这份测试直接读**打包进 APK 的 data/classes.json**，所以它同时验证了
 // 资源声明（pubspec）和真实数据，而不只是解析逻辑。
 
+import 'dart:convert';
+
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lvchecker/models/class_course.dart';
+import 'package:lvchecker/models/entry.dart';
+import 'package:lvchecker/models/gate.dart';
 
 /// 用户确认的「CLASS 认定 - ? - Random」等级对应表。
 const Map<String, List<String>> kExpectedRandomLevels = {
@@ -197,4 +202,95 @@ void main() {
       expect(course.randomCount, 2);
     });
   });
+
+  // 这三份数据里的每一条 "image" 路径都必须真的能 load 出来。
+  //
+  // 为什么值得测：图片格式从 PNG 换成 WebP 之后，「路径写对了但资源没进包」
+  // 是一类**编译期完全发现不了**的错误 —— analyze 绿、build 绿、CI 绿，
+  // 只有装到手机上才发现满屏「图片丢失」。而 pubspec 的 assets 声明不递归，
+  // 少一行就少一张图。这里用 rootBundle 直接验证最终产物。
+  //
+  // 注意它测的是**打包进 app 的资源**，不是磁盘上的文件 ——
+  // 所以能同时覆盖「文件存在但 pubspec 没声明」这种情况。
+  group('所有声明的图片都能从资源包加载', () {
+    test('meta.json 的每条 image', () async {
+      final meta = MetaTable.fromJson((await _loadJson('data/meta.json'))!);
+      final paths = meta.all
+          .map((e) => e.image)
+          .whereType<String>()
+          .where((p) => p.isNotEmpty)
+          .toSet();
+      expect(paths, isNotEmpty);
+      await _expectAllLoadable(paths);
+    });
+
+    test('gates.json 里 BOSS 曲的 image（经 meta 解析）', () async {
+      final meta = MetaTable.fromJson((await _loadJson('data/meta.json'))!);
+      final gates = GateData.fromJson((await _loadJson('data/gates.json'))!);
+      final paths = <String>{};
+      for (final g in gates.gates) {
+        // GateBoss 本身不带 image，要按 linkId 回 meta 查
+        final img = meta[g.boss?.linkId]?.image;
+        if (img != null && img.isNotEmpty) paths.add(img);
+      }
+      expect(paths, isNotEmpty, reason: '每个门都有 BOSS 曲，应该能解析出图片');
+      await _expectAllLoadable(paths);
+    });
+
+    test('classes.json 里随机槽的封面', () async {
+      final data = await ClassData.loadFromAssets();
+      final paths = <String>{};
+      for (final tier in data.tiers) {
+        for (final course in tier.courses) {
+          for (final slot in course.slots) {
+            final img = slot.image;
+            if (img != null && img.isNotEmpty) paths.add(img);
+          }
+        }
+      }
+      expect(paths, isNotEmpty, reason: '应该至少有等级随机/曲池随机两张封面');
+      await _expectAllLoadable(paths);
+    });
+
+    test('classes.json 固定曲引用的 meta 条目都有图', () async {
+      final meta = MetaTable.fromJson((await _loadJson('data/meta.json'))!);
+      final data = await ClassData.loadFromAssets();
+      final paths = <String>{};
+      for (final tier in data.tiers) {
+        for (final course in tier.courses) {
+          for (final slot in course.slots) {
+            if (slot.linkId == null) continue;
+            final img = meta[slot.linkId]?.image;
+            if (img != null && img.isNotEmpty) paths.add(img);
+          }
+        }
+      }
+      expect(paths.length, greaterThan(50), reason: '段位固定曲有 86 首，图应该不少于这个量级');
+      await _expectAllLoadable(paths);
+    });
+  });
+}
+
+Future<Map<String, dynamic>?> _loadJson(String path) async {
+  final raw = await rootBundle.loadString(path);
+  final decoded = jsonDecode(raw);
+  return decoded is Map ? decoded.cast<String, dynamic>() : null;
+}
+
+/// 逐个 [AssetBundle.load] 验证，失败时把**所有**缺失路径一起报出来。
+///
+/// 不用 `Image.asset`：那需要完整的渲染管线，而且失败是异步回调、不好断言。
+/// `rootBundle.load` 直接测「资源在不在包里」，正是这里要保证的事。
+Future<void> _expectAllLoadable(Set<String> paths) async {
+  final missing = <String>[];
+  for (final p in paths) {
+    try {
+      final data = await rootBundle.load(p);
+      if (data.lengthInBytes == 0) missing.add('$p（文件为空）');
+    } catch (_) {
+      missing.add(p);
+    }
+  }
+  expect(missing, isEmpty,
+      reason: '这些图片声明了但没打进 APK（会显示「图片丢失」）：\n${missing.join('\n')}');
 }

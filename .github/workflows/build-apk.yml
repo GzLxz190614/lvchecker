@@ -145,6 +145,9 @@ jobs:
           python3 tools/check_dart.py
           python3 tools/check_assets.py
           python3 tools/check_classes.py
+          # 图片格式：确认 Pillow 支持目标格式，且仓库里的图扩展名与实际格式一致。
+          # 这两种问题的共同点是编译期发现不了，只有装到手机才满屏「图片丢失」。
+          python3 tools/check_image_format.py
           # manifest 补丁脚本的自检。它负责的是「APK 有没有联网权限」，
           # 自己错了就毫无意义，所以在构建之前先验证它的逻辑（含失败路径）。
           python3 tools/patch_android_manifest.py --self-test

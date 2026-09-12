@@ -5,14 +5,19 @@
 
 为什么需要：
     Flutter 的 assets 声明**不递归**子目录。声明 `assets/img/music/` 时，
-    `assets/img/music/51/jacket.png` 这类三级路径不会被 pack 进包。
+    `assets/img/music/51/jacket.webp` 这类三级路径不会被 pack 进包。
     症状是：编译成功、analyze 无 error、APK 能装，但运行时满屏「图片丢失」。
     这个坑踩了两次，所以用静态校验把它挡在构建之前。
 
 校验三件事：
     ① 声明的每个路径在磁盘上都存在
-    ② assets/img 下每个 PNG 都被声明了（漏声明 = APK 里没有这张图）
+    ② assets/img 下每张图片都被声明了（漏声明 = APK 里没有这张图）
     ③ data/ 下四个必需 JSON 都被声明了
+
+⚠️ 这里的图片扫描**刻意不写死扩展名**（原来是 `rglob("*.png")`）。
+    图片格式从 PNG 换成 WebP 时，写死的扫描会退化成「什么都没找到」，
+    于是校验通过 —— 变成一个假绿勾。现在按「已知图片后缀」集合过滤，
+    换格式（或混用格式）都不会让这个检查失效。
 
 用法：
     python tools/check_assets.py
@@ -33,6 +38,9 @@ except Exception:  # noqa: BLE001
     pass
 
 REQUIRED_DATA = ("meta.json", "gates.json", "linklevels.json", "classes.json")
+
+# 已知的图片后缀。不写死单一格式，避免换格式后校验静默失效。
+IMAGE_SUFFIXES = {".webp", ".png", ".jpg", ".jpeg", ".gif", ".bmp"}
 
 
 def declared_assets() -> list[str]:
@@ -83,14 +91,18 @@ def main() -> int:
         else:
             on_disk.add(a)
 
-    # ② 每个 PNG 是否都声明了
+    # ② 每张图片是否都声明了
     img_root = ROOT / "assets" / "img"
     if img_root.exists():
-        pngs = {p.relative_to(ROOT).as_posix() for p in img_root.rglob("*.png")}
-        missing = sorted(pngs - set(declared))
+        images = {
+            p.relative_to(ROOT).as_posix()
+            for p in img_root.rglob("*")
+            if p.is_file() and p.suffix.lower() in IMAGE_SUFFIXES
+        }
+        missing = sorted(images - set(declared))
         if missing:
             problems.append(
-                f"  ✗ {len(missing)} 个 PNG 没有在 pubspec 里声明"
+                f"  ✗ {len(missing)} 张图片没有在 pubspec 里声明"
                 f"（这些图不会进 APK，app 里会显示「图片丢失」）："
             )
             for m in missing[:8]:
@@ -98,7 +110,15 @@ def main() -> int:
             if len(missing) > 8:
                 problems.append(f"      …… 还有 {len(missing) - 8} 个")
             problems.append("    修复：python tools/gen_asset_list.py")
-        print(f"  磁盘上 PNG：{len(pngs)} 个，全部已声明" if not missing else f"  磁盘上 PNG：{len(pngs)} 个")
+        print(
+            f"  磁盘上图片：{len(images)} 张，全部已声明"
+            if not missing
+            else f"  磁盘上图片：{len(images)} 张"
+        )
+        # 声明了图片后缀、但磁盘上没有的，① 已经报过了；这里补一条总数对账，
+        # 防止「扫不到图」这种情况被当成「没问题」
+        if images and not declared:
+            problems.append("  ✗ 磁盘上有图片但 pubspec 一个都没声明")
 
     # ③ data/ 必需文件
     for name in REQUIRED_DATA:

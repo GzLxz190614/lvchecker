@@ -95,18 +95,19 @@ lvchecker/
 │   ├── linklevels.json    Link LEVEL 缓和配置 + 判定色
 │   └── classes.json       AIR 段位课程（6 个 CLASS / 36 个真实组曲）
 ├── assets/
-│   └── img/               160 张 PNG / 19.31 MB（曲绘 / 角色立绘 / 服装 / 段位封面）
-│       ├── music/{id}/    jacket.png
-│       ├── chara/{id}/    image.png
-│       ├── avatar/{id}/   icon.png + tex.png
+│   └── img/               160 张 WebP / 4.13 MB（曲绘 / 角色立绘 / 服装 / 段位封面）
+│       ├── music/{id}/    jacket.webp
+│       ├── chara/{id}/    image.webp
+│       ├── avatar/{id}/   icon.webp + tex.webp
 │       └── class/         段位随机槽的封面 × 2
 ├── tools/                 ← 只在本地/CI 跑，不进 APK
 │   ├── build.py           从 condition/ 生成 data/ 与 assets/img/
 │   ├── gen_classes.py     从 condition/class/course 生成 classes.json
 │   ├── gen_asset_list.py  重建 pubspec 的 assets 列表（必须逐文件列）
 │   ├── check_dart.py      没有本地 Flutter 时的 Dart 静态自查
-│   ├── check_assets.py    pubspec 声明 ↔ 磁盘 PNG 双向校验
+│   ├── check_assets.py    pubspec 声明 ↔ 磁盘图片双向校验
 │   ├── check_classes.py   段位数据 + 等级换算回归
+│   ├── check_image_format.py  图片格式（Pillow 能力 + 扩展名一致性）
 │   ├── validate.py        数据完整性校验
 │   └── preview.py         生成验收预览图（本地用）
 ├── lib/                   ← Flutter 源码
@@ -159,7 +160,7 @@ lvchecker/
   "type": "music", "id": 51,
   "title": "My First Phone", "artist": "cubesato",
   "levels": { "basic": "2", "advanced": "6", "expert": "10", "master": "14" },
-  "image": "assets/img/music/51/jacket.png"
+  "image": "assets/img/music/51/jacket.webp"
 }
 ```
 
@@ -180,12 +181,18 @@ python tools/build.py          # 重新生成 data/ 与 assets/img/
 python tools/gen_classes.py    # 只重生成段位数据（build.py 也会自动调用）
 python tools/validate.py       # 跨文件引用完整性
 python tools/check_classes.py  # 段位数据 + 等级换算
-python tools/check_assets.py   # pubspec 声明 ↔ 磁盘 PNG
+python tools/check_assets.py   # pubspec 声明 ↔ 磁盘图片
+python tools/check_image_format.py  # 图片格式（Pillow 是否支持 WebP 等）
 python tools/preview.py        # 生成预览图到 preview/（本地用，不入库）
 ```
 
-`build.py` 会自动：解析 XML → 生成 JSON → 把 `.dds` 转成 PNG → 按 ID 归档 →
+`build.py` 会自动：解析 XML → 生成 JSON → 把 `.dds` 转成 **WebP** → 按 ID 归档 →
 写 `meta.json` → **重建 `pubspec.yaml` 的 assets 列表**。
+
+> **图片为什么是 WebP**：160 张图实测 **19.31 MB → 4.13 MB（省 78.6%）**。
+> 质量用 PSNR 量过：WebP q=82 平均 **42.3 dB**（>40 dB 基本看不出差别），
+> 而 q=90/95 只多 0.1~1.5 dB 却要多占 18~34% 空间，所以定在 82。
+> 想换回 PNG：把 `tools/build.py` 的 `IMG_EXT` 改成 `"png"`，删掉旧图重跑即可。
 
 > ⚠️ 最后一步（`gen_asset_list.py`）不能跳过。Flutter 的 `assets:` 声明**不是递归的**，
 > 写 `assets/img/music/` 一个目录**不等于**声明了里面的文件。少声明任何一张图，

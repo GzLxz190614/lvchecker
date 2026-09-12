@@ -50,8 +50,13 @@ LEVEL_ID_BASE_DIFFICULTY = 10  # -> Lv10
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 try:
     from build import DATA_VERSION  # type: ignore
+    from build import IMG_EXT, save_image  # type: ignore
 except Exception:  # noqa: BLE001
-    DATA_VERSION = "2026.09.11-2"
+    DATA_VERSION = "2026.09.11-3"
+    IMG_EXT = "webp"
+
+    def save_image(im, out_path, **_kw) -> None:  # type: ignore[misc]
+        im.save(out_path, "WEBP", quality=82, method=6)
 
 CLASS_META = {
     "CLASS Ⅰ": ("I", 1, "#3D66F2"),
@@ -112,8 +117,8 @@ def main() -> int:
     # ---------------------------------------------------------------- 封面
     covers: dict[str, str] = {}
     for src, key, out_name in (
-        (RANDOM_COVER, "classRandom", "random_cover.png"),
-        (RANGE_COVER, "classRange", "range_cover.png"),
+        (RANDOM_COVER, "classRandom", f"random_cover.{IMG_EXT}"),
+        (RANGE_COVER, "classRange", f"range_cover.{IMG_EXT}"),
     ):
         if not src.exists():
             warn(f"缺少封面文件：{src}")
@@ -122,7 +127,8 @@ def main() -> int:
             from PIL import Image
             with Image.open(src) as im:
                 im.load()
-                im.convert("RGBA").save(IMG_OUT / out_name, "PNG", optimize=True)
+                # 格式与质量统一走 build.py 的 save_image，避免两处参数漂移
+                save_image(im.convert("RGBA"), IMG_OUT / out_name)
             covers[key] = f"assets/img/class/{out_name}"
         except Exception as e:  # noqa: BLE001
             warn(f"封面转换失败 {src}: {e}")

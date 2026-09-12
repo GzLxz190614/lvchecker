@@ -323,7 +323,7 @@ UI：显示「3/5 位曲师已完成」，每组内打勾任一即算该组完�
 - 完成后：加半透明白色遮罩 + 居中「已完成」文字，并移到列表末尾
 - 再点一下：取消完成，移回原位
 
-**图片全部本地化**（你要求）：把 `condition/` 里的 `.dds` 转成 PNG，按 **ID 分文件夹**存放，并在每个文件夹里放一个**新的元数据文件**（不用原来的 XML）。
+**图片全部本地化**（你要求）：把 `condition/` 里的 `.dds` 转成图片文件，按 **ID 分文件夹**存放，并在每个文件夹里放一个**新的元数据文件**（不用原来的 XML）。
 
 #### 资源目录结构
 
@@ -1427,10 +1427,10 @@ lvchecker/
 │   ├── linklevels.json              # 缓和配置 + 判定色
 │   └── classes.json                 # AIR 段位课程（6 CLASS / 36 组曲）
 ├── assets/
-│   └── img/                         # 160 张 PNG / 19.31 MB
-│       ├── music/{id}/jacket.png          # 曲绘（含 WE 曲）
-│       ├── chara/{id}/image.png           # × 1（1080×1080）
-│       ├── avatar/{id}/icon.png + tex.png # × 3
+│   └── img/                         # 160 张 WebP / 4.13 MB
+│       ├── music/{id}/jacket.webp         # 曲绘（含 WE 曲）
+│       ├── chara/{id}/image.webp          # × 1（1080×1080）
+│       ├── avatar/{id}/icon.webp + tex.webp # × 3
 │       └── class/                         # 段位随机槽封面 × 2
 ├── lib/
 │   ├── main.dart
@@ -1463,8 +1463,9 @@ lvchecker/
 │   ├── gen_asset_list.py            # 重新生成 pubspec 的 assets 列表（必须逐文件列）
 │   ├── patch_android_manifest.py    # APK 显示名 + **INTERNET 权限**（见 Q17）
 │   ├── check_dart.py                # 无本地 Flutter 时的 Dart 静态自查
-│   ├── check_assets.py              # pubspec 声明 ↔ 磁盘 PNG 双向校验
+│   ├── check_assets.py              # pubspec 声明 ↔ 磁盘图片双向校验（格式无关）
 │   ├── check_classes.py             # 段位数据 + 等级换算回归
+│   ├── check_image_format.py        # 图片格式：Pillow 能力 + 扩展名一致性
 │   ├── validate.py                  # 跨文件引用完整性
 │   └── preview.py                   # 生成验收预览图
 ├── preview/                         # 只在本地看，不进 APK
@@ -1483,12 +1484,13 @@ lvchecker/
 
 | 脚本 | 作用 |
 |---|---|
-| `tools/build.py` | 解析 `condition/` 的 XML → 生成 `data/*.json`；同时把 `.dds` 转成 PNG 并按 ID 归档。**拿到新版本游戏数据重跑即可，不用手抄曲名** |
+| `tools/build.py` | 解析 `condition/` 的 XML → 生成 `data/*.json`；同时把 `.dds` 转成 **WebP** 并按 ID 归档。**拿到新版本游戏数据重跑即可，不用手抄曲名** |
 | `tools/gen_classes.py` | 解析 36 个 `Course.xml` → `data/classes.json`，并转换两张随机封面 |
 | `tools/gen_asset_list.py` | 按磁盘现状重建 `pubspec.yaml` 的 `assets:` 列表。**Flutter 的 assets 声明不是递归的**，必须逐文件列出，少一行就是「图片全部丢失」 |
 | `tools/patch_android_manifest.py` | 给 `flutter create` 生成的 manifest 补应用显示名与 **`INTERNET` 权限**。漏权限时 release APK 完全不能联网，且**没有任何编译期报错**（见 Q17） |
 | `tools/check_dart.py` | 本地没有 Flutter SDK，拿它做有限的静态自查（未定义类型、成员访问、展开语法、可空传参）。**它不能替代 `flutter analyze`** |
-| `tools/check_assets.py` | `pubspec` 声明 ↔ 磁盘 PNG 双向校验（声明了但没文件、有文件但没声明都报） |
+| `tools/check_assets.py` | `pubspec` 声明 ↔ 磁盘图片双向校验（声明了但没文件、有文件但没声明都报）。**扫描不写死扩展名**，换图片格式后不会静默失效 |
+| `tools/check_image_format.py` | 图片格式前置条件：Pillow 是否支持 WebP、仓库里的图扩展名与实际格式是否一致（见 Q18） |
 | `tools/check_classes.py` | 段位引用完整性 + **等级换算回归**（见 7.5） |
 | `tools/validate.py` | 跨文件 `linkId` 引用完整性 |
 | `tools/preview.py` | 生成验收预览图（`preview/*.png`），用来肉眼检查曲绘和条件文本渲染是否正常 |
@@ -1603,7 +1605,8 @@ git push origin v0.1.0
 **M0 的具体产出清单**（✅ 已生成，脚本：`tools/build.py`）：
 
 > ⚠️ 下面是 **M0 完成时**的快照（81 条 meta / 82 张 PNG）。之后陆续接入了
-> 段位课程曲目、奖励曲等，**当前实际数字是 157 条 meta / 160 张 PNG / 19.31 MB**。
+> 段位课程曲目、奖励曲等，**当前实际数字是 157 条 meta / 160 张 WebP / 4.13 MB**
+> （图片格式在 Q18 从 PNG 换成了 WebP，原本是 19.31 MB）。
 > 每次重新生成后以 `tools/validate.py` 的输出为准。
 
 ```
@@ -1735,6 +1738,60 @@ tools/validate.py         数据校验
 > 同类风险提醒：`publish-pages.yml` 的 `enablement: true` 那个失败也是同一类问题——
 > 构建/部署流水线「看起来跑了」，但产物其实不对。这类问题只能靠**验证产物**发现。
 
+### Q18 结论：图片格式改为 WebP（省 15 MB），质量用 PSNR 量化过
+
+**动机**：图片占了 APK 的绝大部分体积（19.31 MB / 约 56 MB）。
+
+**实测数据**（160 张图）：
+
+| 格式 | 体积 | 相对 |
+|---|---|---|
+| PNG | 19.31 MB | — |
+| **WebP q=82** | **4.13 MB** | **省 78.6%** |
+
+**质量不能凭感觉说「差不多」**，所以做了量化对比（对同一张图做
+「编码成 WebP → 解码回来」与原图逐像素比较，算 PSNR）：
+
+| quality | 平均 PSNR | 最低 PSNR | 体积 |
+|---|---|---|---|
+| 75 | 37.83 dB | 32.43 dB | 304 KB |
+| **82** | **42.33 dB** | **35.48 dB** | **358 KB** |
+| 90 | 42.39 dB | 36.72 dB | 423 KB |
+| 95 | 43.86 dB | 37.24 dB | 482 KB |
+
+判据：**PSNR > 40 dB 基本看不出差别**；35~40 dB 静态图仔细看能察觉；< 35 dB 可能在
+渐变/噪点处看到块状。q=82 过了 40 dB 这条线，而 q=90/95 只多 0.1~1.5 dB
+却要多占 18~34% 空间 —— **q=82 是明显的最优解**。
+
+**兼容性**：Android 4.0+ 原生支持解码 WebP（本项目 minSdk 29）。但注意
+**Flutter 的 `Image.asset` 是按文件扩展名选解码器的**，所以路径里的扩展名
+必须一起改 —— 这正是下面那条「改格式时容易漏的地方」。
+
+**实现方式**：`tools/build.py` 里的 `IMG_EXT = "webp"` 是**唯一**的格式开关，
+`gen_classes.py` / `gen_asset_list.py` 都从它 import，避免多处各写一份而漂移。
+换回 PNG 只需改这一个常量 + 删掉旧图重跑。
+
+**改格式时容易漏的地方**（第一次改就踩了两个）：
+
+| 漏掉的地方 | 后果 |
+|---|---|
+| `data/*.json` 里的 `"image"` 路径 | 路径指向不存在的 .png（由 build.py 生成，会跟上） |
+| `pubspec.yaml` 的 assets 列表 | 同上（由 gen_asset_list.py 重建） |
+| `tools/check_assets.py` 的 `rglob("*.png")` | **变成假绿勾**：换格式后它扫不到任何图，于是「全部已声明」永远成立。已改成按已知图片后缀集合过滤 |
+| `tools/validate.py` 的图片统计 | 体积统计恒为 0（同样已改成格式无关） |
+| 仓库根目录的 `icon.png` | **绝对不要动**：那是 `flutter_launcher_icons` 的输入，它按扩展名找文件 |
+
+**顺带加了 `tools/check_image_format.py`**，挡住两类编译期发现不了的问题：
+
+1. **CI 的 Pillow 没编 WebP 支持** → `build.py` 会写不出图。官方 wheel 一般都带，
+   但不能假定；脚本会真的编一张 8×8 验证。
+2. **扩展名与实际格式不符**（手工放错文件、改格式没清干净）→ Flutter 解不开。
+
+> 这个脚本最初写成「抽查前 12 张」，结果故意放一张「扩展名 .webp 实际是 PNG」
+> 的坏图进去，**它通过了** —— 因为坏图排在第 51 个。改成全量检查（实测 160 张
+> 只要 0.9 秒），并把这句教训写进了代码注释。
+> **抽查省下的时间远不值得漏报，而这个检查存在的唯一意义就是别漏报。**
+
 ---
 
 ## 16. 待定/需要你拍板
@@ -1747,7 +1804,7 @@ tools/validate.py         数据校验
 | Q10 | 曲目区默认显示全部还是只未完成？ | ✅ **已定稿**：**显示全部**，未完成在前、已完成在后，不做筛选标签 |
 | Q11 | 采纳**方案 A（现在就转 public）**吗？ | ✅ **已完成**：仓库已是 public（实测 `"private": false`） |
 | ~~Q12~~ | ~~AIR 门在没有段位数据前怎么办？~~ | ✅ **已解决**：占位符方案已废弃；`condition/class/course` 里找到了真实的 36 个组曲，直接接入（见 7.3） |
-| Q13 | 要不要把图片内置进 APK？ | ✅ **已定稿**：要。**不用在线曲绘**，全部本地 dds→png |
+| Q13 | 要不要把图片内置进 APK？ | ✅ **已定稿**：要。**不用在线曲绘**，全部本地 dds 转换（见 Q18：格式已从 PNG 换成 WebP） |
 | Q14 | `source` 字段（原 `confirmed`）保留吗？ | ✅ **保留**，防止以后忘了哪条日期是猜的 |
 | ~~Q15~~ | ~~RE:VERSE 的 11 首要「打过」还是「拿到」？~~ | ✅ **已解决**（见下） |
 
@@ -1773,7 +1830,7 @@ jsDelivr 在助手侧可用但你手机上不通，只有 `github.com` 与 `api.
    - 自动镜像需要存 `GITEE_TOKEN`，而 token 会过期，过期后表现为「镜像悄悄停了」——
      这种静默腐烂比手动推的「忘了推」更难排查
    - 手动推保持仓库「零密钥」的干净状态（这正是当前仓库的真实优势）
-3. **全仓库镜像**（含 `assets/img/` ~19 MB）。只镜像 `data/` 看似干净，但会把
+3. **全仓库镜像**（含 `assets/img/` ~4 MB）。只镜像 `data/` 看似干净，但会把
    「一条 push」变成「一个需要维护的同步动作」，把自动化的复杂度又请回来了。
 4. **必须做版本漂移检测**，否则两个仓库必然悄悄分叉。手段：
    - `SyncResult` / `SourceProbe` 都带上源的 `dataVersion`

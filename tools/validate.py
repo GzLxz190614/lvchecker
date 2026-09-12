@@ -84,9 +84,12 @@ print(f"  悬空引用: {bad}")
 print("\n=== 6. 图片统计 ===")
 declared = {v["image"] for v in meta.values() if v.get("image")}
 missing = [i for i in declared if not os.path.exists(i)]
-allpng = list(Path("assets/img").rglob("*.png"))
-allpng_s = {str(p).replace("\\", "/") for p in allpng}
-orphan = allpng_s - declared
+# 不写死扩展名：换格式（PNG → WebP）时写死的扫描会静默变成「什么都没找到」
+_IMG_SUFFIXES = {".webp", ".png", ".jpg", ".jpeg", ".gif", ".bmp"}
+allimg = [p for p in Path("assets/img").rglob("*")
+          if p.is_file() and p.suffix.lower() in _IMG_SUFFIXES]
+allimg_s = {str(p).replace("\\", "/") for p in allimg}
+orphan = allimg_s - declared
 print(f"  meta 声明图片: {len(declared)}   缺失: {len(missing)}")
-print(f"  实际 PNG: {len(allpng)}   非主图(tex/立绘): {len(orphan)}")
-print(f"  合计体积: {sum(p.stat().st_size for p in allpng)/1024/1024:.2f} MB")
+print(f"  实际图片: {len(allimg)}   非主图(tex/立绘): {len(orphan)}")
+print(f"  合计体积: {sum(p.stat().st_size for p in allimg)/1024/1024:.2f} MB")

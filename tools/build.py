@@ -7,9 +7,9 @@ lvchecker —— M0 数据与资源构建脚本
     data/meta.json         全局条目元数据（图片/名称）去重表
     data/gates.json        13 个门的完整定义
     data/linklevels.json   通关条件缓和配置 + 判定色
-    data/classes.json      AIR 段位课程（当前为占位符）
-    assets/img/music/{id}/jacket.png + meta.json
-    assets/img/avatar/{id}/icon.png + tex.png + meta.json
+    data/classes.json      AIR 段位课程（由 tools/gen_classes.py 生成）
+    assets/img/music/{id}/jacket.<IMG_EXT> + meta.json
+    assets/img/avatar/{id}/icon.<IMG_EXT> + tex.<IMG_EXT> + meta.json
     assets/img/chara/{id}/meta.json
 
 用法：
@@ -45,7 +45,42 @@ SCHEMA_VERSION = 1
 # 数据版本号。meta/gates/linklevels/classes 四个 json 共用同一个值
 # （gen_classes.py 会从这里 import，免得两边写不一致）。
 # 改数据后把它 +1，App 的「检查更新」就是靠比对这个字符串来判断有没有新数据的。
-DATA_VERSION = "2026.09.11-2"
+DATA_VERSION = "2026.09.11-3"
+
+# ---------------------------------------------------------------------------
+# 输出图片格式：WebP。
+#
+# 为什么用 WebP（实测数据，160 张图）：
+#   PNG  19.31 MB  →  WebP(q=82)  4.13 MB      省 78.6% / 15.18 MB
+#   曲绘原始分辨率是 300×300（正好对应卡片 ~95~104dp 的高密度屏显示，没有过度打包），
+#   1080×1080 的角色立绘也从 710KB 降到 141KB。
+#
+#   兼容性没有问题：Android 4.0+ 原生支持解码 WebP，Flutter 的 Image.asset
+#   也支持——但**靠文件扩展名选解码器**，所以路径里的扩展名必须跟着改。
+#
+# ⚠️ 连带影响（改格式时别忘了这几处）：
+#   · data/*.json 里所有 "image" 路径（由本文件生成，会自动跟上）
+#   · pubspec.yaml 的 assets 列表（由 tools/gen_asset_list.py 重建）
+#   · tools/check_assets.py 与 gen_asset_list.py 里的 `rglob("*.png")`
+#   · lib/widgets/item_card.dart 等处的注释示例
+#   · 仓库根目录的 icon.png **不要动**：那是 flutter_launcher_icons 的输入，
+#     它按扩展名找文件，而且启动图标本来就该是 PNG。
+# ---------------------------------------------------------------------------
+IMG_EXT = "webp"
+WEBP_QUALITY = 82
+
+
+def save_image(im, out_path, *, quality: int = WEBP_QUALITY) -> None:
+    """把 PIL 图像按 IMG_EXT 指定的格式写盘。
+
+    `method=6` 是 WebP 编码器的最高压缩档（更慢但更小）。
+    这个脚本只在本地/CI 偶尔跑一次，慢一点无所谓。
+    """
+    if IMG_EXT == "webp":
+        im.save(out_path, "WEBP", quality=quality, method=6)
+    else:
+        im.save(out_path, "PNG", optimize=True)
+
 
 # 门的开放日期（来自 condition/*/日期.txt）
 RELEASE_OPEN = "2026-09-10T10:00"   # 无时区，按手机本地时间解析
@@ -253,7 +288,7 @@ def build_boss_map() -> dict[str, dict]:
             "artist": info["artist"],
             "genre": info["genre"],
             "works": info["works"],
-            "image": f"assets/img/music/{sid}/jacket.png",
+            "image": f"assets/img/music/{sid}/jacket.{IMG_EXT}",
         })
         # 难度信息一律以 boss 目录的 Music.xml 为准（最完整，含小数）
         meta[key]["levels"] = info["levels"]
@@ -289,7 +324,7 @@ def add_music(xml_path: Path, gate: str) -> int:
             "artist": info["artist"],
             "genre": info["genre"],
             "works": info["works"],
-            "image": f"assets/img/music/{sid}/jacket.png",
+            "image": f"assets/img/music/{sid}/jacket.{IMG_EXT}",
         }
     return sid
 
@@ -479,7 +514,7 @@ def build_gates(boss_map: dict[str, dict]) -> list[dict]:
                     warn(f"角色 {ctitle} 没有图片资源（{sub.name} 只有 Chara.xml）")
                 k = add_manual_item(f"chara:{cid}", "chara", cid, ctitle,
                                     "角色 · 需升到 RANK 15",
-                                    f"assets/img/chara/{cid}/icon.png" if has_img else None,
+                                    f"assets/img/chara/{cid}/icon.{IMG_EXT}" if has_img else None,
                                     works=works)
                 items.append(k)
             gate["requirement"] = {"type": "items", "itemKeys": items}
@@ -502,7 +537,7 @@ def build_gates(boss_map: dict[str, dict]) -> list[dict]:
                 k = add_manual_item(f"avatar:{aid}", "avatar", aid, atitle,
                                     {"wear": "服装 · ウェア", "head": "头饰 · ヘッド",
                                      "back": "背包 · バック"}[slot],
-                                    f"assets/img/avatar/{aid}/icon.png",
+                                    f"assets/img/avatar/{aid}/icon.{IMG_EXT}",
                                     slot=slot)
                 items.append(k)
             gate["requirement"] = {"type": "items", "itemKeys": items}
@@ -761,12 +796,12 @@ def convert_one_dds(dds: Path) -> None:
             return
         out_dir = IMG / "chara" / str(cid)
         out_dir.mkdir(parents=True, exist_ok=True)
-        out_path = out_dir / "image.png"
+        out_path = out_dir / f"image.{IMG_EXT}"
         if not out_path.exists():
             with Image.open(dds) as im:
                 im.load()
-                im.convert("RGBA").save(out_path, "PNG", optimize=True)
-        meta[mkey]["image"] = f"assets/img/chara/{cid}/image.png"
+                save_image(im.convert("RGBA"), out_path)
+        meta[mkey]["image"] = f"assets/img/chara/{cid}/image.{IMG_EXT}"
         return
 
     m = re.match(r"^(?:CHU_UI_)?(Jacket|Avatar_Icon|Avatar_Tex)[_](\d+)$", base)
@@ -783,21 +818,21 @@ def convert_one_dds(dds: Path) -> None:
         # （会串号、生成多余目录）。这里按 dds 所在目录精确取 song_id。
         sid = song_id_of_dds_dir(dds.parent) or int(raw)
         out_dir = IMG / "music" / str(sid)
-        out_name = "jacket.png"
+        out_name = f"jacket.{IMG_EXT}"
         mkey = f"music:{sid}"
     elif kind == "Avatar_Icon":
         aid = int(raw)
         out_dir = IMG / "avatar" / str(aid)
-        out_name = "icon.png"
+        out_name = f"icon.{IMG_EXT}"
         mkey = f"avatar:{aid}"
     else:
         aid = int(raw)
         out_dir = IMG / "avatar" / str(aid)
-        out_name = "tex.png"
+        out_name = f"tex.{IMG_EXT}"
         mkey = f"avatar:{aid}"
 
     # 只转换 meta 表里真正会用到的资源。
-    # 被排除的条目（例如 NEW 门里不在条件内的「アイス」）不生成目录和 PNG，避免孤儿资源进 APK。
+    # 被排除的条目（例如 NEW 门里不在条件内的「アイス」）不生成目录和图，避免孤儿资源进 APK。
     if mkey not in meta:
         return
 
@@ -809,7 +844,7 @@ def convert_one_dds(dds: Path) -> None:
 
     with Image.open(dds) as im:
         im.load()
-        im.convert("RGBA").save(out_path, "PNG", optimize=True)
+        save_image(im.convert("RGBA"), out_path)
 
     meta[mkey]["image"] = f"assets/img/{out_dir.relative_to(IMG).as_posix()}/{out_name}"
 
@@ -950,9 +985,9 @@ def main() -> int:
         if c:
             print(f"  {t:<10} {c}")
 
-    pngs = list(IMG.rglob("*.png"))
-    size = sum(p.stat().st_size for p in pngs)
-    print(f"\nPNG：{len(pngs)} 个，合计 {size / 1024 / 1024:.2f} MB")
+    imgs = list(IMG.rglob(f"*.{IMG_EXT}"))
+    size = sum(p.stat().st_size for p in imgs)
+    print(f"\n{IMG_EXT.upper()}：{len(imgs)} 个，合计 {size / 1024 / 1024:.2f} MB")
 
     if warnings:
         print(f"\n⚠️ {len(warnings)} 条警告：")
