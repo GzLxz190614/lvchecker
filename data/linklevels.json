@@ -794,11 +794,24 @@
     "reverse": {
       "levels": [
         {
+          "level": 6,
+          "label": "∞",
+          "from": null,
+          "minDifficulty": "ULTIMA",
+          "life": 500,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "source": "user"
+        },
+        {
           "level": 5,
           "label": "5",
           "from": null,
-          "minDifficulty": "MASTER",
-          "life": 300,
+          "minDifficulty": "ULTIMA",
+          "life": 1500,
           "judges": [
             "JUSTICE",
             "ATTACK",
@@ -810,8 +823,8 @@
           "level": 4,
           "label": "4",
           "from": null,
-          "minDifficulty": "MASTER",
-          "life": 1000,
+          "minDifficulty": "ULTIMA",
+          "life": 3000,
           "judges": [
             "JUSTICE",
             "ATTACK",
@@ -824,7 +837,7 @@
           "label": "3",
           "from": null,
           "minDifficulty": "MASTER",
-          "life": 2000,
+          "life": 5000,
           "judges": [
             "JUSTICE",
             "ATTACK",
@@ -837,7 +850,7 @@
           "label": "2",
           "from": null,
           "minDifficulty": "EXPERT",
-          "life": 3000,
+          "life": 5000,
           "judges": [
             "JUSTICE",
             "ATTACK",
@@ -850,7 +863,7 @@
           "label": "1",
           "from": null,
           "minDifficulty": "BASIC",
-          "life": 3000,
+          "life": 5000,
           "judges": [
             "JUSTICE",
             "ATTACK",
@@ -864,13 +877,56 @@
     "universe": {
       "levels": [
         {
-          "level": 3,
-          "label": "∞（最严）",
+          "level": 6,
+          "label": "∞",
           "from": null,
           "minDifficulty": "ULTIMA",
           "life": 2000,
           "judges": [
             "JUSTICE_CRITICAL",
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "requiredHp": 100,
+          "source": "user"
+        },
+        {
+          "level": 5,
+          "label": "5",
+          "from": null,
+          "minDifficulty": "ULTIMA",
+          "life": 3000,
+          "judges": [
+            "JUSTICE_CRITICAL",
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "requiredHp": 300,
+          "source": "user"
+        },
+        {
+          "level": 4,
+          "label": "4",
+          "from": null,
+          "minDifficulty": "ULTIMA",
+          "life": 5000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "requiredHp": 600,
+          "source": "user"
+        },
+        {
+          "level": 3,
+          "label": "3",
+          "from": null,
+          "minDifficulty": "MASTER",
+          "life": 5000,
+          "judges": [
             "JUSTICE",
             "ATTACK",
             "MISS"
@@ -880,36 +936,7 @@
         },
         {
           "level": 2,
-          "label": "缓和 I",
-          "from": null,
-          "minDifficulty": "ULTIMA",
-          "life": 2000,
-          "judges": [
-            "JUSTICE_CRITICAL",
-            "JUSTICE",
-            "ATTACK",
-            "MISS"
-          ],
-          "requiredHp": 600,
-          "source": "user"
-        },
-        {
-          "level": 1,
-          "label": "缓和 II",
-          "from": null,
-          "minDifficulty": "MASTER",
-          "life": 5000,
-          "judges": [
-            "JUSTICE",
-            "ATTACK",
-            "MISS"
-          ],
-          "requiredHp": 300,
-          "source": "user"
-        },
-        {
-          "level": 0,
-          "label": "缓和 III",
+          "label": "2",
           "from": null,
           "minDifficulty": "EXPERT",
           "life": 5000,
@@ -918,7 +945,21 @@
             "ATTACK",
             "MISS"
           ],
-          "requiredHp": 1,
+          "requiredHp": 1000,
+          "source": "user"
+        },
+        {
+          "level": 1,
+          "label": "1",
+          "from": null,
+          "minDifficulty": "BASIC",
+          "life": 5000,
+          "judges": [
+            "JUSTICE",
+            "ATTACK",
+            "MISS"
+          ],
+          "requiredHp": 1000,
           "source": "user"
         }
       ],
