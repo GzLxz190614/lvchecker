@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-3",
+  "dataVersion": "2026.09.11-2",
   "region": "cn",
   "gameVersion": "中二节奏 2027 (CN1.40)",
   "updatedAt": "2026-09-11",
@@ -26,7 +26,7 @@
       "releaseStatus": "open",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "2026-09-10 更新后，把这 30 首各打一次（难度与分数不限）",
+      "conditionText": "2026-09-10 更新后，把下方 30 首游玩一次，不限难度",
       "conditionOriginal": "上面30首歌，全部打一次",
       "prerequisites": [],
       "tracking": "songs",
@@ -149,7 +149,7 @@
       "releaseStatus": "notYetOpen",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "把 Climax 和 Killing Rhythm 加入收藏，再从收藏文件夹中各打一次",
+      "conditionText": "把 Climax 和 Killing Rhythm 加入收藏，再从收藏文件夹中均游玩一次",
       "conditionOriginal": "添加至喜欢乐曲内，从喜欢乐曲文件夹内均游玩一次",
       "prerequisites": [],
       "tracking": "songs",
@@ -211,7 +211,7 @@
       "releaseStatus": "notYetOpen",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "五位曲师（光吉猛修 / 穴山大輔 / Kai / 水野健治 / 大国奏音）各打一首他们作曲的乐曲，即最少需要打 5 首（每位曲师一首）",
+      "conditionText": "五位曲师（光吉猛修 / 穴山大輔 / Kai / 水野健治 / 大国奏音）各游玩一首他们作曲的乐曲，即最少需要游玩 5 首（每位曲师一首）",
       "conditionOriginal": "五位曲师，从每个人自己作曲的所有乐曲中，各选一首乐曲打一次",
       "prerequisites": [],
       "tracking": "songs",
@@ -279,7 +279,7 @@
       "releaseStatus": "notYetOpen",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "更新后从 Mission 获得 3 件「淀川 沙音瑠」服装（服 / 頭 / ランドセル），穿上后打一次",
+      "conditionText": "更新后从 Mission 获得 3 件「淀川 沙音瑠」服装（服 / 頭 / ランドセル）并装备",
       "conditionOriginal": "从更新后的Mission中获得三个企鹅服装，给企鹅穿上\nウェア「淀川 沙音瑠の服」\nヘッド「淀川 沙音瑠の頭」\nバック「淀川 沙音瑠のランドセル」\n任务结束后可以在Net中购买",
       "prerequisites": [],
       "tracking": "items",
@@ -313,7 +313,7 @@
       "releaseStatus": "notYetOpen",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "2026-09-10 更新后，把这 5 首各打一次（难度与分数不限）",
+      "conditionText": "VERSE ep.SUN 更新后，游玩一遍下方 5 首乐曲（难度不限）",
       "conditionOriginal": "所有乐曲游玩一遍即可",
       "prerequisites": [],
       "tracking": "songs",
@@ -349,7 +349,7 @@
       "releaseStatus": "notYetOpen",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "当期 Mission 收集 100 个气球获得称号 MISSION still in progress，下局解锁隐藏地图 Secret AREA: LUMINOUS 并跑完",
+      "conditionText": "当期 Mission 收集 100 个气球获得称号 MISSION still in progress，下局解锁隐藏地图 Secret AREA: LUMINOUS，跑完地图",
       "conditionOriginal": "在当期Mission中收集100个气球，可获得称号 MISSION still in progress\n下局游戏中会解锁隐藏地图 Secret Area: LUMINOUS\n完成地图即可\n\n当期Mission结束后，Rating高于5.00自动出现该隐藏地图",
       "prerequisites": [],
       "tracking": "items",
@@ -382,7 +382,7 @@
       "releaseStatus": "notYetOpen",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "从「推荐乐曲文件夹」中游玩 メッちゅう殴打 / Theatore Creatore / Crossmythos Rhapsodia 各一次",
+      "conditionText": "从「推荐乐曲文件夹」中各游玩一次 メッちゅう殴打 / Theatore Creatore / Crossmythos Rhapsodia",
       "conditionOriginal": "从推荐乐曲文件夹中游玩这三首歌一次",
       "prerequisites": [],
       "tracking": "songs",
@@ -458,7 +458,7 @@
       "releaseStatus": "notYetOpen",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "通关 X-VERSE 后解锁地图 Secret AREA: MUSIC GAME EX。卡内每首乐曲都要通关课题曲才能获得，所以跑完地图拿全 11 首即等于全部游玩过一遍",
+      "conditionText": "通关 X-VERSE 后解锁地图 Secret AREA: MUSIC GAME EX，完成地图即可",
       "conditionOriginal": "完成X-VERSE门后自动解锁地图 Secret AREA: MUSIC GAME EX ，完成地图，获得地图内所有歌曲即可",
       "prerequisites": [
         "xverse"
@@ -479,8 +479,7 @@
           "music:2977",
           "music:2978"
         ]
-      },
-      "unresolved": "国服条件原文为「完成地图，获得地图内所有歌曲即可」，与日服「play all」不同。待用户确认是「需游玩」还是「拿到歌即可」。"
+      }
     },
     {
       "id": "universe",
@@ -538,7 +537,7 @@
       "releaseStatus": "locked",
       "conditionSource": "official",
       "releaseNote": "",
-      "conditionText": "通关全部 13 个门后自动显示",
+      "conditionText": "通关 UNIVERSE 后作为 Extra Track 出现。\n感谢你的游玩",
       "conditionOriginal": "Linked Tune 为最后的奖励乐曲",
       "prerequisites": [
         "origin",
