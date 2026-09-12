@@ -67,15 +67,23 @@ jobs:
       - name: Generate Android project shell
         run: flutter create --platforms=android --org io.github.gzlxz190614 .
 
-      - name: Assert existing sources were not overwritten
+      # 确认 `flutter create` 没有覆盖我们的源文件，且关键资源都在。
+      #
+      # ⚠️ 这一段以前是写死路径的 shell（`test -f assets/img/music/51/jacket.png`），
+      #    图片格式从 PNG 换成 WebP 时它**直接挂了** —— 改格式的人不会想到
+      #    去改 workflow 里的 shell。讽刺的是这个断言存在的意义就是防止资源
+      #    出问题，结果它成了唯一因为资源改名而挂掉的东西。
+      #
+      #    现在改成调脚本，扩展名从 build.py 的 IMG_EXT 取（唯一真源），
+      #    而且本地就能跑（`python tools/verify_repo.py`），不用推到 CI 试错。
+      #
+      #    注意 manifest 的检查**不在这里** —— 模板里本来就没有 INTERNET 权限，
+      #    要等下面 patch 完再带 --expect-manifest 查一次（顺序搞反会误报）。
+      - name: Verify repo invariants (sources not overwritten, assets)
         run: |
           set -e
-          test -f lib/main.dart
-          test -f lib/pages/gate_pager.dart
-          test -f data/gates.json
-          test -f assets/img/music/51/jacket.png
-          grep -q '^name: lvchecker' pubspec.yaml
-          echo "OK: main.dart / data / assets / pubspec 均未被覆盖"
+          python3 tools/verify_repo.py
+          test -f android/app/src/main/AndroidManifest.xml
 
       # ------------------------------------------------------------------
       # 改包名并把 minSdk 抬到 29（Android 10）。
@@ -130,6 +138,15 @@ jobs:
           python3 tools/patch_android_manifest.py \
             --manifest android/app/src/main/AndroidManifest.xml \
             --label "Linked VERSE Checker"
+
+      # 补丁打完之后再验一次 manifest。
+      #
+      # 为什么不在上面那个脚本里一起查：patch 脚本自己验的是「我刚写进去的东西」，
+      # 而这个脚本验的是「文件现在的状态」。两者都会抓到问题，但后者是独立的第二双眼睛
+      # —— 万一以后有人加了别的步骤去改 manifest（flavor / manifest merger 之类），
+      # 它还能兜住。
+      - name: Verify manifest after patching
+        run: python3 tools/verify_repo.py --expect-manifest
 
       - name: Get dependencies
         run: flutter pub get

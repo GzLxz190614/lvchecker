@@ -22,6 +22,7 @@
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -62,7 +63,7 @@ def collect_assets() -> list[str]:
 HEAD = '''name: lvchecker
 description: "中二节奏 2027 连章（Linked VERSE）门解锁进度记录工具"
 publish_to: "none"
-version: 0.2.0+2
+version: {version}
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
@@ -116,9 +117,31 @@ flutter_launcher_icons:
 '''
 
 
-def render_pubspec(assets: list[str]) -> str:
+# 没有现成 pubspec 时用的兜底版本号
+DEFAULT_VERSION = "0.2.0+2"
+
+
+def current_version() -> str:
+    """
+    读出 pubspec.yaml 里现有的 version，保留它。
+
+    为什么必须这么做：这个脚本是**整体重写** pubspec.yaml 的，
+    早先版本号是写死在 HEAD 里的 —— 于是「你在 pubspec 里把版本改成 0.3.0，
+    下次跑 CI 又被悄悄改回 0.2.0+2」。这种「构建自己改文件」的坑很难发现，
+    因为构建是成功的，只是版本号默默回退了。
+
+    现在以现有 pubspec 为准（它是权威来源），读不到才用兜底值。
+    """
+    if not PUBSPEC.exists():
+        return DEFAULT_VERSION
+    m = re.search(r"^version:\s*(\S+)\s*$", PUBSPEC.read_text(encoding="utf-8"), re.MULTILINE)
+    return m.group(1) if m else DEFAULT_VERSION
+
+
+def render_pubspec(assets: list[str], version: str) -> str:
     body = "\n".join(f"    - {a}" for a in assets)
-    return f"{HEAD}{body}\n{TAIL}"
+    head = HEAD.replace("{version}", version)
+    return f"{head}{body}\n{TAIL}"
 
 
 def main() -> int:
@@ -127,12 +150,14 @@ def main() -> int:
         print("❌ 没找到任何资源文件")
         return 1
 
-    text = render_pubspec(assets)
+    version = current_version()
+    text = render_pubspec(assets, version)
     PUBSPEC.write_text(text, encoding="utf-8")
 
     n_data = sum(1 for a in assets if a.startswith("data/"))
     n_img = sum(1 for a in assets if a.endswith(f".{IMG_EXT}"))
     print(f"已生成 pubspec.yaml：{len(assets)} 个资源（data {n_data} 个 / {IMG_EXT} {n_img} 个）")
+    print(f"  版本号保留为 {version}")
     return 0
 
 

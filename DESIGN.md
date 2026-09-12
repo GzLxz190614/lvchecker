@@ -1466,6 +1466,7 @@ lvchecker/
 │   ├── check_assets.py              # pubspec 声明 ↔ 磁盘图片双向校验（格式无关）
 │   ├── check_classes.py             # 段位数据 + 等级换算回归
 │   ├── check_image_format.py        # 图片格式：Pillow 能力 + 扩展名一致性
+│   ├── verify_repo.py               # 仓库不变量：源文件没被覆盖 / 图片 / INTERNET 权限
 │   ├── validate.py                  # 跨文件引用完整性
 │   └── preview.py                   # 生成验收预览图
 ├── preview/                         # 只在本地看，不进 APK
@@ -1491,6 +1492,7 @@ lvchecker/
 | `tools/check_dart.py` | 本地没有 Flutter SDK，拿它做有限的静态自查（未定义类型、成员访问、展开语法、可空传参）。**它不能替代 `flutter analyze`** |
 | `tools/check_assets.py` | `pubspec` 声明 ↔ 磁盘图片双向校验（声明了但没文件、有文件但没声明都报）。**扫描不写死扩展名**，换图片格式后不会静默失效 |
 | `tools/check_image_format.py` | 图片格式前置条件：Pillow 是否支持 WebP、仓库里的图扩展名与实际格式是否一致（见 Q18） |
+| `tools/verify_repo.py` | 仓库不变量：`flutter create` 没覆盖源文件、四个 JSON 可解析、图片按 `IMG_EXT` 存在、**AndroidManifest 有 INTERNET 权限**。取代了原先写在 workflow 里的写死路径断言（见 Q18） |
 | `tools/check_classes.py` | 段位引用完整性 + **等级换算回归**（见 7.5） |
 | `tools/validate.py` | 跨文件 `linkId` 引用完整性 |
 | `tools/preview.py` | 生成验收预览图（`preview/*.png`），用来肉眼检查曲绘和条件文本渲染是否正常 |
@@ -1693,6 +1695,8 @@ tools/validate.py         数据校验
 | R12 | 预览图的字体回退 | 仅影响本地预览图，不影响 APK | 已实现逐字回退（见 14 节 M0 说明） |
 | R13 | ~~RE:VERSE 的 11 首是「游玩」还是「拿到」~~ | — | ✅ **已解决**：见 Q15 |
 | R14 | ~~release APK 没有 `INTERNET` 权限，导致热更新全部失败~~ | — | ✅ **已解决**：见 Q17。构建期补权限 + **用 aapt 查成品 APK** 断言 |
+| R15 | 断言写在 workflow 的 shell 里、且写死了路径 | 改图片格式时构建直接挂 | ✅ **已解决**：挪进 `tools/verify_repo.py`，扩展名从 `IMG_EXT` 取（见 Q18） |
+| R16 | `gen_asset_list.py` 整体重写 pubspec，版本号一度写死 | 手动改的版本号被下次构建悄悄改回去 | ✅ **已解决**：改成保留现有 pubspec 里的版本 |
 
 ### Q17 结论：release APK 必须显式声明 `INTERNET`（**最隐蔽的一个坑**）
 
@@ -1779,7 +1783,57 @@ tools/validate.py         数据校验
 | `pubspec.yaml` 的 assets 列表 | 同上（由 gen_asset_list.py 重建） |
 | `tools/check_assets.py` 的 `rglob("*.png")` | **变成假绿勾**：换格式后它扫不到任何图，于是「全部已声明」永远成立。已改成按已知图片后缀集合过滤 |
 | `tools/validate.py` 的图片统计 | 体积统计恒为 0（同样已改成格式无关） |
+| **workflow 里的 `test -f assets/img/music/51/jacket.png`** | **构建直接失败** —— 这次真的挂在这里，见下面 |
 | 仓库根目录的 `icon.png` | **绝对不要动**：那是 `flutter_launcher_icons` 的输入，它按扩展名找文件 |
+
+#### 改格式时实际挂掉的那一处（教训）
+
+第一次推 CI 就红了，原因正是上表倒数第二行：workflow 里那句
+
+```yaml
+test -f assets/img/music/51/jacket.png
+```
+
+**没跟着改**。也就是说 —— 这个断言存在的意义就是「防止资源出问题」，
+结果它成了唯一因为资源改名而挂掉的东西。
+
+深层原因不是「忘了改」，而是**这类断言本来就不该写在 workflow 的 shell 里**：
+
+- 它写死了路径，而路径的扩展名由 `build.py` 的 `IMG_EXT` 决定 —— 两处真源
+- 它在本地跑不了，只能推到 CI 试错（一次几分钟，还要烧 Actions 额度）
+- 它和它要保护的东西放在两个完全不同的地方，改一处不会想到另一处
+
+**修法**：把这些不变量挪进 `tools/verify_repo.py`，扩展名从 `IMG_EXT` 取。
+换格式时这个脚本自动跟上，**结构上不可能再漏**。
+（已用「把 IMG_EXT 改成 png 再跑」验证过：它会正确地报出两张图都找不到。）
+
+顺带它还把「AndroidManifest 有没有 INTERNET 权限」也一起校验了 ——
+那条同样是「编译期不报错、只有装到手机才发现」的类型，放在同一个地方正好。
+
+> ⚠️ 但**顺序有讲究**，这里又踩了一次：`flutter create` 生成的模板本来就没有
+> INTERNET 权限（权限是后面 `patch_android_manifest.py` 插进去的），
+> 所以这个脚本如果在 patch **之前**就断言权限，会对着未打补丁的模板必然失败。
+>
+> 我自己第一版就是这么写的，写完才意识到。
+> 现在用 `--expect-manifest` 显式区分，workflow 里跑两次：
+>
+> | 时机 | 命令 | 查什么 |
+> |---|---|---|
+> | `flutter create` 之后 | `verify_repo.py` | 源文件没被覆盖、JSON 可解析、图片按 `IMG_EXT` 在 |
+> | `patch_android_manifest.py` 之后 | `verify_repo.py --expect-manifest` | 显示名 + INTERNET 权限 |
+>
+> 「顺序搞反会怎样」也测过（用临时 manifest 跑了 4 个场景）：
+> 未打补丁 + `--expect-manifest` → 正确失败；已打补丁 → 通过；
+> 只缺权限 → 失败并给出「装上去会完全无法联网」的明确原因。
+
+#### 另一个顺手修掉的坑：构建会悄悄改掉版本号
+
+`gen_asset_list.py` 是**整体重写** `pubspec.yaml` 的，而版本号原先写死在脚本里。
+于是「你在 pubspec 里把版本改成 0.3.0 → 下次 CI 跑 `gen_asset_list.py` →
+被悄悄改回 0.2.0+2」。构建是成功的，只是版本号默默回退。
+
+现在改成**以现有 pubspec 为准**（读 `^version:` 行，读不到才用兜底值），
+并打印 `版本号保留为 x.y.z`，已本地验证过改版本后不会被冲掉。
 
 **顺带加了 `tools/check_image_format.py`**，挡住两类编译期发现不了的问题：
 

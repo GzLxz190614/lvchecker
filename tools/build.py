@@ -310,7 +310,7 @@ def build_boss_map() -> dict[str, dict]:
 def add_music(xml_path: Path, gate: str) -> int:
     """把一首曲目加入 meta 表，返回 songId。
 
-    图片路径**固定按曲目 id 推导**为 `assets/img/music/<id>/jacket.png`，
+    图片路径**固定按曲目 id 推导**为 `assets/img/music/<id>/jacket.<IMG_EXT>`，
     因为转换阶段（convert_one_dds）会往那里写。
     """
     info = parse_music(xml_path)
