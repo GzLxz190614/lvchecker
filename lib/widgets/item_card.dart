@@ -60,12 +60,11 @@ class ItemCard extends StatelessWidget {
 
 /// 卡片的文字区。
 ///
-/// 曲名最长有 25 个全角字符（`今ぞ♡崇め奉れ☆オマエらよ！！～姫の秘メタル渇望～`），
-/// 在卡片宽度下要占 3 行，会把曲师名挤掉。
+/// 曲名和曲师名都用 [MarqueeText]：卡片很窄，长名字放不下。
 ///
-/// 处理方式：
-///   - **曲名**用 [MarqueeText]：一行显示，放不下就自动左右循环滚动，完整可读；
-///   - **曲师**正常换行，不再被挤走。
+/// 之前只有曲名滚动、曲师名最多两行 ellipsis 截断，结果是
+/// `あべにゅうぷろじぇくと feat.佐倉 紗織　produced by ave;new`（44 字符）
+/// 这类曲师名永远读不全。既然滚动机制已经有了，没理由只给曲名用。
 class _ScrollableText extends StatelessWidget {
   const _ScrollableText({required this.entry});
 
@@ -89,10 +88,8 @@ class _ScrollableText extends StatelessWidget {
           ),
           if (entry.caption.isNotEmpty) ...[
             const SizedBox(height: 4),
-            Text(
-              entry.caption,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+            MarqueeText(
+              text: entry.caption,
               style: const TextStyle(
                 fontSize: 10.5,
                 height: 1.25,
@@ -142,7 +139,6 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
   TextPainter? _tp;
   double _measuredForWidth = -1;
   double _overflow = 0;
-  double _lineHeight = 0;
 
   @override
   void dispose() {
@@ -159,8 +155,8 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
     }
   }
 
-  /// 返回 (溢出宽度, 行高)。同一宽度下复用缓存，不在 build 里反复测量。
-  (double, double) _measure(double availableWidth) {
+  /// 返回溢出宽度。同一宽度下复用缓存，不在 build 里反复测量。
+  double _measure(double availableWidth) {
     var tp = _tp;
     if (tp == null || (_measuredForWidth - availableWidth).abs() > 0.5) {
       tp = TextPainter(
@@ -171,7 +167,6 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
       _tp = tp;
       _measuredForWidth = availableWidth;
       _overflow = (tp.width - availableWidth).clamp(0.0, double.infinity);
-      _lineHeight = tp.height;
 
       if (_overflow > 0.5) {
         final ms = (_overflow / widget.velocity * 1000).round();
@@ -182,14 +177,15 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
         _c.value = 0;
       }
     }
-    return (_overflow, _lineHeight);
+    return _overflow;
   }
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final (overflow, lineHeight) = _measure(constraints.maxWidth);
+        final overflow = _measure(constraints.maxWidth);
+        final available = constraints.maxWidth;
 
         final text = AnimatedBuilder(
           animation: _c,
@@ -209,9 +205,22 @@ class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStat
           return Align(alignment: Alignment.centerLeft, child: text);
         }
 
+        // ⚠️ 这里的宽度必须是**可用宽度**，不能让它收缩到文字宽度。
+        //
+        // 之前的写法是 `SizedBox(height: lineHeight, child: ClipRect(child: Align(...)))`，
+        // 只限了高度没限宽度，而 `Align` 在**有界**约束下会收缩到子项的固有宽度
+        // （只有在无界约束下才扩展到最大）。于是 ClipRect 被撑成了整段文字的宽度，
+        // 裁剪框跟着文字一起平移 —— 表现就是「字在动，但右边永远是空白，
+        // 看不到被遮挡的部分」。给 SizedBox 显式定宽之后，裁剪框才会固定在
+        // 可用宽度上，文字在里面平移，右边的字才会真正露出来。
+        //
+        // 高度不用手写：maxLines: 1 + softWrap: false 保证渲染就是一行，
+        // 高度由子项决定（写死反而可能和实际行高差一点，导致上下被切）。
         return SizedBox(
-          height: lineHeight,
-          child: ClipRect(child: Align(alignment: Alignment.centerLeft, child: text)),
+          width: available,
+          child: ClipRect(
+            child: Align(alignment: Alignment.centerLeft, child: text),
+          ),
         );
       },
     );

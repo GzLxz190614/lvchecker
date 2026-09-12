@@ -4,6 +4,7 @@ import '../models/entry.dart';
 import '../models/gate.dart';
 import '../models/link_level.dart';
 import '../theme.dart';
+import 'item_card.dart';
 import 'link_level_list.dart';
 
 /// 页面最下方的 BOSS 区块：BOSS 曲信息 + 通关条件（Link LEVEL 缓和表）。
@@ -46,10 +47,8 @@ class BossSection extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  boss.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: MarqueeText(
+                  text: boss.title,
                   style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
@@ -59,9 +58,9 @@ class BossSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            boss.artist,
-            maxLines: 2,
+          // 曲师名也可能很长（最长实测 44 字符），用滚动而不是截断
+          MarqueeText(
+            text: boss.artist,
             style: const TextStyle(fontSize: 12, color: AppTheme.textDim),
           ),
           const SizedBox(height: 10),
