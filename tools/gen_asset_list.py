@@ -76,6 +76,9 @@ dependencies:
   http: ^1.2.2
   # 热更新：把拉到的 JSON 缓存到应用私有目录，离线时用缓存
   path_provider: ^2.1.4
+  # 落雪查分器的个人 API 密钥（能读全部成绩）不落明文，用它存进 Android Keystore。
+  # 见 lib/import/lxns_credentials.dart
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:

@@ -174,6 +174,7 @@ class _HomeState extends State<_Home> {
       MaterialPageRoute<bool>(
         builder: (_) => SettingsPage(
           gates: _r.data.gateData.gates,
+          meta: _r.data.meta,
           store: _r.store,
           dataVersion: _r.data.gateData.dataVersion,
           gameVersion: _r.data.gateData.gameVersion,

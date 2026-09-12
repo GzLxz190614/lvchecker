@@ -206,12 +206,19 @@ class GateData {
     required this.dataVersion,
     required this.gameVersion,
     required this.gates,
+    this.updatedAt,
   });
 
   final int schemaVersion;
   final String dataVersion;
   final String gameVersion;
   final List<Gate> gates;
+
+  /// 数据生成日期（`updatedAt`，形如 `2026-09-11`）。
+  ///
+  /// ⚠️ 注意这**不是**游戏版本更新日 —— 它是我们重新生成数据的日期，
+  /// 只适合当「这份数据有多新」的参考，**不能**拿来当「更新后」的时间界线。
+  final String? updatedAt;
 
   /// 解锁条件门（不含奖励乐曲页），用于「已解锁 n/13」统计
   List<Gate> get conditionGates => gates.where((g) => !g.isReward).toList();
@@ -226,6 +233,7 @@ class GateData {
       schemaVersion: (json['schemaVersion'] as num?)?.toInt() ?? 1,
       dataVersion: (json['dataVersion'] as String?) ?? 'unknown',
       gameVersion: (json['gameVersion'] as String?) ?? '',
+      updatedAt: json['updatedAt'] as String?,
       gates: gates,
     );
   }

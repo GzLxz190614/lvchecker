@@ -3,18 +3,22 @@ import 'package:flutter/material.dart';
 import '../data/data_loader.dart';
 import '../data/data_sync.dart';
 import '../data/progress_store.dart';
+import '../import/lxns_client.dart';
+import '../import/lxns_credentials.dart';
+import '../import/lxns_import.dart';
+import '../models/entry.dart';
 import '../models/gate.dart';
 import '../theme.dart';
 import '../util/time_util.dart';
 
 /// 设置页。
 ///
-/// M1 内容：关于 / 数据来源 / **热更新** / 重置进度。
-/// M4 会再加「从落雪查分器导入」+ 密钥管理。
+/// 内容：关于 / 数据来源 / **热更新** / **落雪查分器导入** / 重置进度。
 class SettingsPage extends StatefulWidget {
   const SettingsPage({
     super.key,
     required this.gates,
+    required this.meta,
     required this.store,
     required this.dataVersion,
     required this.gameVersion,
@@ -24,6 +28,10 @@ class SettingsPage extends StatefulWidget {
   });
 
   final List<Gate> gates;
+
+  /// 用来把 `music:51` 解析成曲名（提示里要显示曲名而不是 id）
+  final MetaTable meta;
+
   final ProgressStore store;
   final String dataVersion;
   final String gameVersion;
@@ -49,10 +57,19 @@ class _SettingsPageState extends State<SettingsPage> {
   /// 放在 build 里会在滑动时反复读 4 个文件。同步完成/清缓存后主动刷新一次即可。
   Map<String, String?>? _cachedVersions;
 
+  // ---- 落雪查分器 ----
+  bool _lxnsBusy = false;
+  bool _hasToken = false;
+
+  /// 只用来显示打码形式（`abcd…wxyz`），不是完整密钥。
+  /// 完整密钥只在真正请求时从加密存储里读一次。
+  String _tokenPreview = '';
+
   @override
   void initState() {
     super.initState();
     _refreshCachedVersions();
+    _refreshTokenState();
   }
 
   void _refreshCachedVersions() {
@@ -85,22 +102,7 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 22),
 
           const _SectionTitle('落雪查分器导入'),
-          _Card(
-            children: [
-              const Text(
-                '尚未开放。\n导入只是「辅助建议」：查分器对很多曲目查不到游玩时间，'
-                '所以无法判断是否在更新后打过，最终仍以你手动打勾为准。',
-                style: TextStyle(fontSize: 13, height: 1.5, color: AppTheme.textSecondary),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.download_outlined, size: 18),
-                label: const Text('从查分器获取数据'),
-                style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(42)),
-              ),
-            ],
-          ),
+          _Card(children: _lxnsSection(context)),
           const SizedBox(height: 22),
 
           const _SectionTitle('重置进度'),
@@ -462,6 +464,386 @@ class _SettingsPageState extends State<SettingsPage> {
     });
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('已清除缓存，正在使用 APK 内置数据')),
+    );
+  }
+
+  // ---------------------------------------------------------------- 落雪查分器
+
+  /// 密钥管理 + 导入入口。
+  ///
+  /// 设计的核心原则：**这个功能只做「辅助建议」，最终以你手动打勾为准。**
+  /// 原因见 lib/import/lxns_import.dart 顶部的说明 —— 落雪接口给的
+  /// `play_time` 是「最好成绩那次」的时间，不是最后游玩时间，
+  /// 所以「没找到开门之后的记录」不能当成「没打过」。
+  List<Widget> _lxnsSection(BuildContext context) {
+    final children = <Widget>[
+      const Text(
+        '从落雪查分器读你的成绩，帮你找出「哪些歌在门开放后打过」。\n'
+        '密钥存在手机的加密存储里（Android Keystore），不会上传到任何地方。',
+        style: TextStyle(fontSize: 13, height: 1.6, color: AppTheme.textSecondary),
+      ),
+      const SizedBox(height: 10),
+      _kv('密钥', _hasToken ? '已配置（${LxnsCredentials.mask(_tokenPreview)}）' : '未配置'),
+    ];
+
+    children.add(const SizedBox(height: 8));
+    children.add(
+      Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: _lxnsBusy ? null : () => _editToken(context),
+              icon: const Icon(Icons.key_outlined, size: 17),
+              label: Text(_hasToken ? '更换密钥' : '填写密钥'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.textSecondary,
+                side: const BorderSide(color: AppTheme.border),
+                minimumSize: const Size.fromHeight(40),
+              ),
+            ),
+          ),
+          if (_hasToken) ...[
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: _lxnsBusy ? null : () => _forgetToken(context),
+              icon: const Icon(Icons.delete_outline, size: 17),
+              label: const Text('清除'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.textDim,
+                side: const BorderSide(color: AppTheme.border),
+                minimumSize: const Size.fromHeight(40),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+
+    children.add(const SizedBox(height: 8));
+    children.add(
+      FilledButton.icon(
+        onPressed: (!_hasToken || _lxnsBusy) ? null : () => _doImport(context),
+        icon: _lxnsBusy
+            ? const SizedBox(
+                width: 15, height: 15, child: CircularProgressIndicator(strokeWidth: 2))
+            : const Icon(Icons.download_outlined, size: 18),
+        label: Text(_lxnsBusy ? '获取中…' : '从查分器获取数据并比对'),
+        style: FilledButton.styleFrom(
+          backgroundColor: AppTheme.accent,
+          foregroundColor: const Color(0xFF14141C),
+          minimumSize: const Size.fromHeight(44),
+        ),
+      ),
+    );
+
+    children.add(const SizedBox(height: 8));
+    children.add(
+      const Text(
+        '⚠️ 说明：查分器只能给出「最好成绩那次」的时间，不是最后游玩时间。\n'
+        '所以它只能确认「这段时间之后确实打过」，**不能证明「没打过」** —— '
+        '因此已勾选但找不到证据的曲目只会提示你，不会被自动取消。',
+        style: TextStyle(fontSize: 11, color: AppTheme.textFaint, height: 1.5),
+      ),
+    );
+
+    return children;
+  }
+
+  /// 判定用的「开门时间」。
+  ///
+  /// 优先用门自己的 `releaseDate`（ORIGIN / AIR 有）。
+  /// 国服其余 11 个门还没公布日期，于是退回**最早的已知开门日**
+  /// （= 本次更新的开放日 2026-09-10）。
+  ///
+  /// 为什么可以这么退回：`conditionText` 全都是「2026-09-10 更新后，把这几首各打一次」，
+  /// 所以「更新日之后打过」正是要判断的事。
+  ///
+  /// ⚠️ 退回是**偏保守**的：更新日 ≤ 该门真正开放的时间，
+  ///    所以「更新日之后打过」不一定等于「该门开门之后打过」——
+  ///    可能把一些其实已达标的歌判成「无法确认」。
+  ///    宁可让你多点几下确认，也不要漏报「还没打」。
+  ///
+  /// 显式取所有已公布日期里**最早**的那个，不依赖列表顺序。
+  DateTime? _cutoffFor(Gate gate) {
+    final own = parseLocalDate(gate.releaseDate);
+    if (own != null) return own;
+
+    DateTime? earliest;
+    for (final g in widget.gates) {
+      final d = parseLocalDate(g.releaseDate);
+      if (d == null) continue;
+      if (earliest == null || d.isBefore(earliest)) earliest = d;
+    }
+    return earliest;
+  }
+
+  /// 给弹窗显示用：说明这次的基准时间是怎么来的。
+  ///
+  /// 必须显示出来 —— 用户看到「建议勾上」时要能知道**拿什么时间比的**，
+  /// 否则这个建议是无法复核的。
+  String _cutoffNote() {
+    final all = widget.gates
+        .map((g) => parseLocalDate(g.releaseDate))
+        .whereType<DateTime>()
+        .toList()
+      ..sort();
+    if (all.isEmpty) {
+      return '⚠️ 数据里没有任何门的开放日期，无法判断「更新后」，本次不建议勾选。';
+    }
+    return '基准时间：${formatLocalDate(all.first)}（游戏更新日）。'
+        '已公布开放日期的门（ORIGIN / AIR）用它们自己的日期。';
+  }
+
+  Future<void> _editToken(BuildContext context) async {
+    final controller = TextEditingController();
+    final saved = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surfaceHigh,
+        title: const Text('落雪个人 API 密钥', style: TextStyle(fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '在查分器网页「账号详情」页生成个人 API 密钥，然后粘贴到这里。\n'
+              '注意要的是**个人**密钥（X-User-Token），不是开发者密钥。',
+              style: TextStyle(fontSize: 12.5, height: 1.5, color: AppTheme.textSecondary),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              obscureText: true,
+              decoration: const InputDecoration(
+                hintText: '粘贴密钥',
+                border: OutlineInputBorder(),
+                isDense: true,
+              ),
+              style: const TextStyle(fontSize: 13),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('取消')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('保存'),
+          ),
+        ],
+      ),
+    );
+
+    if (saved != true) return;
+    final ok = await LxnsCredentials.saveToken(controller.text);
+    if (!context.mounted) return;
+    if (!ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('保存失败：这台手机的安全存储不可用')),
+      );
+      return;
+    }
+    await _refreshTokenState();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('密钥已保存到加密存储')),
+    );
+  }
+
+  Future<void> _forgetToken(BuildContext context) async {
+    await LxnsCredentials.clearToken();
+    await _refreshTokenState();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('已清除密钥')),
+    );
+  }
+
+  Future<void> _refreshTokenState() async {
+    final t = await LxnsCredentials.readToken();
+    if (!mounted) return;
+    setState(() {
+      _hasToken = t != null && t.isNotEmpty;
+      _tokenPreview = t ?? '';
+    });
+  }
+
+  Future<void> _doImport(BuildContext context) async {
+    final token = await LxnsCredentials.readToken();
+    if (!context.mounted) return;
+    if (token == null || token.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('还没有配置密钥')),
+      );
+      return;
+    }
+
+    setState(() => _lxnsBusy = true);
+    LxnsImportReport? lxReport;
+    String? error;
+    try {
+      final scores = await const LxnsClient().fetchPlayerScores(token);
+      lxReport = evaluateAllGates(
+        gates: widget.gates,
+        cutoffOf: _cutoffFor,
+        scores: scores,
+        isTicked: widget.store.isTicked,
+        titleOf: (k) => widget.meta[k]?.title ?? k,
+        songIdOf: (k) => k.split(':').last,
+        fetchedAt: DateTime.now(),
+      );
+    } on LxnsApiException catch (e) {
+      error = e.message;
+    } catch (e) {
+      error = '$e';
+    }
+    if (!mounted) return;
+    setState(() => _lxnsBusy = false);
+
+    if (error != null) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error), duration: const Duration(seconds: 6)),
+      );
+      return;
+    }
+    if (!context.mounted || lxReport == null) return;
+    await _showImportResult(context, lxReport);
+  }
+
+  /// 结果弹窗：列出「建议勾上」和「已勾选但没找到证据」，让用户决定。
+  Future<void> _showImportResult(BuildContext context, LxnsImportReport report) async {
+    final toTick = report.of(LxnsVerdict.confirmed);
+    final contradicted = report.of(LxnsVerdict.contradicted);
+    final unknown = report.of(LxnsVerdict.unknown);
+
+    final apply = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surfaceHigh,
+        title: const Text('查分器比对结果', style: TextStyle(fontSize: 16)),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  '读到你 ${report.scoreCount} 个谱面的成绩，扫描了 ${report.scannedGates} 个门。',
+                  style: const TextStyle(fontSize: 12, color: AppTheme.textDim),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _cutoffNote(),
+                  style: const TextStyle(fontSize: 11, color: AppTheme.textFaint, height: 1.45),
+                ),
+                const SizedBox(height: 12),
+
+                if (toTick.isNotEmpty) ...[
+                  _resultHeader('✅ 建议勾上（${toTick.length} 首）', AppTheme.accent),
+                  const Text(
+                    '这些歌在开门时间之后有成绩记录，但你现在没勾：',
+                    style: TextStyle(fontSize: 11.5, color: AppTheme.textDim, height: 1.4),
+                  ),
+                  const SizedBox(height: 6),
+                  ...toTick.map((r) => _resultLine(r, showTime: true)),
+                  const SizedBox(height: 14),
+                ],
+
+                if (contradicted.isNotEmpty) ...[
+                  _resultHeader('⚠️ 已勾选，但没找到证据（${contradicted.length} 首）',
+                      AppTheme.warning),
+                  const Text(
+                    '你已经勾了这些歌，但查分器的记录里找不到「开门之后」的成绩。\n'
+                    '⚠️ 这不代表你没打过 —— 查分器只记最好成绩那次的时间。\n'
+                    '**不会自动取消你的勾选**，请自己确认一下。',
+                    style: TextStyle(fontSize: 11.5, color: AppTheme.textDim, height: 1.4),
+                  ),
+                  const SizedBox(height: 6),
+                  ...contradicted.map((r) => _resultLine(r, showTime: true)),
+                  const SizedBox(height: 14),
+                ],
+
+                if (toTick.isEmpty && contradicted.isEmpty) ...[
+                  const Text(
+                    '没有需要处理的曲目。',
+                    style: TextStyle(fontSize: 13, color: AppTheme.textSecondary),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+
+                if (unknown.isNotEmpty)
+                  Text(
+                    '另有 ${unknown.length} 首既没勾、也没找到开门之后的记录，未做处理。',
+                    style: const TextStyle(fontSize: 11, color: AppTheme.textFaint, height: 1.4),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('关闭'),
+          ),
+          if (toTick.isNotEmpty)
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: Text('勾上这 ${toTick.length} 首'),
+            ),
+        ],
+      ),
+    );
+
+    if (apply != true) return;
+
+    // 按门分组调用 tickAll —— 存档是按 gateId 分区的
+    final byGate = <String, List<String>>{};
+    for (final r in toTick) {
+      byGate.putIfAbsent(r.gateId, () => []).add(r.entryKey);
+    }
+    for (final e in byGate.entries) {
+      await widget.store.tickAll(e.key, e.value);
+    }
+    await widget.onDataRefreshed();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('已勾上 ${toTick.length} 首')),
+    );
+  }
+
+  Widget _resultHeader(String text, Color color) => Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Text(
+          text,
+          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: color),
+        ),
+      );
+
+  Widget _resultLine(LxnsSongResult r, {bool showTime = false}) {
+    final t = r.lastKnownPlay;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              r.title,
+              style: const TextStyle(fontSize: 12.5, color: AppTheme.textPrimary, height: 1.35),
+            ),
+          ),
+          if (showTime)
+            Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Text(
+                t == null ? '无时间记录' : formatLocalDate(t),
+                style: const TextStyle(fontSize: 11, color: AppTheme.textFaint),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
