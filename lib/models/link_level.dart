@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart' show rootBundle;
 
+import '../util/time_util.dart' show parseLocalDate;
+
 /// 判定（JUSTICE / ATTACK / MISS / JUSTICE CRITICAL）的伤害与颜色。
 ///
 /// 颜色来自游戏内判定文字配色。注意 MISS 是纯黑 —— 在深色底上会看不见，
@@ -178,7 +180,7 @@ LinkLevelTier? currentTier(List<LinkLevelTier> tiers, {DateTime? now}) {
   final today = now ?? DateTime.now();
   LinkLevelTier? best;
   for (final t in tiers) {
-    final d = _parse(t.from);
+    final d = parseLocalDate(t.from);
     if (d == null) continue;
     if (d.isAfter(today)) continue;
     if (best == null || _levelRank(t) < _levelRank(best)) best = t;
@@ -188,12 +190,6 @@ LinkLevelTier? currentTier(List<LinkLevelTier> tiers, {DateTime? now}) {
 
 /// ∞ 档（level 0）视为「最严」，排序时 rank 最大。
 int _levelRank(LinkLevelTier t) => t.level == 0 ? 999 : t.level;
-
-DateTime? _parse(String? raw) {
-  if (raw == null || raw.trim().isEmpty) return null;
-  final s = raw.trim();
-  return DateTime.tryParse(s) ?? DateTime.tryParse('${s}T00:00');
-}
 
 /// 血量门槛的分段（UNIVERSE 门专用）。
 ///
@@ -227,7 +223,7 @@ HpTier? currentHpTier(List<HpTier> tiers, {DateTime? now}) {
   final today = now ?? DateTime.now();
   HpTier? best;
   for (final t in tiers) {
-    final d = _parse(t.from);
+    final d = parseLocalDate(t.from);
     if (d == null) continue;
     if (d.isAfter(today)) continue;
     // 门槛越低越新（缓和方向是放宽），所以取最小的 requiredHp

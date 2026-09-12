@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/link_level.dart';
 import '../theme.dart';
+import '../util/time_util.dart' show parseLocalDate;
 
 /// 通关条件列表（BOSS 挑战那一层）。
 ///
@@ -61,18 +62,13 @@ class LinkLevelList extends StatelessWidget {
 
   _TierState _stateOf(LinkLevelTier t, LinkLevelTier? current) {
     if (identical(t, current)) return _TierState.current;
-    final d = _parse(t.from);
+    final d = parseLocalDate(t.from);
     if (d == null) return _TierState.notYet;
     if (d.isAfter(DateTime.now())) return _TierState.notYet;
     return _TierState.past;
   }
 }
 
-DateTime? _parse(String? raw) {
-  if (raw == null || raw.trim().isEmpty) return null;
-  final s = raw.trim();
-  return DateTime.tryParse(s) ?? DateTime.tryParse('${s}T00:00');
-}
 
 enum _TierState { past, current, notYet }
 
@@ -114,7 +110,7 @@ class HpRequirementList extends StatelessWidget {
   }
 
   Widget _hpRow(HpTier t, bool isCurrent) {
-    final from = _parse(t.from);
+    final from = parseLocalDate(t.from);
     final fg = isCurrent ? AppTheme.textPrimary : AppTheme.textDim;
 
     return Container(
@@ -265,7 +261,7 @@ class _TierRow extends StatelessWidget {
   }
 
   String _fromLabel() {
-    final d = _parse(tier.from);
+    final d = parseLocalDate(tier.from);
     if (d == null) return '缓和日期未公布';
     return '${d.year}-${_two(d.month)}-${_two(d.day)} 起';
   }
