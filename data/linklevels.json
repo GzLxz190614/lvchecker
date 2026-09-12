@@ -41,7 +41,7 @@
         {
           "level": 4,
           "label": "4",
-          "from": null,
+          "from": "2026-09-14T7:00",
           "minDifficulty": "MASTER",
           "life": 1000,
           "judges": [
@@ -54,7 +54,7 @@
         {
           "level": 3,
           "label": "3",
-          "from": null,
+          "from": "2026-09-17T7:00",
           "minDifficulty": "MASTER",
           "life": 2000,
           "judges": [
@@ -67,7 +67,7 @@
         {
           "level": 2,
           "label": "2",
-          "from": null,
+          "from": "2026-09-21T7:00",
           "minDifficulty": "EXPERT",
           "life": 3000,
           "judges": [
@@ -80,7 +80,7 @@
         {
           "level": 1,
           "label": "1",
-          "from": null,
+          "from": "2026-09-24T7:00",
           "minDifficulty": "BASIC",
           "life": 3000,
           "judges": [
@@ -110,7 +110,7 @@
         {
           "level": 4,
           "label": "4",
-          "from": null,
+          "from": "2026-09-14T7:00",
           "minDifficulty": "MASTER",
           "life": 1000,
           "judges": [
@@ -123,7 +123,7 @@
         {
           "level": 3,
           "label": "3",
-          "from": null,
+          "from": "2026-09-17T7:00",
           "minDifficulty": "MASTER",
           "life": 2000,
           "judges": [
@@ -136,7 +136,7 @@
         {
           "level": 2,
           "label": "2",
-          "from": null,
+          "from": "2026-09-21T7:00",
           "minDifficulty": "EXPERT",
           "life": 3000,
           "judges": [
@@ -149,7 +149,7 @@
         {
           "level": 1,
           "label": "1",
-          "from": null,
+          "from": "2026-09-24T7:00",
           "minDifficulty": "BASIC",
           "life": 3000,
           "judges": [
