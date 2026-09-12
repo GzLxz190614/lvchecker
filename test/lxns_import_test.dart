@@ -192,15 +192,56 @@ void main() {
       );
       expect(v['music:51'], LxnsVerdict.unknown,
           reason: '没有比较基准时不能建议勾选');
+    });
 
-      final v2 = _run(
+    test('cutoff 为 null 时，已勾选的曲目不会被报成「没找到证据」', () {
+      // ⚠️ 这条来自一次真实失败：原先无论有没有基准，已勾选 + 没命中
+      //    都会归成 contradicted。于是当数据里一个开放日期都没有时，
+      //    弹窗会给**每一首已勾选的歌**发一条「已勾选，但没找到证据」——
+      //    而实际上根本没查过。这是两件完全不同的事：
+      //      · 查过了、没证据  → contradicted（值得提示）
+      //      · 根本没法查      → 保持原样，不提示
+      final v = _run(
         gate: _songsGate(songKeys: ['music:51']),
         cutoff: null,
         scores: [_score(51, LxnsLevel.master, '2099-01-01T00:00')],
         ticked: {'music:51'},
       );
-      expect(v2['music:51'], LxnsVerdict.consistent,
-          reason: '基准缺失时也不该反过来提示「已勾选但没证据」');
+      expect(v['music:51'], LxnsVerdict.consistent,
+          reason: '没有基准 = 没比较过，不能反过来提示「已勾选但没证据」');
+      expect(v['music:51']!.isNoticeOnly, isFalse,
+          reason: '不该出现在「需要你确认」的提示列表里');
+    });
+
+    test('report.cutoff 为 null 时 didCompare 也是 false（界面据此说明「没比较」）', () {
+      final report = evaluateAllGates(
+        gates: [_songsGate(songKeys: ['music:51'])],
+        cutoffOf: (_) => null,
+        scores: const [],
+        isTicked: (_, __) => false,
+        titleOf: (k) => k,
+        songIdOf: (k) => k.split(':').last,
+      );
+      expect(report.didCompare, isFalse,
+          reason: '界面要能区分「查过了没问题」和「没法查」');
+    });
+
+    test('report.cutoff 取所有门基准里最早的那个', () {
+      final report = evaluateAllGates(
+        gates: [
+          _songsGate(songKeys: ['music:51'], id: 'a'),
+          _songsGate(songKeys: ['music:53'], id: 'b'),
+        ],
+        cutoffOf: (g) => g.id == 'a'
+            ? DateTime.parse('2026-09-20T10:00')
+            : DateTime.parse('2026-09-10T10:00'),
+        scores: const [],
+        isTicked: (_, __) => false,
+        titleOf: (k) => k,
+        songIdOf: (k) => k.split(':').last,
+      );
+      expect(report.didCompare, isTrue);
+      expect(report.cutoff, DateTime.parse('2026-09-10T10:00'));
     });
 
     test('score 里的 songId 对不上时不算命中', () {

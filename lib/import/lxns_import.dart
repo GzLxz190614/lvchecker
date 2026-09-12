@@ -86,6 +86,7 @@ class LxnsImportReport {
     required this.scannedGates,
     required this.scoreCount,
     this.fetchedAt,
+    this.cutoff,
   });
 
   final List<LxnsSongResult> results;
@@ -95,6 +96,16 @@ class LxnsImportReport {
   final int scoreCount;
 
   final DateTime? fetchedAt;
+
+  /// 这次用的基准时间（最早的已知开门日）。
+  ///
+  /// **null 表示没有基准，根本没做比较** —— 界面必须把这件事说出来，
+  /// 否则用户看到「没有需要处理的曲目」会误以为「查过了，都没问题」，
+  /// 而实际上是「没法查」。这两件事完全不同。
+  final DateTime? cutoff;
+
+  /// 是否真的做过比较
+  bool get didCompare => cutoff != null;
 
   List<LxnsSongResult> of(LxnsVerdict v) =>
       results.where((r) => r.verdict == v).toList();
@@ -186,10 +197,17 @@ LxnsImportReport evaluateGate({
     }
 
     final play = best?.playTime;
-    final after = playedAfter(play, cutoff);
 
     LxnsVerdict verdict;
-    if (after) {
+    if (cutoff == null) {
+      // ⚠️ 没有基准时间 → **根本没做过比较**，不能说「没找到证据」。
+      //
+      // 这个区分很重要：如果把「没比较」也归成 contradicted，那么当数据里
+      // 一个门的开放日期都没有时，弹窗会给**每一首已勾选的歌**都发一条
+      // 「已勾选，但没找到证据」——纯噪音，而且是在没查的情况下吓唬你。
+      // 所以这里只分「已勾选（无从比较，保持原样）」和「未勾选（无从判断）」。
+      verdict = ticked ? LxnsVerdict.consistent : LxnsVerdict.unknown;
+    } else if (playedAfter(play, cutoff)) {
       verdict = ticked ? LxnsVerdict.consistent : LxnsVerdict.confirmed;
     } else {
       verdict = ticked ? LxnsVerdict.contradicted : LxnsVerdict.unknown;
@@ -237,12 +255,20 @@ LxnsImportReport evaluateAllGates({
   final all = <LxnsSongResult>[];
   var scanned = 0;
 
+  // 报告里带一份「这次用的基准」，界面要据此区分
+  // 「查过了没问题」和「没法查」。取所有门基准里最早的那个。
+  DateTime? reportCutoff;
+
   for (final gate in gates) {
     if (gate.isReward) continue;
+    final cutoff = cutoffOf(gate);
+    if (cutoff != null && (reportCutoff == null || cutoff.isBefore(reportCutoff))) {
+      reportCutoff = cutoff;
+    }
     // auto / manual 这类没有需要打的歌，跳过（evaluateGate 也会返回空）
     final r = evaluateGate(
       gate: gate,
-      cutoff: cutoffOf(gate),
+      cutoff: cutoff,
       scores: idx,
       isTicked: (k) => isTicked(gate.id, k),
       titleOf: titleOf,
@@ -258,5 +284,6 @@ LxnsImportReport evaluateAllGates({
     scannedGates: scanned,
     scoreCount: idx.length,
     fetchedAt: fetchedAt,
+    cutoff: reportCutoff,
   );
 }

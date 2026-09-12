@@ -735,8 +735,15 @@ class _SettingsPageState extends State<SettingsPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _cutoffNote(),
-                  style: const TextStyle(fontSize: 11, color: AppTheme.textFaint, height: 1.45),
+                  report.didCompare
+                      ? _cutoffNote()
+                      : '⚠️ 数据里没有任何门的开放日期，**这次没有做比较** —— '
+                          '下面的结果只是「读到了多少成绩」，不代表「都没问题」。',
+                  style: TextStyle(
+                    fontSize: 11,
+                    height: 1.45,
+                    color: report.didCompare ? AppTheme.textFaint : AppTheme.warning,
+                  ),
                 ),
                 const SizedBox(height: 12),
 
