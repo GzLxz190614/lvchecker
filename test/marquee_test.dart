@@ -1,27 +1,26 @@
 // 跑马灯（MarqueeText）的行为测试。
 //
-// **为什么必须写这个测试**：滚动这个功能我改错过两次，
-// 两次都是「推断正确、装到手机上现象一样」——
+// **为什么必须写这个测试**：滚动这个功能我改错过三次。
 //
-//   第一版：`SizedBox(height:) + ClipRect(Align(child: text))`
-//           → 字在动，但右边永远空白
-//   第二版：加了 `SizedBox(width: available)`
-//           → 现象完全没变
+//   ① `SizedBox(height:) + ClipRect(Align(child: text))` → 字在动，右边永远空白
+//   ② ① + `SizedBox(width: available)`                  → 现象完全没变
+//   ③ `+ OverflowBox(maxWidth: ∞) + Transform`          → 文字整个不见了
 //
-// 根本困难在于：本地没有 Flutter 环境，我没法真的跑起来看，
-// 只能靠推断 Flutter 内部的约束传递细节，而推断错了两次。
+// 三次都是「推断 Flutter 内部的约束传递行为」，而本地没有 Flutter 环境，
+// 推断了三次错了三次，每次都靠你装一次 APK 才知道结果。这个循环必须打断。
 //
-// 所以这里把「滚动到底成不成立」变成**可自动验证的断言**：
-// 只要我在 CI 里跑它，就不需要靠装 APK 才知道对不对。
+// 现在断言的是**布局真实算出来的量**（ScrollPosition.maxScrollExtent），
+// 不是我自己的 TextPainter 测量 —— 少一个可能算错的环节。
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lvchecker/widgets/item_card.dart';
 
-/// 一段一定放不下的长文本（22 个全角字符是实测最长的曲名之一）。
+/// 实测最长的曲名之一（22 个全角字符）。
 const kLongText = '今ぞ♡崇め奉れ☆オマエらよ！！～姫の秘メタル渇望～';
+const kShortText = '短曲名';
 
-/// 一个很短的可用宽度，保证长文本必然溢出。
+/// 故意很窄，保证长文本必然溢出。
 const double kBoxWidth = 120;
 
 Widget _host(String text, {double width = kBoxWidth}) => MaterialApp(
@@ -38,91 +37,105 @@ Widget _host(String text, {double width = kBoxWidth}) => MaterialApp(
       ),
     );
 
-/// 找到跑马灯里那个真正绘制文字的 Text 的 RenderBox。
-RenderBox _textRenderBox(WidgetTester tester) {
-  final finder = find.descendant(
-    of: find.byType(MarqueeText),
-    matching: find.byType(Text),
+/// 跑马灯里那个滚动视图的 position。第二帧之后才 attach。
+ScrollPosition _scrollPosition(WidgetTester tester) {
+  final state = tester.state<ScrollableState>(
+    find.descendant(
+      of: find.byType(MarqueeText),
+      matching: find.byType(Scrollable),
+    ),
   );
-  expect(finder, findsOneWidget, reason: 'MarqueeText 里应该正好有一个 Text');
-  return tester.renderObject<RenderBox>(finder);
+  return state.position;
 }
 
-void main() {
-  testWidgets('短文本不滚动，且不被裁剪', (tester) async {
-    await tester.pumpWidget(_host('短曲名'));
+Future<ScrollPosition> _pumpAndSettleLayout(WidgetTester tester, String text) async {
+  await tester.pumpWidget(_host(text));
+  // 用**带时长**的 pump：不带时长时推进量是 0，动画控制器可能一步都没走。
+  // 第一帧完成布局；_syncToLayout 挂在 post-frame 回调上，所以需要第二帧。
+  await tester.pump(const Duration(milliseconds: 16));
+  await tester.pump(const Duration(milliseconds: 16));
+  return _scrollPosition(tester);
+}
 
-    final box = _textRenderBox(tester);
-    // 放得下：整段文字都在可用宽度内
-    expect(box.size.width, lessThanOrEqualTo(kBoxWidth + 0.5),
-        reason: '短文本不该溢出');
-  });
+/// 动画时长上限是 9000ms（见 MarqueeText 的 clamp）。
+/// 要在测试里走完一个单程，模拟时间必须超过它，所以这里用 200 帧 × 50ms = 10s。
+const int _frames = 200;
+const Duration _step = Duration(milliseconds: 50);
 
-  testWidgets('长文本：文字按固有宽度布局，不被挤成可用宽度', (tester) async {
-    await tester.pumpWidget(_host(kLongText));
-
-    final box = _textRenderBox(tester);
-    // ★ 这是最关键的一条断言。
-    //   如果文字被挤成「可用宽度」，那它一开始就是残缺的，
-    //   平移只是在移动一段缺了尾巴的文字 —— 这正是前两次的现象。
-    expect(box.size.width, greaterThan(kBoxWidth + 1),
-        reason: '文字必须比裁剪框宽，否则说明它被挤窄了（会永远看不到右边内容）');
-  });
-
-  testWidgets('长文本：裁剪框的宽度等于可用宽度', (tester) async {
-    await tester.pumpWidget(_host(kLongText));
-
-    final clip = find.descendant(
-      of: find.byType(MarqueeText),
-      matching: find.byType(ClipRect),
+/// 跑马灯里那个真正绘制文字的 RenderBox。
+RenderBox _textBox(WidgetTester tester) => tester.renderObject<RenderBox>(
+      find.descendant(of: find.byType(MarqueeText), matching: find.byType(Text)),
     );
-    expect(clip, findsOneWidget, reason: '溢出的文字必须被裁剪，否则会渗透到相邻卡片');
 
-    final clipBox = tester.renderObject<RenderBox>(clip);
-    expect(clipBox.size.width, closeTo(kBoxWidth, 0.5),
-        reason: '裁剪框宽度必须钉死为可用宽度，不能跟着文字一起变宽');
+void main() {
+  testWidgets('短文本：放得下，不滚动', (tester) async {
+    final pos = await _pumpAndSettleLayout(tester, kShortText);
+
+    // ★ 用布局算出来的溢出量，而不是我自己量的文字宽度
+    expect(pos.maxScrollExtent, lessThanOrEqualTo(0.5),
+        reason: '短文本不该需要滚动（maxScrollExtent=${pos.maxScrollExtent}）');
   });
 
-  testWidgets('长文本：确实会平移，且平移量足以露出尾部', (tester) async {
-    await tester.pumpWidget(_host(kLongText));
+  testWidgets('长文本：文字按固有宽度布局，没被挤成可用宽度', (tester) async {
+    await _pumpAndSettleLayout(tester, kLongText);
 
-    final box = _textRenderBox(tester);
-    final textWidth = box.size.width;
-    final expectedOverflow = textWidth - kBoxWidth;
+    final box = _textBox(tester);
+    // ★ 这是最关键的一条，也正是前三次栽掉的地方。
+    //   如果文字被挤成「可用宽度」，它一开始就是残缺的，
+    //   后面的滚动只是在移动一段缺了尾巴的文字 —— 右边当然永远空白。
+    expect(box.size.width, greaterThan(kBoxWidth + 1),
+        reason: '文字宽度 ${box.size.width} 必须大于可用宽度 $kBoxWidth，'
+            '否则说明被挤窄了（会永远看不到右边内容）');
+  });
 
-    // 收集一段时间内的平移量
-    final offsets = <double>[];
-    for (var i = 0; i < 40; i++) {
-      await tester.pump(const Duration(milliseconds: 50));
-      final transform = tester
-          .widget<Transform>(find.descendant(
-            of: find.byType(MarqueeText),
-            matching: find.byType(Transform),
-          ))
-          .transform;
-      offsets.add(transform.storage[12]); // Matrix4 的 x 平移量
+  testWidgets('长文本：可以滚动，且滚动范围足够露出尾部', (tester) async {
+    final pos = await _pumpAndSettleLayout(tester, kLongText);
+
+    // ★ 用布局真实算出的 maxScrollExtent。前三次的 bug 就死在这里：
+    //   技术上「能滚」，但没有任何东西保证滚出来的距离覆盖真正的溢出量。
+    final textWidth = _textBox(tester).size.width;
+    final expected = textWidth - kBoxWidth;
+
+    expect(pos.maxScrollExtent, greaterThan(1),
+        reason: '必须能滚（否则说明文字没超出容器）');
+    expect(pos.maxScrollExtent, closeTo(expected, 1.0),
+        reason: '可滚动距离 ${pos.maxScrollExtent} 应该约等于'
+            '「文字宽度 - 可用宽度」= $expected');
+  });
+
+  testWidgets('长文本：确实会随时间滚动，并且会滚到尾部', (tester) async {
+    final pos = await _pumpAndSettleLayout(tester, kLongText);
+    final maxExtent = pos.maxScrollExtent;
+
+    final seen = <double>[];
+    for (var i = 0; i < _frames; i++) {
+      await tester.pump(_step);
+      seen.add(pos.pixels);
     }
 
-    expect(offsets.every((o) => o <= 0.01), isTrue,
-        reason: '平移只能是负值（向左移），实测前几帧 ${offsets.take(5)}');
+    expect(seen.every((p) => p >= -0.01 && p <= maxExtent + 0.01), isTrue,
+        reason: '滚动位置必须始终落在 [0, $maxExtent] 内，实测 ${seen.take(5)}');
 
-    final moved = offsets.reduce((a, b) => a < b ? a : b); // 最左的位置
-    final reach = -moved;
+    final furthest = seen.reduce((a, b) => a > b ? a : b);
+    // ★ 到达尾部 = 右边被遮住的内容真的露出来了
+    expect(furthest, greaterThan(maxExtent - 1),
+        reason: '最远只滚到 $furthest / $maxExtent —— 没到尾部说明尾部内容仍看不到');
+  });
 
-    expect(reach, greaterThan(1),
-        reason: '文字必须真的动起来（40 帧里几乎没动说明动画没跑）');
+  testWidgets('动画会往返（回到起点，首尾都能读到）', (tester) async {
+    final pos = await _pumpAndSettleLayout(tester, kLongText);
+    final maxExtent = pos.maxScrollExtent;
 
-    // ★ 用**绝对值**判断，不用百分比。
-    //
-    //   一开始我写的是「reach > expectedOverflow * 0.7」，但那是个循环论证：
-    //   expectedOverflow 是按「文字固有宽度」算的，如果文字其实被挤窄了，
-    //   这个基准本身就是错的，断言还照样通过 —— 又一个假绿勾。
-    //
-    //   换成绝对值之后，它至少能独立地说明「文字确实移出了超过一个字宽的距离」，
-    //   也就是右边确实露出了新内容。文字宽度本身由上面那条断言单独把关。
-    expect(reach, greaterThan(30),
-        reason: '最远只移动了 $reach 逻辑像素（文字宽 $textWidth，'
-            '裁剪框 $kBoxWidth，理论上需要移动约 $expectedOverflow）。'
-            '移动太少说明尾部露不出来。');
+    final seen = <double>[];
+    for (var i = 0; i < _frames; i++) {
+      await tester.pump(_step);
+      seen.add(pos.pixels);
+    }
+
+    final furthest = seen.reduce((a, b) => a > b ? a : b);
+    final nearest = seen.reduce((a, b) => a < b ? a : b);
+
+    expect(furthest, greaterThan(maxExtent - 1), reason: '要到过尾部');
+    expect(nearest, lessThan(1), reason: '要回到过起点（reverse 往返）');
   });
 }

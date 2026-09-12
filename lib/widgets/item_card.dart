@@ -108,12 +108,35 @@ class _ScrollableText extends StatelessWidget {
 /// 为什么不用横向滚动条：卡片很窄，手动左右滑很难精确操作，
 /// 而且会和外面门页的上下滚动抢手势。自动循环更适合「一眼看全曲名」。
 ///
-/// 实现要点：
-/// - 用 [TextPainter] 量出文字真实宽度，只有**超出可用宽度**时才启动动画；
-///   放得下就静止显示，不会平白动起来。
-/// - 动作用 [AnimationController.repeat] 的 `reverse: true`：
-///   一条 0→1 的直线动画镜像播放，等于「推到末尾再弹回起点」，
-///   首尾都能读到，语义也比手动 forward/reverse 清晰。
+/// ⚠️⚠️ 这个组件修过**三次**，前两次都错在「自己推断 Flutter 的约束传递行为」：
+///
+///   ① `SizedBox(height:) + ClipRect(Align(child: text))`
+///      → 字在动，但右边永远空白
+///   ② ① + `SizedBox(width: available)`
+///      → 现象完全没变
+///   ③ `SizedBox + ClipRect + OverflowBox(maxWidth: ∞) + Transform`
+///      → **文字整个不见了**（比之前更糟）
+///
+/// 根本困难：本地没有 Flutter 环境，我没法真的跑起来看，只能靠推断，
+/// 而约束传递是 Flutter 内部行为，推断了三次错了三次。
+///
+/// 所以现在**不再自己拼约束**，改用 Flutter 官方文档明确描述的做法：
+///
+///   SingleChildScrollView(scrollDirection: horizontal)
+///     └ Row(mainAxisSize: MainAxisSize.min)
+///         └ Text(maxLines: 1, softWrap: false)
+///
+/// 这里的关键**全部是文档写明的行为**，不是我推的：
+///
+/// - 横向 `SingleChildScrollView` 会给子项**无界宽度约束**。
+/// - `Row` 在无界宽度下 + `MainAxisSize.min` → 按子项固有宽度装配。
+/// - 因此 `Text` 拿到无界宽度 → `softWrap: false` 时**一定**排成完整一行，
+///   不可能被挤成可用宽度。（前三版就是栽在「文字到底按多宽布局」上。）
+/// - 滚动视图默认 `clipBehavior: Clip.hardEdge`，会按自身尺寸裁剪 ——
+///   不再需要我手写 `ClipRect`。
+///
+/// 滚动位置由 [ScrollController] 手动驱动（不是手势滚动），
+/// 这样不会和门页的上下滚动抢手势；动画是往返的，首尾都能读到。
 class MarqueeText extends StatefulWidget {
   const MarqueeText({
     super.key,
@@ -135,109 +158,87 @@ class MarqueeText extends StatefulWidget {
 class _MarqueeTextState extends State<MarqueeText> with SingleTickerProviderStateMixin {
   late final AnimationController _c = AnimationController(vsync: this);
 
-  /// 已缓存的测量结果，只为 (text, style, 可用宽度) 组合算一次
-  TextPainter? _tp;
-  double _measuredForWidth = -1;
-  double _overflow = 0;
+  /// 驱动滚动位置：0 = 最左，1 = 最右
+  late final Animation<double> _anim =
+      Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(parent: _c, curve: Curves.linear));
+
+  final ScrollController _scroll = ScrollController();
 
   @override
-  void dispose() {
-    _c.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _c.addListener(_applyScroll);
+    // 首帧之后才知道真实的 maxScrollExtent，那时再决定「要不要滚、滚多久」。
+    WidgetsBinding.instance.addPostFrameCallback((_) => _syncToLayout());
   }
 
   @override
   void didUpdateWidget(covariant MarqueeText old) {
     super.didUpdateWidget(old);
     if (old.text != widget.text || old.style != widget.style) {
-      _tp = null;
-      _measuredForWidth = -1;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _syncToLayout());
     }
   }
 
-  /// 返回溢出宽度。同一宽度下复用缓存，不在 build 里反复测量。
-  double _measure(double availableWidth) {
-    var tp = _tp;
-    if (tp == null || (_measuredForWidth - availableWidth).abs() > 0.5) {
-      tp = TextPainter(
-        text: TextSpan(text: widget.text, style: widget.style),
-        textDirection: TextDirection.ltr,
-        maxLines: 1,
-      )..layout();
-      _tp = tp;
-      _measuredForWidth = availableWidth;
-      _overflow = (tp.width - availableWidth).clamp(0.0, double.infinity);
+  @override
+  void dispose() {
+    _c.removeListener(_applyScroll);
+    _c.dispose();
+    _scroll.dispose();
+    super.dispose();
+  }
 
-      if (_overflow > 0.5) {
-        final ms = (_overflow / widget.velocity * 1000).round();
-        _c.duration = Duration(milliseconds: ms.clamp(900, 9000));
-        if (!_c.isAnimating) _c.repeat(reverse: true);
-      } else if (_c.isAnimating) {
-        _c.stop();
-        _c.value = 0;
-      }
+  /// 把动画进度映射成滚动位移。
+  ///
+  /// 取 min(1.0, ...) 是必要的：布局还没完成时 `position` 可能还没 attach，
+  /// 或者 `maxScrollExtent` 还没算出来。
+  void _applyScroll() {
+    if (!_scroll.hasClients) return;
+    _scroll.jumpTo(_scroll.position.maxScrollExtent * _c.value.clamp(0.0, 1.0));
+  }
+
+  /// 布局完成后决定：不需要滚就停，需要滚就设定时长并开始往返。
+  void _syncToLayout() {
+    if (!mounted || !_scroll.hasClients) return;
+    // 这里拿到的 maxScrollExtent 是**布局真实算出来的溢出量**，
+    // 不是我自己用 TextPainter 量的 —— 少一个可能算错的环节。
+    final overflow = _scroll.position.maxScrollExtent;
+
+    if (overflow <= 0.5) {
+      if (_c.isAnimating) _c.stop();
+      _c.value = 0;
+      return;
     }
-    return _overflow;
+
+    final ms = (overflow / widget.velocity * 1000).round();
+    final d = Duration(milliseconds: ms.clamp(900, 9000));
+    if (_c.duration != d) _c.duration = d;
+    if (!_c.isAnimating) {
+      _c.value = 0;
+      _c.repeat(reverse: true);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final overflow = _measure(constraints.maxWidth);
-        final available = constraints.maxWidth;
-
-        // 文字本体：**不裁剪、不加约束**，按自己的固有宽度绘制成一个长条。
-        // 移动它靠 Transform.translate，露出哪一段由外层容器裁剪决定。
-        final text = AnimatedBuilder(
-          animation: _c,
-          builder: (context, _) => Transform.translate(
-            offset: Offset(-overflow * _c.value, 0),
-            child: Text(
-              widget.text,
-              maxLines: 1,
-              softWrap: false,
-              style: widget.style,
-            ),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      controller: _scroll,
+      // 纯自动滚动：禁掉手势，避免和外层门页的上下滚动抢
+      physics: const NeverScrollableScrollPhysics(),
+      child: Row(
+        // ★ 关键：无界宽度下按文字固有宽度装配，于是文字一定是完整的一行。
+        //   `MainAxisSize.max` 会去撑满「无限宽」，那样文字反而被挤回可用宽度。
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.text,
+            maxLines: 1,
+            softWrap: false,
+            style: widget.style,
           ),
-        );
-
-        if (overflow <= 0.5) {
-          // 放得下：静止显示，不裁剪
-          return Align(alignment: Alignment.centerLeft, child: text);
-        }
-
-        // ⚠️⚠️ 为什么用 OverflowBox 而不是 Align（这个 bug 修过两次，第二次仍没修好）
-        //
-        // 第一版是 `SizedBox(height:) + ClipRect(Align(child: text))`；
-        // 第二版加了 `SizedBox(width: available)`，**现象完全没变**。
-        //
-        // 原因是「文字最终按多宽布局」取决于 Align / ClipRect 内部的约束传递细节，
-        // 而那是 Flutter 内部行为 —— 这个项目**没有本地 Flutter 环境**，
-        // 我只能靠推断。推断错了两次，每次都要你装一次 APK 才知道结果。
-        //
-        // 所以这次换成不依赖任何传递行为的写法：
-        //
-        //   SizedBox(width: 可用宽度)        ← 裁剪框宽度**钉死**
-        //     └ ClipRect                     ← 按这个宽度裁剪
-        //         └ OverflowBox(maxWidth: ∞)  ← 明确告诉文字「你可以比裁剪框宽」
-        //             └ Transform.translate   ← 在框内平移
-        //
-        // `maxWidth: double.infinity` 是关键：无论 Flutter 怎么传递约束，
-        // 文字都会被允许按固有宽度布局成完整的一行。
-        // 之前那两版里文字很可能被挤成「可用宽度」→ 它一开始就是残缺的，
-        // 平移只是在移动一段本来就缺了尾巴的文字，右边当然永远是空白。
-        return SizedBox(
-          width: available,
-          child: ClipRect(
-            child: OverflowBox(
-              alignment: Alignment.centerLeft,
-              maxWidth: double.infinity,
-              child: text,
-            ),
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
