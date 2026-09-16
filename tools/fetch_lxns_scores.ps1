@@ -1,4 +1,4 @@
-# 从落雪查分器拉取成绩，并提取出 ORIGIN 门那 30 首。
+﻿# 从落雪查分器拉取成绩，并提取出 ORIGIN 门那 30 首。
 #
 # 用法（在仓库根目录）：
 #     powershell -ExecutionPolicy Bypass -File tools\fetch_lxns_scores.ps1
@@ -29,6 +29,12 @@ Write-Host ''
 Write-Host '=== 落雪查分器：拉取成绩 ===' -ForegroundColor Cyan
 Write-Host '密钥在查分器网页「账号详情」页生成，要的是【个人】密钥（X-User-Token）。'
 Write-Host ''
+
+# 先确认 python 在 —— 不然要等输入完密钥、请求也发了才发现
+if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
+    Write-Host '找不到 python。这个脚本用 python 做提取，请先装好并加入 PATH。' -ForegroundColor Red
+    exit 1
+}
 
 $secure = Read-Host -Prompt '粘贴你的个人 API 密钥（输入时不显示）' -AsSecureString
 $token = [System.Net.NetworkCredential]::new('', $secure).Password
