@@ -381,8 +381,132 @@ def ref(itype: str, iid: int) -> str:
 
 # ---------------------------------------------------------------- 各门数据
 
+def load_music_order() -> list[int]:
+    """
+    读 `condition/MusicSort.xml`，返回**游戏内的乐曲排序**（id 的列表，按显示顺序）。
+
+    为什么需要它：游戏里乐曲**不是按 id 排序**的，而是按这个文件里的顺序。
+    我们希望门页的曲目顺序和机台上看到的一致 —— 不然找一个歌要对半天。
+
+    ⚠️ 但**段位（AIR）的组曲不能用它**：段位组曲里的曲目顺序由 Course.xml 的
+       槽位决定（就是游戏里那个顺序），不能重排。见 sort_gate_songs 的说明。
+
+    文件结构：
+        <SerializeSortData>
+          <SortList>
+            <StringID><id>0</id>...</StringID>      <- 文档顺序 = 游戏内顺序
+            <StringID><id>5</id>...</StringID>
+            ...
+    """
+    path = CONDITION / "MusicSort.xml"
+    if not path.exists():
+        warn(f"找不到 {path}，曲目将退回按 id 排序（和游戏内顺序可能不一致）")
+        return []
+
+    try:
+        root = ET.parse(path).getroot()
+    except ET.ParseError as e:
+        warn(f"解析 {path} 失败：{e}")
+        return []
+
+    sort_list = root.find("SortList")
+    if sort_list is None:
+        warn(f"{path} 里没有 SortList")
+        return []
+
+    order: list[int] = []
+    for node in sort_list.findall("StringID"):
+        raw = node.findtext("id")
+        if raw is None:
+            continue
+        try:
+            order.append(int(raw))
+        except ValueError:
+            continue
+
+    if not order:
+        warn(f"{path} 的 SortList 是空的")
+    return order
+
+
+def _sort_key_factory(order: list[int]):
+    """
+    做「linkId -> 排序键」。
+
+    表里没有的曲目排到最后（用一个比所有 rank 都大的值），
+    它们之间保持原顺序 —— 靠 Python 的 sort 是稳定排序，不需要额外 tie-break。
+    """
+    rank = {mid: i for i, mid in enumerate(order)}
+    missing = len(order)
+
+    def key(link_id: str) -> int:
+        try:
+            mid = int(link_id.split(":")[1])
+        except (IndexError, ValueError):
+            return missing + 1  # 非 music: 引用，排最后
+        return rank.get(mid, missing)
+
+    return key
+
+
+def sort_gate_songs(gates: list[dict], order: list[int]) -> int:
+    """
+    把所有门的曲目按 MusicSort 顺序排好，返回改动了几个门。
+
+    ⚠️ **跳过 AIR**：它是段位课程，曲目顺序由 Course.xml 的槽位决定
+       （游戏里组曲就是按槽 1→2→3 显示的），不能用 MusicSort 重排。
+       段位的顺序在 gen_classes.py 里生成，不在 gates.json 里。
+
+    PARADISE 的分组：**组之间不动**（分组是按曲师的，游戏里也是按曲师分栏），
+    只把每组内部的曲目排序。
+    """
+    if not order:
+        return 0
+
+    key = _sort_key_factory(order)
+    touched = 0
+
+    for gate in gates:
+        if gate.get("id") == "air":
+            continue
+        if gate.get("kind") == "reward":
+            continue
+
+        req = gate.get("requirement")
+        if not isinstance(req, dict):
+            continue
+
+        changed = False
+
+        song_keys = req.get("songKeys")
+        if isinstance(song_keys, list) and song_keys:
+            before = list(song_keys)
+            song_keys.sort(key=key)
+            if song_keys != before:
+                changed = True
+
+        for group in req.get("groups") or []:
+            if not isinstance(group, dict):
+                continue
+            gk = group.get("songKeys")
+            if isinstance(gk, list) and gk:
+                before = list(gk)
+                gk.sort(key=key)
+                if gk != before:
+                    changed = True
+
+        if changed:
+            touched += 1
+
+    return touched
+
+
 def collect_songs(gate_path: Path, gate_id: str) -> list[str]:
-    """把门目录下所有 music*/Music.xml 收集为 linkId 列表（按曲 id 排序）。"""
+    """把门目录下所有 music*/Music.xml 收集为 linkId 列表（按曲 id 排序）。
+
+    注意：这只是**收集**。最终的显示顺序由 [sort_gate_songs] 按
+    `condition/MusicSort.xml` 重排（游戏内顺序），段位除外。
+    """
     ids: set[int] = set()
     for sub in sorted(p for p in gate_path.iterdir() if p.is_dir()):
         for xml in sorted(sub.rglob("Music.xml")):
@@ -894,6 +1018,13 @@ def main() -> int:
 
     print("\n== 解析门与曲目 ==")
     gates = build_gates(boss_map)
+
+    print("\n== 按游戏内顺序排列门曲目（MusicSort.xml）==")
+    music_order = load_music_order()
+    if music_order:
+        touched = sort_gate_songs(gates, music_order)
+        print(f"  MusicSort 共 {len(music_order)} 首；重排了 {touched} 个门的曲目顺序")
+        print("  （AIR 是段位课程，顺序由 Course.xml 的槽位决定，不参与重排）")
 
     print("\n== 解析段位曲目 ==")
     class_ids = collect_class_music()

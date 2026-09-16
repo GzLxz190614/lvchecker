@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-3",
+  "dataVersion": "2026.09.11-4",
   "region": "cn",
   "gameVersion": "中二节奏 2027 (CN1.40)",
   "updatedAt": "2026-09-11",
@@ -33,35 +33,35 @@
       "requirement": {
         "type": "playAll",
         "songKeys": [
-          "music:51",
-          "music:53",
           "music:59",
-          "music:63",
+          "music:79",
+          "music:148",
+          "music:71",
+          "music:75",
+          "music:140",
+          "music:163",
+          "music:80",
+          "music:51",
           "music:64",
           "music:65",
-          "music:67",
-          "music:69",
-          "music:70",
-          "music:71",
           "music:74",
-          "music:75",
-          "music:76",
-          "music:79",
-          "music:80",
-          "music:82",
           "music:95",
+          "music:67",
+          "music:53",
           "music:100",
-          "music:101",
-          "music:105",
-          "music:107",
           "music:108",
-          "music:140",
+          "music:107",
+          "music:105",
+          "music:82",
+          "music:76",
           "music:141",
+          "music:63",
           "music:147",
-          "music:148",
+          "music:69",
           "music:151",
+          "music:70",
+          "music:101",
           "music:152",
-          "music:163",
           "music:180"
         ]
       }
@@ -228,18 +228,18 @@
           {
             "key": "光吉猛修",
             "songKeys": [
-              "music:180",
+              "music:2493",
               "music:384",
-              "music:483",
               "music:2355",
-              "music:2493"
+              "music:483",
+              "music:180"
             ]
           },
           {
             "key": "大国奏音",
             "songKeys": [
-              "music:2050",
-              "music:2354"
+              "music:2354",
+              "music:2050"
             ]
           },
           {
@@ -251,8 +251,8 @@
           {
             "key": "穴山大輔",
             "songKeys": [
-              "music:407",
-              "music:2353"
+              "music:2353",
+              "music:407"
             ]
           }
         ]
@@ -322,8 +322,8 @@
         "songKeys": [
           "music:2266",
           "music:2326",
-          "music:2327",
           "music:2556",
+          "music:2327",
           "music:2597"
         ]
       }
@@ -389,8 +389,8 @@
       "requirement": {
         "type": "playAll",
         "songKeys": [
-          "music:2705",
           "music:2712",
+          "music:2705",
           "music:2802"
         ]
       }
@@ -467,17 +467,17 @@
       "requirement": {
         "type": "playAll",
         "songKeys": [
-          "music:2968",
-          "music:2969",
           "music:2970",
           "music:2971",
           "music:2972",
           "music:2973",
+          "music:2978",
           "music:2974",
           "music:2975",
           "music:2976",
           "music:2977",
-          "music:2978"
+          "music:2968",
+          "music:2969"
         ]
       }
     },

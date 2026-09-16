@@ -36,6 +36,7 @@ Android 规定：**签名不同的 APK 不能覆盖安装**，只能先卸载。
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from pathlib import Path
@@ -219,9 +220,19 @@ def main() -> int:
     else:
         raise SystemExit(f"{app_dir} 下找不到 build.gradle(.kts)")
 
-    # android/key.properties —— 与 android/app 同级，rootProject.file() 才找得到
+    # android/key.properties —— 与 android/app 同级，rootProject.file() 才找得到。
+    #
+    # ⚠️ storeFile 必须是**相对 key.properties 所在目录（即 android/）** 的路径，
+    #    因为 gradle 那边是 `rootProject.file("key.properties")` + `file(storeFile)`，
+    #    而 **rootProject 就是 android/**。
+    #
+    #    这里踩过一次：原来写的是「keystore 的父目录和 key.properties 的父目录
+    #    相同就用文件名，否则用 keystore 的完整路径」—— 而 keystore 在 android/app/、
+    #    key.properties 在 android/，两者不相等，于是写下了 `android/app/release.jks`。
+    #    拼上 rootProject 之后变成 `android/android/app/release.jks`，构建失败：
+    #        Keystore file '.../android/app/android/app/release.jks' not found
     props.parent.mkdir(parents=True, exist_ok=True)
-    store_rel = keystore.name if keystore.parent.resolve() == props.parent.resolve() else str(keystore)
+    store_rel = os.path.relpath(keystore.resolve(), props.parent.resolve()).replace(os.sep, "/")
     props.write_text(
         "# 由 tools/setup_android_signing.py 生成 —— 内含签名口令，**绝不进 git**\n"
         f"storeFile={store_rel}\n"
@@ -230,7 +241,7 @@ def main() -> int:
         f"keyPassword={args.key_password}\n",
         encoding="utf-8",
     )
-    print(f"已写 {props}（storeFile={store_rel}）")
+    print(f"已写 {props}（storeFile={store_rel}，相对 android/ 目录）")
 
     text = target.read_text(encoding="utf-8")
     notes = []
@@ -281,6 +292,23 @@ def main() -> int:
             problems.append("缺少 `import java.util.Properties`（Kotlin DSL 下必须显式 import）")
         if "Properties()" not in final:
             problems.append("signingConfigs 里没有构造 Properties()")
+
+    # ★ storeFile 必须是相对 android/（rootProject）的路径，而且不能越界到
+    #   `android/` 之外 —— 否则 gradle 拼出来的路径会是错的。
+    #
+    #   这里踩过一次：写成了 `android/app/release.jks`（相对仓库根），
+    #   gradle 拼上 rootProject 后变成 `android/android/app/release.jks`。
+    #   所以这里**真的去解析一遍**，确认文件能被找到，而不是只看字符串。
+    resolved = (props.parent / store_rel).resolve()
+    if not resolved.exists():
+        problems.append(
+            f"key.properties 里的 storeFile='{store_rel}' 解析到 {resolved}，文件不存在"
+        )
+    if "android/app/android" in str(resolved).replace("\\", "/"):
+        problems.append(f"storeFile 路径出现重复段（android/app/android）：{resolved}")
+    if store_rel.startswith("/") or re.match(r"^[A-Za-z]:", store_rel):
+        problems.append(f"storeFile='{store_rel}' 是绝对路径 —— 应该相对 android/ 目录")
+    print(f"storeFile={store_rel}  ->  解析为 {resolved}（存在={resolved.exists()}）")
 
     print()
     print("----- gradle 关键行 -----")
