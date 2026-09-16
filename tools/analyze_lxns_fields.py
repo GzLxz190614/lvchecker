@@ -39,14 +39,34 @@ def main() -> int:
         print(__doc__)
         return 1
     p = Path(sys.argv[1])
+    if not p.exists():
+        print(f"找不到文件：{p}")
+        return 1
+
     text = p.read_text(encoding="utf-8", errors="replace")
     start = text.find("{")
     if start > 0:
         text = text[start:]
-    doc = json.loads(text)
+
+    # 这个脚本只吃 API 的**原始 JSON 响应**。
+    # 如果误把 lxns_origin.txt（人读的文本报告）传进来，给一句人话而不是抛栈。
+    try:
+        doc = json.loads(text)
+    except json.JSONDecodeError as e:
+        print(f"❌ 这不是合法的 JSON（{e.msg} @ 行 {e.lineno}）")
+        print("   这个脚本要的是 API 的原始响应文件（scores_raw.json），")
+        print("   不是 extract_lxns_origin.py 生成的人读报告（lxns_origin.txt）。")
+        print("   用法：python tools/analyze_lxns_fields.py scores_raw.json")
+        return 1
+
+    if not isinstance(doc, dict):
+        print("❌ 顶层不是 JSON 对象")
+        return 1
+
     data = doc.get("data")
     if not isinstance(data, list):
-        print("响应里没有成绩列表")
+        print(f"响应里没有成绩列表（success={doc.get('success')} "
+              f"code={doc.get('code')} message={doc.get('message')!r}）")
         return 1
 
     rows = [r for r in data if isinstance(r, dict)]
