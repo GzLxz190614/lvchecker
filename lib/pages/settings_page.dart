@@ -488,30 +488,44 @@ class _SettingsPageState extends State<SettingsPage> {
 
     children.add(const SizedBox(height: 8));
     children.add(
+      // ⚠️ 两个按钮都要包 Flexible。
+      //
+      // 之前的写法是 `Expanded(更换密钥)` + 裸的 `OutlinedButton(删除密钥)`：
+      // Expanded 会吃掉所有剩余宽度，而**非 Flexible 的子项在 Row 里拿的是
+      // 无界宽度约束**，它的文字（「删除密钥」）按不换行的固有宽度参与布局。
+      // 窄屏/大字体下这一行就放不下，删除按钮被压没了 —— 你看到的那条
+      // 「竖着的小白长条」就是它被压到几乎零宽的样子。
+      //
+      // 两个都用 Flexible 之后，宽度不够时按比例分配（flex 1:1），
+      // 谁都不会被挤掉。标签也顺手缩短，减少总宽度需求。
       Row(
         children: [
-          Expanded(
+          Flexible(
             child: OutlinedButton.icon(
               onPressed: _lxnsBusy ? null : () => _editToken(context),
               icon: const Icon(Icons.key_outlined, size: 17),
-              label: Text(_hasToken ? '更换密钥' : '填写密钥'),
+              label: Text(_hasToken ? '更换' : '填写密钥'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.textSecondary,
                 side: const BorderSide(color: AppTheme.border),
                 minimumSize: const Size.fromHeight(40),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
               ),
             ),
           ),
           if (_hasToken) ...[
             const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: _lxnsBusy ? null : () => _forgetToken(context),
-              icon: const Icon(Icons.delete_outline, size: 17),
-              label: const Text('删除密钥'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFE57373),
-                side: const BorderSide(color: Color(0xFF5A2A2A)),
-                minimumSize: const Size.fromHeight(40),
+            Flexible(
+              child: OutlinedButton.icon(
+                onPressed: _lxnsBusy ? null : () => _forgetToken(context),
+                icon: const Icon(Icons.delete_outline, size: 17),
+                label: const Text('删除密钥'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFE57373),
+                  side: const BorderSide(color: Color(0xFF5A2A2A)),
+                  minimumSize: const Size.fromHeight(40),
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
               ),
             ),
           ],

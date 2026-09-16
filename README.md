@@ -376,6 +376,55 @@ Pages 让热更新更快，但需要**手动启用一次**（`GITHUB_TOKEN` 无�
 **同步永远不会碰你的打勾记录。** 数据层（`data/*.json`）和存档层
 （`SharedPreferences`）完全隔离，同步只覆盖前者。
 
+### ⚠️ 「装新版要卸载」——这是签名问题，改版本号没用
+
+Android 规定：**签名不同的 APK 不能覆盖安装**，只能先卸载。
+而打勾进度存在应用私有目录，**卸载就一起没了**。
+
+没配签名时，`flutter build apk --release` 会用 **debug keystore**，
+而 GitHub Actions 每次都是全新机器 —— 那个 keystore 每次都重新随机生成，
+于是**每个 APK 的签名都不一样**。
+
+> **改版本号解决不了这个问题。** 签名不固定的话，版本号改多大都得卸载重装。
+
+#### 一次性配置（4 个 Secrets）
+
+**① 生成 keystore**（`keytool` 随 JDK 一起，Android Studio 自带）
+
+```powershell
+keytool -genkeypair -v -keystore lvchecker-release.jks -storetype JKS `
+  -keyalg RSA -keysize 2048 -validity 10000 -alias lvchecker
+```
+
+会问 keystore 口令和姓名等（姓名随便填）。**口令务必记牢** ——
+丢了就没法再签发能覆盖安装的更新。
+
+**② 转成 base64**（一行，方便粘贴）
+
+```powershell
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("lvchecker-release.jks")) | Set-Clipboard
+```
+
+**③ GitHub 加 4 个 Secret**（Settings → Secrets and variables → Actions）
+
+| Secret 名 | 值 |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | ②复制到剪贴板那串 |
+| `ANDROID_KEYSTORE_PASSWORD` | ①设的 keystore 口令 |
+| `ANDROID_KEY_ALIAS` | `lvchecker` |
+| `ANDROID_KEY_PASSWORD` | ①设的密钥口令（通常同上） |
+
+**④ 之后正常触发构建即可**，CI 会自动解出 keystore 并配置签名。
+
+> `lvchecker-release.jks` **不要提交、不要删**。已在 `.gitignore` 里
+> （`*.jks` / `key.properties`）。
+
+**没配 Secret 时**构建不会失败，但日志会有醒目警告 —— 那种 APK
+**仍然需要卸载重装**。
+
+> ⚠️ **启用固定签名的那一次，还是得卸载重装**（之前的 APK 是随机 debug 签名，
+> 无法覆盖）。建议现在先把当前进度记下来，装完这一次之后就不用再卸载了。
+
 ---
 
 ### 三级加载

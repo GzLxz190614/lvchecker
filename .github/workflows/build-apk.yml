@@ -148,6 +148,53 @@ jobs:
       - name: Verify manifest after patching
         run: python3 tools/verify_repo.py --expect-manifest
 
+      # ------------------------------------------------------------------
+      # 固定 release 签名 —— **这是「装新版要卸载、进度全丢」的根因**。
+      #
+      # CI 里没有签名配置时，`flutter build apk --release` 会用 **debug keystore** 签名，
+      # 而 GitHub Actions 每次都是全新机器 —— 那个 keystore 每次都重新随机生成。
+      # Android 规定签名不同的 APK 不能覆盖安装，只能先卸载；
+      # 而 App 的打勾进度存在应用私有目录，卸载就一起没了。
+      #
+      # **版本号解决不了这个问题** —— 签名不固定的话，改多大版本号都得卸载重装。
+      #
+      # 需要的仓库 Secrets（Settings → Secrets and variables → Actions）：
+      #   ANDROID_KEYSTORE_BASE64   keystore 文件的 base64
+      #   ANDROID_KEYSTORE_PASSWORD keystore 口令
+      #   ANDROID_KEY_ALIAS         别名
+      #   ANDROID_KEY_PASSWORD      别名口令
+      #
+      # 没配 Secret 时会**跳过**（不是失败），但会打一条醒目警告 ——
+      # 这样你第一次可以先照常出包，之后再补签名。
+      # ------------------------------------------------------------------
+      - name: Configure release signing (if secrets are set)
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -e
+          if [ -z "$KS_B64" ] || [ -z "$KS_PASS" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASS" ]; then
+            echo "::warning::没有配置签名 Secret，本次 APK 会用每次随机生成的 debug 签名。"
+            echo "::warning::后果：装新版必须先卸载，**本机进度会丢**。"
+            echo "::warning::修复见 README「固定签名」一节（配 4 个 Secret）。"
+            exit 0
+          fi
+
+          mkdir -p android/app
+          # base64 可能因为粘贴时换行而带空格，先去掉空白
+          printf '%s' "$KS_B64" | tr -d ' \n\r\t' | base64 -d > android/app/release.jks
+          ls -l android/app/release.jks
+
+          python3 tools/setup_android_signing.py \
+            --app-dir android/app \
+            --keystore android/app/release.jks \
+            --props android/key.properties \
+            --key-alias "$KEY_ALIAS" \
+            --store-password "$KS_PASS" \
+            --key-password "$KEY_PASS"
+
       - name: Get dependencies
         run: flutter pub get
 
@@ -261,6 +308,26 @@ jobs:
             echo "OK: APK 已带 INTERNET 权限，热更新才有网络可用"
           else
             echo "::error::APK 里没有 INTERNET 权限 —— 装上去会完全无法联网（所有源都报域名解析失败）"
+            exit 1
+          fi
+
+          # ---- 版本号与包名：和 pubspec 对齐 ----
+          #
+          # 为什么要查成品：版本号是唯一能证明「这个包比手机上那个新」的东西。
+          # 如果 pubspec 改了但没生效（或反过来，构建悄悄回退了版本），
+          # 你会装了半天发现还是同一个包，而构建是绿的。
+          echo '----- 版本号 -----'
+          EXPECTED=$(grep -E '^version:' pubspec.yaml | sed -E 's/^version:[[:space:]]*//')
+          echo "pubspec 里的版本: $EXPECTED"
+          echo "（Android 会把它转成 versionName+versionCode：0.3.0+3 -> 0.3.0 / 3）"
+          # 从 APK 的 manifest 里读出来对一遍
+          "$AAPT" dump badging "$APK" | grep -E "^package:" || true
+
+          echo '----- 断言：包名正确 -----'
+          if "$AAPT" dump badging "$APK" | grep -q "package: io.github.gzlxz190614.lvchecker"; then
+            echo "OK: 包名 io.github.gzlxz190614.lvchecker"
+          else
+            echo "::error::APK 的包名不对 —— 装上去会变成另一个 App（进度也不共享）"
             exit 1
           fi
 
