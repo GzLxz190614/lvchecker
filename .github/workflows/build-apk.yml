@@ -221,7 +221,10 @@ jobs:
       # ------------------------------------------------------------------
       # 本地检查（因为无法在本地跑 flutter，这些静态校验就放在 CI 里）
       # ------------------------------------------------------------------
-      - name: Static checks (dart / assets / classes / gates schema / music order / images)
+      # ⚠️ 这里**不能**跑 tools/check_music_order.py：它需要
+      #    condition/MusicSort.xml，而 condition/ 是 gitignore 的（游戏解包资源），
+      #    CI 上不存在，跑了必然失败。那个检查只能在本地跑。
+      - name: Static checks (python / dart / assets / classes / gates schema / images)
         run: |
           set -e
           # 先按磁盘现状重建资源列表，再校验（避免「加了图但忘了声明」漏过）
@@ -238,9 +241,6 @@ jobs:
           #   * 两步的 itemKey 重复       -> 一次勾选影响两处，两步退化成一步。
           # STAR 门原来就是「只判角色卡、不判 RANK 15」，属于同一类错。
           python3 tools/check_gates_schema.py
-          # 曲目顺序是否还符合游戏内 MusicSort 顺序。顺序错了肉眼几乎看不出来
-          # （一个门 30 首，看起来「差不多有序」不代表真的对），只能靠脚本比。
-          python3 tools/check_music_order.py
           # 图片格式：确认 Pillow 支持目标格式，且仓库里的图扩展名与实际格式一致。
           # 这两种问题的共同点是编译期发现不了，只有装到手机才满屏「图片丢失」。
           python3 tools/check_image_format.py
@@ -251,6 +251,19 @@ jobs:
           # 但已知的几类错（全限定类名、裸的 r"、引号不成对、相对路径）
           # 可以在这里挡住 —— 那几类我各踩过一次，每次烧一轮 CI。
           python3 tools/check_gradle_snippet.py
+
+      # 上面那批静态检查是不是真的能在 CI 上跑？
+      # condition/ 是 gitignore 的（游戏解包资源），本地有、CI 没有 ——
+      # 所以很容易写出「本地过、一上 CI 就炸」的检查
+      # （check_music_order.py 就是这么炸的，白烧一轮构建）。
+      #
+      # 这一步用**空的 condition/ 占位**把 CI 环境复现出来，逐个比对输出，
+      # 谁依赖 condition/ 就当场报出来。
+      #
+      # 在 CI 上本机就没有 condition/，脚本会检测到「无法模拟」并跳过 ——
+      # 所以这一步主要在**本地**起作用（推之前先跑一遍）。
+      - name: Verify static checks don't depend on local-only condition/
+        run: python3 tools/check_ci_safety.py
 
       # 从仓库根目录的 icon.png 生成各密度启动图标。
       # 必须在 flutter pub get 之后跑（它依赖 flutter_launcher_icons 包）。

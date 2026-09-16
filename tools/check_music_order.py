@@ -14,12 +14,28 @@
 本脚本对每个门分别算「按 MusicSort 排」和「按 Mate 排」两种期望顺序，
 再和实际顺序比对，从而判断这个门到底用的哪一份。
 
+本脚本需要 `condition/MusicSort*.xml`，而 `condition/` 是 **gitignore 的**
+（游戏解包原始资源，版权属 SEGA，见 .gitignore 的说明）。所以：
+
+    * 本地开发（有 condition/）：正常运行，逐个门核对顺序。
+    * CI（没有 condition/）：**默认跳过并返回 0**，且打印醒目说明。
+
+默认跳过是有意的，但要警惕它的含义：**跳过不等于通过**。
+所以还有 `--require` 开关 —— 传上它，缺文件就报错退出。
+CI 里不传 `--require`（否则每次构建都红），本地想强制核对时可以传。
+
+为什么不干脆从 CI 去掉：去掉之后这个检查就只在本地存在，
+而「顺序被改动」是很容易发生的（build.py 重新生成、手工调 gates.json）。
+保留在这里、明确说明它跳过，比彻底删掉更不容易被遗忘。
+
 用法：
-    python tools/check_music_order.py
+    python tools/check_music_order.py            # 本地核对；缺文件则跳过
+    python tools/check_music_order.py --require  # 缺文件算失败
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 import xml.etree.ElementTree as ET
@@ -71,11 +87,29 @@ def project(order: list[int], ids: list[int]) -> list[int]:
 
 
 def main() -> int:
-    ms = load_order(CONDITION / "MusicSort.xml")
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--require", action="store_true",
+                    help="缺少 condition/MusicSort.xml 时算失败（默认是跳过）")
+    args = ap.parse_args()
+
+    ms_path = CONDITION / "MusicSort.xml"
+    if not ms_path.exists():
+        # `condition/` 是 gitignore 的，CI 上必然没有。
+        # 关键：**不要在这里打「✓ 通过」** —— 那是在假装检查过了。
+        print(f"⚠ 跳过：找不到 {ms_path}")
+        print("  condition/ 是 gitignore 的（游戏解包资源），CI 上没有这份数据。")
+        print("  这个检查只能在有 condition/ 的机器上跑（本地）。")
+        if args.require:
+            print("✗ --require 指定了必须有它，视为失败")
+            return 1
+        print("  （跳过 != 通过：本次**没有**核对任何顺序）")
+        return 0
+
+    ms = load_order(ms_path)
     mate = load_order(CONDITION / "MusicSort_Mate.xml")
 
     if not ms:
-        print("✗ 读不到 MusicSort.xml —— 无法核对")
+        print("✗ 读不到 MusicSort.xml（文件在但解析不出曲目）—— 无法核对")
         return 1
 
     print(f"MusicSort.xml      : {len(ms)} 首")

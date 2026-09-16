@@ -142,6 +142,19 @@ def main() -> int:
             if not any((s.get("itemKeys") or []) for s in steps):
                 problems.append(f"{gid}: 所有 step 的 itemKeys 都是空的（total 会是 0）")
 
+            # 顶层 itemKeys 是 steps 的**冗余平铺**（老版本 App 只读它，
+            # 用来算出正确的 total）。冗余字段必然有漂移风险，所以必须校验。
+            # 不一致的后果是静默的：判定用 steps（对），但显示/旧版用 itemKeys（错）。
+            flat = req.get("itemKeys")
+            if flat is not None:
+                from_steps = [str(k) for s in steps for k in (s.get("itemKeys") or [])]
+                if [str(k) for k in flat] != from_steps:
+                    problems.append(
+                        f"{gid}: 顶层 itemKeys 和 steps 里的条目不一致\n"
+                        f"       itemKeys = {flat}\n"
+                        f"       steps    = {from_steps}"
+                    )
+
         # --- 3. 普通 items 也不能有重复 itemKey ---
         if rtype == "items":
             raw = req.get("itemKeys") or []
