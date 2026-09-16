@@ -315,25 +315,68 @@ jobs:
             exit 1
           fi
 
-          # ---- 版本号与包名：和 pubspec 对齐 ----
+          # ---- 版本号与包名：和 pubspec / gradle 对齐 ----
           #
           # 为什么要查成品：版本号是唯一能证明「这个包比手机上那个新」的东西。
           # 如果 pubspec 改了但没生效（或反过来，构建悄悄回退了版本），
           # 你会装了半天发现还是同一个包，而构建是绿的。
-          echo '----- 版本号 -----'
-          EXPECTED=$(grep -E '^version:' pubspec.yaml | sed -E 's/^version:[[:space:]]*//')
-          echo "pubspec 里的版本: $EXPECTED"
-          echo "（Android 会把它转成 versionName+versionCode：0.3.0+3 -> 0.3.0 / 3）"
-          # 从 APK 的 manifest 里读出来对一遍
-          "$AAPT" dump badging "$APK" | grep -E "^package:" || true
+          #
+          # ⚠️ **不要把包名字符串写在这个脚本里**。
+          #    踩过一次：写死 `grep -q "package: io.github.gzlxz190614.lvchecker"`
+          #    之后，GitHub 的 secret 打码把脚本里那串替换成了 `***`
+          #    （它匹配到了 Secret 值里的子串），于是 grep 拿字面量 `***` 去比，
+          #    永远失败 —— 而 APK 明明是对的。所以改成从 build.gradle.kts 读
+          #    applicationId 来对照，脚本里不出现那串名字。
+          echo '----- 版本号与包名 -----'
+          PUBSPEC_VERSION=$(grep -E '^version:' pubspec.yaml | sed -E 's/^version:[[:space:]]*//')
+          EXPECTED_NAME=$(echo "$PUBSPEC_VERSION" | cut -d+ -f1)
+          EXPECTED_CODE=$(echo "$PUBSPEC_VERSION" | cut -d+ -f2)
+          echo "pubspec: $PUBSPEC_VERSION  -> versionName=$EXPECTED_NAME versionCode=$EXPECTED_CODE"
 
-          echo '----- 断言：包名正确 -----'
-          if "$AAPT" dump badging "$APK" | grep -q "package: io.github.gzlxz190614.lvchecker"; then
-            echo "OK: 包名 io.github.gzlxz190614.lvchecker"
-          else
-            echo "::error::APK 的包名不对 —— 装上去会变成另一个 App（进度也不共享）"
+          # 只取 `aapt dump badging` 的第一行 package: —— 里面才有 versionCode/versionName
+          "$AAPT" dump badging "$APK" | head -n 1 > /tmp/apk-badging.txt
+          cat /tmp/apk-badging.txt
+
+          APK_PKG=$(sed -nE "s/^package: name='([^']+)'.*/\1/p" /tmp/apk-badging.txt)
+          APK_NAME=$(sed -nE "s/.*versionName='([^']*)'.*/\1/p" /tmp/apk-badging.txt)
+          APK_CODE=$(sed -nE "s/.*versionCode='([^']*)'.*/\1/p" /tmp/apk-badging.txt)
+
+          GRADLE_APPID=$(sed -nE 's/^[[:space:]]*applicationId[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/p' android/app/build.gradle.kts | head -n 1)
+
+          # 长度对比：万一包名里也有被 ::add-mask:: 打码的子串，
+          # 内容对比会失败但长度对比仍然有效 —— 这是兜底信号，不是主要判据。
+          echo "gradle applicationId 长度 = ${#GRADLE_APPID}"
+          echo "APK 里的包名长度         = ${#APK_PKG}"
+          echo "APK versionName=$APK_NAME versionCode=$APK_CODE"
+
+          problems=""
+          if [ -z "$APK_PKG" ]; then
+            problems="$problems\n  ✗ 读不出 APK 的包名"
+          fi
+          if [ -z "$GRADLE_APPID" ]; then
+            problems="$problems\n  ✗ 读不出 gradle 的 applicationId"
+          fi
+          if [ -n "$APK_PKG" ] && [ -n "$GRADLE_APPID" ] && [ "$APK_PKG" != "$GRADLE_APPID" ]; then
+            problems="$problems\n  ✗ APK 包名与 gradle applicationId 不一致"
+          fi
+          if [ "${#APK_PKG}" != "${#GRADLE_APPID}" ]; then
+            problems="$problems\n  ✗ 包名长度不同（${#APK_PKG} vs ${#GRADLE_APPID}）"
+          fi
+          # 用显式 if 而不是 `[ ... ] && problems=...`：
+          # 后者在 `bash -e` 下的行为依赖「短路列表末尾退出码被忽略」这条细则，容易踩坑。
+          if [ "$APK_NAME" != "$EXPECTED_NAME" ]; then
+            problems="$problems\n  ✗ versionName='$APK_NAME'，pubspec 期望 '$EXPECTED_NAME'"
+          fi
+          if [ "$APK_CODE" != "$EXPECTED_CODE" ]; then
+            problems="$problems\n  ✗ versionCode='$APK_CODE'，pubspec 期望 '$EXPECTED_CODE'"
+          fi
+
+          if [ -n "$problems" ]; then
+            echo "::error::APK 元信息校验失败："
+            printf '%b\n' "$problems"
             exit 1
           fi
+          echo "OK: 包名与 gradle 一致；versionName=$APK_NAME versionCode=$APK_CODE"
 
       # 发 Release：附件不计入 Actions 存储额度，而且给出一个固定下载链接，
       # 手机上点开就能装。
