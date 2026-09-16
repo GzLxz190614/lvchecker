@@ -48,6 +48,19 @@ except Exception:  # noqa: BLE001
 
 SIGNING_NAME = "release"
 
+
+def unescape_kotlin(s: str) -> str:
+    """
+    把从 gradle 文件里读到的字符串字面量内容还原成真实字符串。
+
+    为什么需要：在 Windows 上路径全是反斜杠，写进 Kotlin 字符串时会成为 `\\\\`
+    （我用的是原始字符串 r"..."，所以其实是原样的单个反斜杠；
+    但如果将来改回普通字符串就会是双写）。这里统一反转义，
+    这样断言在 Windows 和 Linux 上都能正确比对 —— 否则会出现
+    「注入正确但断言误报」的假失败（我第一版就是这样）。
+    """
+    return s.replace("\\\\", "\\")
+
 # ⚠️ 判断「有没有 signingConfigs 块」**不能用 `"signingConfigs" in text`**。
 #
 # Flutter 模板的 release 块里本来就有这么一句：
@@ -78,8 +91,8 @@ def ensure_kts_imports(text: str) -> tuple[str, str]:
     return f"{lines}\n\n{text}", f"已补 import: {', '.join(missing)}"
 
 
-def patch_kts(text: str) -> tuple[str, str]:
-    """Kotlin DSL 版本。返回 (新内容, 说明)。"""
+def patch_kts(text: str, keystore_abs: str) -> tuple[str, str]:
+    """Kotlin DSL 版本。返回值里带 keystore 的**绝对路径**（见下）。"""
     if _HAVE_BLOCK_KTS.search(text):
         return text, "已有 signingConfigs 块，跳过注入"
 
@@ -89,23 +102,39 @@ def patch_kts(text: str) -> tuple[str, str]:
     indent = m.group(1)
     pos = m.start()
 
+    # ⚠️⚠️ storeFile 这里写**绝对路径**，而且**不经过 key.properties 中转**。
+    #
+    # 踩过的坑（两次 CI 失败）：
+    #   `storeFile = file(cfg.getProperty("storeFile"))` 解析出来的位置取决于
+    #   Gradle 把哪个目录当基准 —— 第二次 CI 报
+    #       Keystore file '.../android/app/app/release.jks' not found
+    #   说明它按 `android/app/` 解析，而不是我以为的 `android/`。
+    #   而本机没有 Flutter/Gradle，我**没法在本地验证**基准目录到底是什么。
+    #
+    #   所以干脆不要那个基准：Python 脚本知道 keystore 的真实绝对路径
+    #   （CI 里就是 runner 上的路径），直接写进来。绝对路径 Gradle 原样使用，
+    #   不拼接、不需要 import、不受 rootProject 影响。
+    #
+    #   代价：这个文件是**每次构建现改的**（android/ 本身不入 git），
+    #   所以路径写死没有可移植性问题。
+    # 用 Kotlin **原始字符串** r"..." —— 反斜杠原样保留，不需要转义。
+    # （Windows 路径里全是反斜杠，普通字符串要写成 `\\`，容易两头对不上；
+    #   原始字符串 + 下面的 unescape 比对最省事。）
     block = (
         f"{indent}signingConfigs {{\n"
-        f"{indent}    // release 用固定的 keystore（口令从 android/key.properties 读，不进 git）。\n"
-        f"{indent}    // 见 tools/setup_android_signing.py 顶部说明：签名不固定会导致\n"
-        f"{indent}    // 「装新版必须先卸载」，而卸载会清掉本机进度。\n"
+        f"{indent}    // release 用固定的 keystore。\n"
+        f"{indent}    // storeFile 用**绝对路径**（由 tools/setup_android_signing.py 写入）：\n"
+        f"{indent}    // Gradle 对相对路径按哪个目录解析，在本机无法验证，已经踩过两次坑\n"
+        f"{indent}    // （android/android/app/... 和 android/app/app/... 各一次）。\n"
+        f"{indent}    // 绝对路径原样使用，不受 rootProject 影响。\n"
+        f"{indent}    // 口令仍从 android/key.properties 读，不写在这个文件里。\n"
         f"{indent}    create(\"{SIGNING_NAME}\") {{\n"
-        f"{indent}        // ⚠️ 这里**刻意不写全限定类名**（形如「包名.类名」的那种）。\n"
-        f"{indent}        // 在 Gradle Kotlin DSL 里 `java` 会被解析成 Gradle 的 java 扩展而不是包名，\n"
-        f"{indent}        // 写全限定名会报 `Unresolved reference: util`、整个构建失败。实测踩过一次。\n"
-        f"{indent}        //\n"
-        f"{indent}        // 所以先显式 import 把类引进来（见文件顶部），这里只用简单类名。\n"
+        f"{indent}        storeFile = File(r\"{keystore_abs}\")\n"
         f"{indent}        val cfg = Properties()\n"
         f"{indent}        val f = rootProject.file(\"key.properties\")\n"
         f"{indent}        if (f.exists()) {{\n"
         f"{indent}            cfg.load(FileInputStream(f))\n"
         f"{indent}        }}\n"
-        f"{indent}        storeFile = cfg.getProperty(\"storeFile\")?.let {{ file(it) }}\n"
         f"{indent}        storePassword = cfg.getProperty(\"storePassword\")\n"
         f"{indent}        keyAlias = cfg.getProperty(\"keyAlias\")\n"
         f"{indent}        keyPassword = cfg.getProperty(\"keyPassword\")\n"
@@ -114,10 +143,10 @@ def patch_kts(text: str) -> tuple[str, str]:
         f"\n"
     )
     text = text[:pos] + block + text[pos:]
-    return text, "已注入 signingConfigs（Kotlin DSL）"
+    return text, "已注入 signingConfigs（Kotlin DSL，storeFile 绝对路径 + 口令读 key.properties）"
 
 
-def patch_groovy(text: str) -> tuple[str, str]:
+def patch_groovy(text: str, keystore_abs: str) -> tuple[str, str]:
     """旧 Groovy DSL 版本（flutter create 老版本会生成 build.gradle）。"""
     if _HAVE_BLOCK_GROOVY.search(text):
         return text, "已有 signingConfigs 块，跳过注入"
@@ -128,13 +157,16 @@ def patch_groovy(text: str) -> tuple[str, str]:
     indent = m.group(1)
     pos = m.start()
 
+    escaped = keystore_abs.replace("\\", "\\\\")
     block = (
         f"{indent}signingConfigs {{\n"
         f"{indent}    release {{\n"
+        f"{indent}        // storeFile 用绝对路径（见 setup_android_signing.py 的说明：\n"
+        f"{indent}        // Gradle 对相对路径的基准目录在本机无法验证，已踩过两次坑）\n"
+        f"{indent}        storeFile = new File(\"{escaped}\")\n"
         f"{indent}        def props = new Properties()\n"
         f"{indent}        def f = rootProject.file('key.properties')\n"
         f"{indent}        if (f.exists()) {{ props.load(new FileInputStream(f)) }}\n"
-        f"{indent}        storeFile = props['storeFile'] ? file(props['storeFile']) : null\n"
         f"{indent}        storePassword = props['storePassword']\n"
         f"{indent}        keyAlias = props['keyAlias']\n"
         f"{indent}        keyPassword = props['keyPassword']\n"
@@ -143,7 +175,7 @@ def patch_groovy(text: str) -> tuple[str, str]:
         f"\n"
     )
     text = text[:pos] + block + text[pos:]
-    return text, "已注入 signingConfigs（Groovy DSL）"
+    return text, "已注入 signingConfigs（Groovy DSL，storeFile 绝对路径）"
 
 
 def wire_release(text: str, is_kts: bool) -> tuple[str, str]:
@@ -220,28 +252,27 @@ def main() -> int:
     else:
         raise SystemExit(f"{app_dir} 下找不到 build.gradle(.kts)")
 
-    # android/key.properties —— 与 android/app 同级，rootProject.file() 才找得到。
+    # android/key.properties —— 存口令用。
     #
-    # ⚠️ storeFile 必须是**相对 key.properties 所在目录（即 android/）** 的路径，
-    #    因为 gradle 那边是 `rootProject.file("key.properties")` + `file(storeFile)`，
-    #    而 **rootProject 就是 android/**。
-    #
-    #    这里踩过一次：原来写的是「keystore 的父目录和 key.properties 的父目录
-    #    相同就用文件名，否则用 keystore 的完整路径」—— 而 keystore 在 android/app/、
-    #    key.properties 在 android/，两者不相等，于是写下了 `android/app/release.jks`。
-    #    拼上 rootProject 之后变成 `android/android/app/release.jks`，构建失败：
-    #        Keystore file '.../android/app/android/app/release.jks' not found
+    # ⚠️ 这里**不再写 storeFile**。原因：Gradle 对相对路径按哪个目录解析，
+    #    在本机无法验证，已经踩过两次坑（`android/android/app/...` 和
+    #    `android/app/app/...` 各一次 —— 同一份相对路径，我的脚本和 Gradle
+    #    解析到了不同位置）。现在 keystore 的绝对路径直接写进 gradle，
+    #    key.properties 只留口令，不再参与路径解析。
     props.parent.mkdir(parents=True, exist_ok=True)
-    store_rel = os.path.relpath(keystore.resolve(), props.parent.resolve()).replace(os.sep, "/")
     props.write_text(
         "# 由 tools/setup_android_signing.py 生成 —— 内含签名口令，**绝不进 git**\n"
-        f"storeFile={store_rel}\n"
+        "# 注意：keystore 路径不在这个文件里（直接写在 build.gradle 的 storeFile，用绝对路径）\n"
         f"storePassword={args.store_password}\n"
         f"keyAlias={args.key_alias}\n"
         f"keyPassword={args.key_password}\n",
         encoding="utf-8",
     )
-    print(f"已写 {props}（storeFile={store_rel}，相对 android/ 目录）")
+    print(f"已写 {props}（只含口令；keystore 绝对路径直接写进 gradle）")
+
+    # keystore 的绝对路径 —— 直接注入 gradle，避开 Gradle 的路径基准问题
+    keystore_abs = str(keystore.resolve())
+    print(f"keystore 绝对路径：{keystore_abs}")
 
     text = target.read_text(encoding="utf-8")
     notes = []
@@ -251,7 +282,7 @@ def main() -> int:
         text, note = ensure_kts_imports(text)
         notes.append(note)
 
-    text, note = patch_kts(text) if is_kts else patch_groovy(text)
+    text, note = patch_kts(text, keystore_abs) if is_kts else patch_groovy(text, keystore_abs)
     notes.append(note)
     text, note = wire_release(text, is_kts)
     notes.append(note)
@@ -293,22 +324,32 @@ def main() -> int:
         if "Properties()" not in final:
             problems.append("signingConfigs 里没有构造 Properties()")
 
-    # ★ storeFile 必须是相对 android/（rootProject）的路径，而且不能越界到
-    #   `android/` 之外 —— 否则 gradle 拼出来的路径会是错的。
+    # ★ storeFile 必须出现在 gradle 里、且是**绝对路径**。
     #
-    #   这里踩过一次：写成了 `android/app/release.jks`（相对仓库根），
-    #   gradle 拼上 rootProject 后变成 `android/android/app/release.jks`。
-    #   所以这里**真的去解析一遍**，确认文件能被找到，而不是只看字符串。
-    resolved = (props.parent / store_rel).resolve()
-    if not resolved.exists():
+    #   这里踩过两次（同一份相对路径，我的脚本和 Gradle 解析到不同位置）：
+    #     · storeFile=android/app/release.jks  ->  报 android/android/app/release.jks
+    #     · storeFile=app/release.jks          ->  报 android/app/app/release.jks
+    #   既然 Gradle 的基准目录在本机无法验证，就彻底不用相对路径。
+    m = re.search(r'storeFile\s*=\s*(?:new\s+)?File\(\s*r?["\']([^"\']+)["\']\s*\)', final)
+    if not m:
         problems.append(
-            f"key.properties 里的 storeFile='{store_rel}' 解析到 {resolved}，文件不存在"
+            "gradle 里没有 `storeFile = File(\"<绝对路径>\")` —— "
+            "相对路径的基准目录无法验证，必须用绝对路径"
         )
-    if "android/app/android" in str(resolved).replace("\\", "/"):
-        problems.append(f"storeFile 路径出现重复段（android/app/android）：{resolved}")
-    if store_rel.startswith("/") or re.match(r"^[A-Za-z]:", store_rel):
-        problems.append(f"storeFile='{store_rel}' 是绝对路径 —— 应该相对 android/ 目录")
-    print(f"storeFile={store_rel}  ->  解析为 {resolved}（存在={resolved.exists()}）")
+    else:
+        written = unescape_kotlin(m.group(1))
+        ok_abs = written.startswith("/") or re.match(r"^[A-Za-z]:[\\/]", written)
+        if not ok_abs:
+            problems.append(f"storeFile='{written}' 不是绝对路径")
+        if written != keystore_abs:
+            problems.append(
+                f"storeFile 写的是 '{written}'，与 keystore 实际路径 '{keystore_abs}' 不一致"
+            )
+        # 真的去 stat 一遍，别只看字符串
+        exists = Path(written).exists()
+        if not exists:
+            problems.append(f"storeFile 指向的 {written} 不存在")
+        print(f"storeFile = {written}（绝对路径，存在={exists}）")
 
     print()
     print("----- gradle 关键行 -----")
