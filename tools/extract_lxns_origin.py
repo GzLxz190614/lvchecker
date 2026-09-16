@@ -83,6 +83,15 @@ def main() -> int:
     release_date = origin.get("releaseDate") or "?"
 
     # ---- 过滤成绩 ----
+    #
+    # ⚠️ 判断「更新后打过」要用 `last_played_time`，**不是 `play_time`**。
+    #    实测差别很大：
+    #      · play_time        = **最好成绩那次**的时间。今天打过但没刷新最高分
+    #                            的话它会停在很久以前，看着像「没打过」。
+    #      · last_played_time = **最后一次游玩**的时间。这才是我们要的。
+    #
+    #    而 `last_played_time` **官方文档的 Score 结构体里根本没写** ——
+    #    是靠打印真实响应的字段名才发现的。所以两个都列出来对比。
     rows = []
     for s in data:
         if not isinstance(s, dict):
@@ -95,39 +104,63 @@ def main() -> int:
             "songId": sid,
             "title": meta.get(want_ids[sid], {}).get("title", "?"),
             "level": LEVEL_NAMES.get(idx, f"?({idx})"),
-            "playTimeUtc": s.get("play_time"),
+            "lastPlayed": s.get("last_played_time"),
+            "playTime": s.get("play_time"),
             "score": s.get("score"),
         })
 
-    # 按歌 id、难度排序，便于比对
-    rows.sort(key=lambda r: (r["songId"], str(r["level"])))
+    # 按最后游玩时间倒序：最近打的排最前，最便于核对
+    rows.sort(key=lambda r: (r["lastPlayed"] is not None, r["lastPlayed"] or ""),
+              reverse=True)
 
     # ---- 输出 ----
+    open_dt = None
+    try:
+        open_dt = datetime.fromisoformat(release_date.replace("Z", "+00:00"))
+        if open_dt.tzinfo is None:
+            open_dt = open_dt.replace(tzinfo=CST)
+    except Exception:  # noqa: BLE001
+        pass
+
+    def fmt(raw):
+        if not raw:
+            return "(无)"
+        try:
+            return (
+                datetime.fromisoformat(raw.replace("Z", "+00:00"))
+                .astimezone(CST)
+                .strftime("%Y-%m-%d %H:%M")
+            )
+        except Exception:  # noqa: BLE001
+            return f"(解析失败 {raw})"
+
+    def after_open(raw):
+        """这条记录的「最后游玩时间」是否在开门之后。"""
+        if not raw or open_dt is None:
+            return "?"
+        try:
+            t = datetime.fromisoformat(raw.replace("Z", "+00:00")).astimezone(CST)
+        except Exception:  # noqa: BLE001
+            return "?"
+        return "★" if t >= open_dt else " "
+
     lines = []
     lines.append(f"# ORIGIN 门成绩提取（门开放日期 {release_date}）")
     lines.append(f"# 门要求 {len(want_ids)} 首；接口里命中 {len({r['songId'] for r in rows})} 首，"
                  f"{len(rows)} 条谱面记录")
-    lines.append(f"# 时间已转成北京时间（接口原始是 UTC）")
+    lines.append("# 时间已转成北京时间（接口原始是 UTC）")
+    lines.append("# ★ = 最后游玩时间在开门之后（这个门的正确依据）")
     lines.append("")
 
     hit_ids = {r["songId"] for r in rows}
-    lines.append("== 在接口里找到的 ==")
+    lines.append("== 在接口里找到的（按最后游玩时间倒序）==")
+    lines.append(f"{'':2}{'id':>6}  {'难度':<10}  {'最后游玩':<17}  "
+                 f"{'最好成绩那次':<17}  {'分数':>8}  曲名")
     for r in rows:
-        t = r["playTimeUtc"]
-        local = ""
-        if t:
-            try:
-                local = (
-                    datetime.fromisoformat(t.replace("Z", "+00:00"))
-                    .astimezone(CST)
-                    .strftime("%Y-%m-%d %H:%M")
-                )
-            except Exception:  # noqa: BLE001
-                local = f"(解析失败: {t})"
-        else:
-            local = "(接口未给时间)"
         lines.append(
-            f"{r['songId']:>5}  {r['level']:<10}  {local:<17}  {r['score'] or 0:>8}  {r['title']}"
+            f"{after_open(r['lastPlayed'])} {r['songId']:>6}  {r['level']:<10}  "
+            f"{fmt(r['lastPlayed']):<17}  {fmt(r['playTime']):<17}  "
+            f"{r['score'] or 0:>8}  {r['title']}"
         )
 
     lines.append("")
@@ -141,10 +174,8 @@ def main() -> int:
     out = ROOT / "lxns_origin.txt"
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    print("\n".join(lines[:6]))
-    print("...")
-    print(f"\n已写入 {out}")
-    print(f"（这个文件不会进 git 仓库 —— lxns_* 已在 .gitignore 里）")
+    print("\n".join(lines))
+    print(f"\n已写入 {out}（不会进 git 仓库）")
     return 0
 
 

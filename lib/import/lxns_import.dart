@@ -58,6 +58,7 @@ class LxnsSongResult {
     required this.verdict,
     this.lastKnownPlay,
     this.cutoff,
+    this.basedOnExactLastPlay = false,
   });
 
   final String gateId;
@@ -77,6 +78,12 @@ class LxnsSongResult {
 
   /// 判定用的时间界线（开门时间）
   final DateTime? cutoff;
+
+  /// 这条结论是不是靠**精确的最后游玩时间**得出的。
+  ///
+  /// false 表示接口那条记录没有 `last_played_time`、退化成了「最好成绩那次」，
+  /// 此时「没找到证据」的结论更弱，界面应该把语气放软。
+  final bool basedOnExactLastPlay;
 }
 
 /// 整个导入的结果汇总。
@@ -184,19 +191,26 @@ LxnsImportReport evaluateGate({
     final ticked = isTicked(key);
 
     // 落雪成绩是按 (songId, 难度) 存的，而我们只关心「打没打过这首歌」，
-    // 不限难度 —— 所以取这首歌所有难度里最新的那条记录。
+    // 不限难度 —— 所以取这首歌所有难度里**最后游玩时间最晚**的那条。
+    //
+    // 用 comparableTime（= last_played_time，没有才退回 play_time）而不是
+    // play_time：后者只是「最好成绩那次」。今天打过但没刷新最高分的话，
+    // 它会停在很久以前，于是把打过的歌误判成「无法确认」——
+    // 这正是实测发现 last_played_time 存在之前的表现。
     LxnsScore? best;
     if (songId != null) {
       for (final lv in LxnsLevel.values) {
         final s = scores[(songId, lv)];
         if (s == null) continue;
-        final a = best?.playTime;
-        final b = s.playTime;
+        final a = best?.comparableTime;
+        final b = s.comparableTime;
         if (best == null || (b != null && (a == null || b.isAfter(a)))) best = s;
       }
     }
 
-    final play = best?.playTime;
+    final play = best?.comparableTime;
+    // 这条结论是「精确的最后游玩时间」推出来的，还是退化成「最好成绩时间」
+    final exact = best?.hasExactLastPlay ?? false;
 
     LxnsVerdict verdict;
     if (cutoff == null) {
@@ -221,6 +235,7 @@ LxnsImportReport evaluateGate({
       verdict: verdict,
       lastKnownPlay: play,
       cutoff: cutoff,
+      basedOnExactLastPlay: exact,
     ));
   }
 

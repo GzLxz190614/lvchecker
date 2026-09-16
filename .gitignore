@@ -33,6 +33,7 @@ lx_test.txt
 scores_raw*.json
 lxns_*.json
 lxns_*.txt
+lxns_origin.txt
 
 # ============================================================
 # Python —— 工具脚本的运行产物

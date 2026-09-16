@@ -118,7 +118,7 @@ def main() -> int:
         v = first[k]
         if k in PRIVATE:
             print(f"    {k:16} = <已隐去>")
-        elif k in ("play_time", "upload_time"):
+        elif k in ("play_time", "upload_time", "last_played_time"):
             print(f"    {k:16} = {v!r}  -> 北京 {to_local(v)}")
         else:
             print(f"    {k:16} = {v!r}")
@@ -127,9 +127,13 @@ def main() -> int:
     times = [r for r in data if isinstance(r, dict)]
     with_play = sum(1 for r in times if r.get("play_time"))
     with_upload = sum(1 for r in times if r.get("upload_time"))
+    with_last = sum(1 for r in times if r.get("last_played_time"))
     print()
     print(f"  统计：{len(times)} 条里，play_time 非空 {with_play} 条，"
-          f"upload_time 非空 {with_upload} 条")
+          f"upload_time 非空 {with_upload} 条，last_played_time 非空 {with_last} 条")
+    if with_last:
+        print("  ★ last_played_time 存在 —— 这就是「最后游玩时间」，"
+              "判定应该用它而不是 play_time")
 
     if with_upload:
         # 按 upload_time 倒序，看最近同步的是哪几条（只看时间，不带曲名之外的信息）

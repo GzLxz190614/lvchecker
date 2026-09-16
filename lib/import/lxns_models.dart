@@ -56,23 +56,39 @@ enum LxnsLevel {
 
 /// 一条成绩（`Score`）。
 ///
-/// ⚠️ **`playTime` 的语义必须先说清楚**，否则判定会想当然地错：
+/// ## 三个时间字段的区别（**这里错过一次，务必看清**）
 ///
-///   它是「**该谱面最好成绩**那次的时间」，**不是最后一次游玩时间**。
-///   所以：
-///     · playTime 在开门之后  → 确实在开门之后打过（最好成绩就是那时刷的）
-///     · playTime 在开门之前  → **无法判断**开门后有没有打过
-///       （可能打完那次之后再没碰，也可能打了很多次但都没超过它）
-///     · 没有这条成绩        → 这个谱面**从来没打过**
+/// 官方文档的 `Score` 结构体只写了两个时间字段：
 ///
-///   API 现在没有提供「最后游玩时间」，所以上面第二种情况只能归到「无法判断」。
-///   这是接口能力的上限，不是实现偷懒。
+/// | 字段 | 文档说明 | 实际语义 |
+/// |---|---|---|
+/// | `play_time` | 游玩的 UTC 时间 | **最好成绩那一次**的时间 |
+/// | `upload_time` | 成绩被同步时的 UTC 时间 | 这条记录最后一次被同步 |
+///
+/// 但**实际响应里还有一个文档没写的字段**：
+///
+/// | 字段 | 实际语义 |
+/// |---|---|---|
+/// | `last_played_time` | **最后一次游玩**的时间 ← 判定就该用它 |
+///
+/// 这个字段是靠实际请求探查发现的（官方文档里没有）。发现过程值得一提：
+/// 先按文档只用 `play_time`，结果实测「今天打过但没刷新最高分」的歌
+/// `play_time` 还停在一年前；于是去扒更全的 API 列表 wiki，仍然只有那两个
+/// 字段；最后是**打印真实响应的字段名**才看到它。
+///
+/// **教训：文档不全时，打印真实响应比反复读文档有效。**
+///
+/// 判定优先级：`lastPlayedTime` → 没有才退回 `playTime`
+/// （退回时语义变弱，会把一些其实打过的判成「无法确认」，
+/// 但**不会**误判成「打过了」—— 宁可漏报，不可误报）。
 class LxnsScore {
   const LxnsScore({
     required this.songId,
     required this.level,
     required this.score,
+    this.lastPlayedTime,
     this.playTime,
+    this.uploadTime,
   });
 
   final int songId;
@@ -81,12 +97,26 @@ class LxnsScore {
   /// 分数值（如 1010000）
   final int score;
 
-  /// 本地时区的游玩时间；null 表示接口没给。
-  ///
-  /// 接口返回的是 UTC（形如 `2024-01-09T16:00:00Z`），
-  /// 这里**已经转成本地时间** —— 因为门的开放日期是本地时间语义，
-  /// 两边不统一会差 8 小时（北京时间）从而判断错。
+  /// **最后一次游玩时间**（本地时区）。判定的首选依据。
+  final DateTime? lastPlayedTime;
+
+  /// 最好成绩那次的时间（本地时区）。
   final DateTime? playTime;
+
+  /// 这条记录最后一次被同步的时间（本地时区）。
+  ///
+  /// ⚠️ **不能用来判断「打过」**：对最好成绩那条记录来说，
+  /// 它只在刷新最高分时才变。留着只为排查用。
+  final DateTime? uploadTime;
+
+  /// 判定「这个谱面在某时间点之后有没有被游玩」时该用的时间。
+  ///
+  /// 优先 [lastPlayedTime]；没有才退回 [playTime]（语义更弱，见类文档）。
+  DateTime? get comparableTime => lastPlayedTime ?? playTime;
+
+  /// 用的是不是真正精确的「最后游玩时间」
+  /// （false = 退化成了「最好成绩那次」，结论要相应弱化）
+  bool get hasExactLastPlay => lastPlayedTime != null;
 
   static LxnsScore? fromJson(Map<String, dynamic> json) {
     final id = (json['id'] as num?)?.toInt();
@@ -96,7 +126,9 @@ class LxnsScore {
       songId: id,
       level: level,
       score: (json['score'] as num?)?.toInt() ?? 0,
+      lastPlayedTime: parseUtcToLocal(json['last_played_time'] as String?),
       playTime: parseUtcToLocal(json['play_time'] as String?),
+      uploadTime: parseUtcToLocal(json['upload_time'] as String?),
     );
   }
 

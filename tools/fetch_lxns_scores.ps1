@@ -64,6 +64,10 @@ try {
     Write-Host "已收到 $size 字节" -ForegroundColor Green
     Write-Host ''
 
+    # 先看字段分布（特别是 last_played_time 是否普遍存在），再提取 ORIGIN
+    & python tools\analyze_lxns_fields.py $raw
+    Write-Host ''
+
     & python tools\extract_lxns_origin.py $raw
     $code = $LASTEXITCODE
 }

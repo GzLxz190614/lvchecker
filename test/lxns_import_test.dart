@@ -44,11 +44,27 @@ Gate _groupedGate({required List<List<String>> groups}) => Gate.fromJson({
       },
     });
 
+/// 只有「最好成绩那次」时间（旧字段，没有 last_played_time 时才会走到）
 LxnsScore _score(int songId, LxnsLevel level, String? playTime) => LxnsScore(
       songId: songId,
       level: level,
       score: 1000000,
       playTime: playTime == null ? null : DateTime.parse(playTime),
+    );
+
+/// 带「最后游玩时间」的成绩（正常情况：接口会给这个字段）
+LxnsScore _scoreLast(
+  int songId,
+  LxnsLevel level,
+  String? lastPlayed, {
+  String? bestTime,
+}) =>
+    LxnsScore(
+      songId: songId,
+      level: level,
+      score: 1000000,
+      lastPlayedTime: lastPlayed == null ? null : DateTime.parse(lastPlayed),
+      playTime: bestTime == null ? null : DateTime.parse(bestTime),
     );
 
 /// 判定一个门，返回「条目 key -> 判定」
@@ -288,6 +304,107 @@ void main() {
         scores: const [],
       );
       expect(v, isEmpty, reason: '角色/服装/地图不是打歌，落雪成绩帮不上忙');
+    });
+  });
+
+  group('last_played_time 优先于 play_time（这是实测踩出来的关键）', () {
+    // 真实场景：用户今天打了某首歌，但没刷新最高分。
+    //   play_time        = 2025-10-04（最好成绩那次，一年前）
+    //   last_played_time = 2026-09-16（今天真的打了）
+    // 如果只看 play_time，这首会被误判成「无法确认」。
+    test('今天打过但没刷新最高分 → 必须判成 confirmed，不能因为 play_time 旧就漏掉', () {
+      final v = _run(
+        gate: _songsGate(songKeys: ['music:51']),
+        cutoff: cutoff,
+        scores: [
+          _scoreLast(51, LxnsLevel.master, '2026-09-16T08:07',
+              bestTime: '2025-10-04T16:07'),
+        ],
+      );
+      expect(v['music:51'], LxnsVerdict.confirmed,
+          reason: '判定必须用 last_played_time，不是 play_time');
+    });
+
+    test('已勾选 + 最后游玩在开门前 → contradicted（用 last_played_time 判）', () {
+      final v = _run(
+        gate: _songsGate(songKeys: ['music:51']),
+        cutoff: cutoff,
+        scores: [
+          _scoreLast(51, LxnsLevel.master, '2026-01-01T00:00',
+              bestTime: '2025-01-01T00:00'),
+        ],
+        ticked: {'music:51'},
+      );
+      expect(v['music:51'], LxnsVerdict.contradicted);
+    });
+
+    test('没有 last_played_time 时退回 play_time（语义变弱但方向不会错）', () {
+      // play_time 在开门后 -> 仍可确认
+      final v = _run(
+        gate: _songsGate(songKeys: ['music:51']),
+        cutoff: cutoff,
+        scores: [_scoreLast(51, LxnsLevel.master, null, bestTime: '2026-09-11T01:00')],
+      );
+      expect(v['music:51'], LxnsVerdict.confirmed);
+    });
+
+    test('两个字段都没有 → 无法确认，不能瞎猜', () {
+      final v = _run(
+        gate: _songsGate(songKeys: ['music:51']),
+        cutoff: cutoff,
+        scores: [_scoreLast(51, LxnsLevel.master, null)],
+      );
+      expect(v['music:51'], LxnsVerdict.unknown);
+    });
+
+    test('能区分「结论来自精确的最后游玩时间」还是退化的最好成绩时间', () {
+      final exact = evaluateGate(
+        gate: _songsGate(songKeys: ['music:51']),
+        cutoff: cutoff,
+        scores: indexScores(
+            [_scoreLast(51, LxnsLevel.master, '2026-09-16T08:07')]),
+        isTicked: (_) => false,
+        titleOf: (k) => k,
+        songIdOf: (k) => k.split(':').last,
+      );
+      expect(exact.results.single.basedOnExactLastPlay, isTrue);
+
+      final weak = evaluateGate(
+        gate: _songsGate(songKeys: ['music:51']),
+        cutoff: cutoff,
+        scores: indexScores([_score(51, LxnsLevel.master, '2026-09-16T08:07')]),
+        isTicked: (_) => false,
+        titleOf: (k) => k,
+        songIdOf: (k) => k.split(':').last,
+      );
+      expect(weak.results.single.basedOnExactLastPlay, isFalse,
+          reason: '只有 play_time 时结论更弱，界面该把语气放软');
+    });
+
+    test('多难度时取 last_played_time 最晚的那条', () {
+      final v = _run(
+        gate: _songsGate(songKeys: ['music:51']),
+        cutoff: cutoff,
+        scores: [
+          _scoreLast(51, LxnsLevel.expert, '2026-01-01T00:00'),
+          _scoreLast(51, LxnsLevel.master, '2026-09-16T08:07'),
+        ],
+      );
+      expect(v['music:51'], LxnsVerdict.confirmed);
+    });
+
+    test('某难度只有新时间、另一难度只有旧的最好成绩时间 → 取最晚', () {
+      final v = _run(
+        gate: _songsGate(songKeys: ['music:51']),
+        cutoff: cutoff,
+        scores: [
+          // 这个难度没有 last_played_time，退回一年前的最好成绩
+          _score(51, LxnsLevel.expert, '2025-01-01T00:00'),
+          // 这个难度有精确的最后游玩时间，是今天
+          _scoreLast(51, LxnsLevel.master, '2026-09-16T08:07'),
+        ],
+      );
+      expect(v['music:51'], LxnsVerdict.confirmed);
     });
   });
 

@@ -539,9 +539,9 @@ class _SettingsPageState extends State<SettingsPage> {
     children.add(const SizedBox(height: 8));
     children.add(
       const Text(
-        '⚠️ 说明：查分器只能给出「最好成绩那次」的时间，不是最后游玩时间。\n'
-        '所以它只能确认「这段时间之后确实打过」，**不能证明「没打过」** —— '
-        '因此已勾选但找不到证据的曲目只会提示你，不会被自动取消。',
+        '判定用的是查分器的「最后游玩时间」：在门开放之后打过、但你没勾的，'
+        '会提示并可以一键勾上；\n'
+        '已勾选却找不到「开放之后」记录的，只提示、**不会自动取消你的勾选**。',
         style: TextStyle(fontSize: 11, color: AppTheme.textFaint, height: 1.5),
       ),
     );
@@ -797,11 +797,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 if (contradicted.isNotEmpty) ...[
                   _resultHeader('⚠️ 已勾选，但没找到证据（${contradicted.length} 首）',
                       AppTheme.warning),
-                  const Text(
-                    '你已经勾了这些歌，但查分器的记录里找不到「开门之后」的成绩。\n'
-                    '⚠️ 这不代表你没打过 —— 查分器只记最好成绩那次的时间。\n'
-                    '**不会自动取消你的勾选**，请自己确认一下。',
-                    style: TextStyle(fontSize: 11.5, color: AppTheme.textDim, height: 1.4),
+                  Text(
+                    // 依据「最后游玩时间」时可以说得确定；退化成「最好成绩时间」时要放软。
+                    // 两者混在一份结果里时就按弱的那种措辞。
+                    contradicted.any((r) => r.basedOnExactLastPlay)
+                        ? '查分器记录的**最后游玩时间**都在门开放之前。\n'
+                            '如果确实打过，可能查分器还没同步到 —— 请自己确认一下。\n'
+                            '**不会自动取消你的勾选**。'
+                        : '这些记录里没有「最后游玩时间」字段，只能退而看「最好成绩那次」的时间，\n'
+                            '而那个时间都在门开放之前。**这不代表你没打过** ——\n'
+                            '最好成绩可能是很久以前刷的，之后打过但没超过它。\n'
+                            '**不会自动取消你的勾选**，请自己确认。',
+                    style: const TextStyle(
+                        fontSize: 11.5, color: AppTheme.textDim, height: 1.4),
                   ),
                   const SizedBox(height: 6),
                   ...contradicted.map((r) => _resultLine(r, showTime: true)),
