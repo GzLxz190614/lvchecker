@@ -6,7 +6,7 @@
 # 它会：
 #   1. 隐蔽地提示你输入个人 API 密钥（输入时屏幕上不显示，不进历史记录）
 #   2. 调落雪个人 API 拿全部成绩，存成 scores_raw.json
-#   3. 运行 tools/lxns_extract_origin.py，提取 ORIGIN 门那 30 首 -> lxns_origin.txt
+#   3. 运行 tools/extract_lxns_origin.py，提取 ORIGIN 门那 30 首 -> lxns_origin.txt
 #   4. 立刻清掉第 2 步的原始响应（里面有你全部成绩，不必留着）
 #
 # 两个文件都在 .gitignore 里（lxns_* / scores_raw*.json），不会被提交。
@@ -58,7 +58,7 @@ try {
     Write-Host "已收到 $size 字节" -ForegroundColor Green
     Write-Host ''
 
-    & python tools\lxns_extract_origin.py $raw
+    & python tools\extract_lxns_origin.py $raw
     $code = $LASTEXITCODE
 }
 finally {
