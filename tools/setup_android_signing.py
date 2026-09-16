@@ -58,6 +58,25 @@ _HAVE_BLOCK_KTS = re.compile(r"signingConfigs\s*\{")
 _HAVE_BLOCK_GROOVY = re.compile(r"signingConfigs\s*\{")
 
 
+def ensure_kts_imports(text: str) -> tuple[str, str]:
+    """
+    在 .kts 文件顶部补上 `import java.util.Properties` / `import java.io.FileInputStream`。
+
+    为什么需要：注入的 signingConfigs 里要用这两个类，但**不能写全限定名** ——
+    在 Gradle Kotlin DSL 里 `java` 会被解析成 Gradle 的 java 扩展而不是包名，
+    `java.util.Properties()` 会报 `Unresolved reference: util`（实测踩过，
+    整个构建失败）。显式 import 之后就能只用简单类名 `Properties()`。
+    """
+    needed = ["java.util.Properties", "java.io.FileInputStream"]
+    missing = [n for n in needed if re.search(rf"^import\s+{re.escape(n)}\s*$", text, re.MULTILINE) is None]
+    if not missing:
+        return text, "import 已存在，跳过"
+
+    # 插到第一行之前（import 必须出现在文件顶部，Kotlin 要求在所有声明之前）
+    lines = "\n".join(f"import {n}" for n in needed)
+    return f"{lines}\n\n{text}", f"已补 import: {', '.join(missing)}"
+
+
 def patch_kts(text: str) -> tuple[str, str]:
     """Kotlin DSL 版本。返回 (新内容, 说明)。"""
     if _HAVE_BLOCK_KTS.search(text):
@@ -75,13 +94,20 @@ def patch_kts(text: str) -> tuple[str, str]:
         f"{indent}    // 见 tools/setup_android_signing.py 顶部说明：签名不固定会导致\n"
         f"{indent}    // 「装新版必须先卸载」，而卸载会清掉本机进度。\n"
         f"{indent}    create(\"{SIGNING_NAME}\") {{\n"
-        f"{indent}        val props = java.util.Properties()\n"
+        f"{indent}        // ⚠️ 这里**刻意不写全限定类名**（形如「包名.类名」的那种）。\n"
+        f"{indent}        // 在 Gradle Kotlin DSL 里 `java` 会被解析成 Gradle 的 java 扩展而不是包名，\n"
+        f"{indent}        // 写全限定名会报 `Unresolved reference: util`、整个构建失败。实测踩过一次。\n"
+        f"{indent}        //\n"
+        f"{indent}        // 所以先显式 import 把类引进来（见文件顶部），这里只用简单类名。\n"
+        f"{indent}        val cfg = Properties()\n"
         f"{indent}        val f = rootProject.file(\"key.properties\")\n"
-        f"{indent}        if (f.exists()) f.inputStream().use {{ props.load(it) }}\n"
-        f"{indent}        storeFile = props.getProperty(\"storeFile\")?.let {{ file(it) }}\n"
-        f"{indent}        storePassword = props.getProperty(\"storePassword\")\n"
-        f"{indent}        keyAlias = props.getProperty(\"keyAlias\")\n"
-        f"{indent}        keyPassword = props.getProperty(\"keyPassword\")\n"
+        f"{indent}        if (f.exists()) {{\n"
+        f"{indent}            cfg.load(FileInputStream(f))\n"
+        f"{indent}        }}\n"
+        f"{indent}        storeFile = cfg.getProperty(\"storeFile\")?.let {{ file(it) }}\n"
+        f"{indent}        storePassword = cfg.getProperty(\"storePassword\")\n"
+        f"{indent}        keyAlias = cfg.getProperty(\"keyAlias\")\n"
+        f"{indent}        keyPassword = cfg.getProperty(\"keyPassword\")\n"
         f"{indent}    }}\n"
         f"{indent}}}\n"
         f"\n"
@@ -209,6 +235,11 @@ def main() -> int:
     text = target.read_text(encoding="utf-8")
     notes = []
 
+    # Kotlin 需要在顶部 import（不能用全限定名，见 ensure_kts_imports 的说明）
+    if is_kts:
+        text, note = ensure_kts_imports(text)
+        notes.append(note)
+
     text, note = patch_kts(text) if is_kts else patch_groovy(text)
     notes.append(note)
     text, note = wire_release(text, is_kts)
@@ -225,6 +256,31 @@ def main() -> int:
         problems.append("没有 signingConfigs 块")
     if not re.search(r"buildTypes[\s\S]*?signingConfig", final):
         problems.append("release buildType 没有指向 signingConfig")
+
+    if is_kts:
+        # ★ 这两条是这次 CI 失败的直接原因，必须挡住：
+        #   Gradle Kotlin DSL 里 `java` 不是包名，`java.util.Properties()` 会编译失败。
+        #
+        #   注意要**排除 import 行和注释行** ——
+        #   `import java.util.Properties` 本身就含 `java.util.`，是合法的；
+        #   注释里也可能提到它。只看真正的代码。
+        offending = [
+            (i, ln) for i, ln in enumerate(final.splitlines(), 1)
+            if re.search(r"\bjava\s*\.\s*(util|io)\s*\.", ln)
+            and not ln.lstrip().startswith("import ")
+            and not ln.lstrip().startswith("//")
+        ]
+        if offending:
+            problems.append(
+                "注入的代码里用了全限定类名（java.util. / java.io.）—— "
+                "Gradle Kotlin DSL 里 `java` 会被解析成 Gradle 扩展而不是包名，"
+                "会报 Unresolved reference 导致构建失败。"
+                f"位置：{offending}"
+            )
+        if "import java.util.Properties" not in final:
+            problems.append("缺少 `import java.util.Properties`（Kotlin DSL 下必须显式 import）")
+        if "Properties()" not in final:
+            problems.append("signingConfigs 里没有构造 Properties()")
 
     print()
     print("----- gradle 关键行 -----")
