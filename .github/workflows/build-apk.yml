@@ -235,6 +235,10 @@ jobs:
           # manifest 补丁脚本的自检。它负责的是「APK 有没有联网权限」，
           # 自己错了就毫无意义，所以在构建之前先验证它的逻辑（含失败路径）。
           python3 tools/patch_android_manifest.py --self-test
+          # 签名注入脚本的产物静态检查。本机没有 Kotlin 编译器，验不了语法，
+          # 但已知的几类错（全限定类名、裸的 r"、引号不成对、相对路径）
+          # 可以在这里挡住 —— 那几类我各踩过一次，每次烧一轮 CI。
+          python3 tools/check_gradle_snippet.py
 
       # 从仓库根目录的 icon.png 生成各密度启动图标。
       # 必须在 flutter pub get 之后跑（它依赖 flutter_launcher_icons 包）。

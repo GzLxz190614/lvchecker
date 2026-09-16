@@ -117,9 +117,16 @@ def patch_kts(text: str, keystore_abs: str) -> tuple[str, str]:
     #
     #   代价：这个文件是**每次构建现改的**（android/ 本身不入 git），
     #   所以路径写死没有可移植性问题。
-    # 用 Kotlin **原始字符串** r"..." —— 反斜杠原样保留，不需要转义。
-    # （Windows 路径里全是反斜杠，普通字符串要写成 `\\`，容易两头对不上；
-    #   原始字符串 + 下面的 unescape 比对最省事。）
+    # ⚠️ 用**普通字符串**，不用 Kotlin 原始字符串 `r"..."`。
+    #
+    #   我上一版用了 `File(r"...")`，CI 报：
+    #       Expecting ','    /    Unresolved reference: r
+    #   原始字符串在这个位置没被接受。我本地没有 Kotlin 编译器，**验不了**语法，
+    #   所以不冒险 —— 普通字符串是绝对安全的。
+    #
+    #   代价是要转义反斜杠（Windows 路径才有）。CI 跑在 Linux 上，路径里
+    #   本来就没有反斜杠，转义是空操作；但保留它让脚本在 Windows 上也能用。
+    escaped = keystore_abs.replace("\\", "\\\\")
     block = (
         f"{indent}signingConfigs {{\n"
         f"{indent}    // release 用固定的 keystore。\n"
@@ -129,7 +136,7 @@ def patch_kts(text: str, keystore_abs: str) -> tuple[str, str]:
         f"{indent}    // 绝对路径原样使用，不受 rootProject 影响。\n"
         f"{indent}    // 口令仍从 android/key.properties 读，不写在这个文件里。\n"
         f"{indent}    create(\"{SIGNING_NAME}\") {{\n"
-        f"{indent}        storeFile = File(r\"{keystore_abs}\")\n"
+        f"{indent}        storeFile = File(\"{escaped}\")\n"
         f"{indent}        val cfg = Properties()\n"
         f"{indent}        val f = rootProject.file(\"key.properties\")\n"
         f"{indent}        if (f.exists()) {{\n"
