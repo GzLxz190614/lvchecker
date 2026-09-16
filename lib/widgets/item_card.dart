@@ -388,41 +388,67 @@ class ItemGrid extends StatelessWidget {
   }
 }
 
-/// 区块标题：左侧标题 + 右侧进度
+/// 区块标题：左侧标题（可带一行说明）+ 右侧进度
 class SectionHeader extends StatelessWidget {
-  const SectionHeader({super.key, required this.title, this.trailing, this.trailingColor});
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.trailing,
+    this.trailingColor,
+    this.note,
+  });
 
   final String title;
   final String? trailing;
   final Color? trailingColor;
 
+  /// 标题下方的补充说明。用在 STAR 门的两个步骤上
+  /// （例如第 2 步标题是「升到 RANK 15」，说明是「从地图 VERSE ep.STAR 获得后练级」）。
+  final String? note;
+
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFC9CFE4),
-              ),
+    final heading = Row(
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFFC9CFE4),
             ),
           ),
-          if (trailing != null)
-            Text(
-              trailing!,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: trailingColor ?? AppTheme.textDim,
-              ),
+        ),
+        if (trailing != null)
+          Text(
+            trailing!,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: trailingColor ?? AppTheme.textDim,
             ),
+          ),
+      ],
+    );
+
+    if (note == null || note!.isEmpty) {
+      return Padding(padding: const EdgeInsets.only(bottom: 10), child: heading);
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          heading,
+          const SizedBox(height: 3),
+          Text(
+            note!,
+            style: const TextStyle(fontSize: 12, height: 1.45, color: AppTheme.textFaint),
+          ),
         ],
       ),
     );

@@ -129,7 +129,7 @@ def main() -> int:
             android = tmp / name.replace(" ", "")
             app = android / "app"
             app.mkdir(parents=True)
-            (app / fname).write_text(src, encoding="utf-8")
+            (app / fname).write_text(src, encoding="utf-8", newline="\n")
             ks = app / "release.jks"
             ks.write_bytes(b"\x00" * 512)
 

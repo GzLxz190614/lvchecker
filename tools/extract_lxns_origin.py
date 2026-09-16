@@ -172,7 +172,7 @@ def main() -> int:
         lines.append(f"{k:>12}  {meta.get(k, {}).get('title', '?')}")
 
     out = ROOT / "lxns_origin.txt"
-    out.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    out.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
 
     print("\n".join(lines))
     print(f"\n已写入 {out}（不会进 git 仓库）")

@@ -273,8 +273,7 @@ def main() -> int:
         f"storePassword={args.store_password}\n"
         f"keyAlias={args.key_alias}\n"
         f"keyPassword={args.key_password}\n",
-        encoding="utf-8",
-    )
+        encoding="utf-8", newline="\n")
     print(f"已写 {props}（只含口令；keystore 绝对路径直接写进 gradle）")
 
     # keystore 的绝对路径 —— 直接注入 gradle，避开 Gradle 的路径基准问题
@@ -294,7 +293,7 @@ def main() -> int:
     text, note = wire_release(text, is_kts)
     notes.append(note)
 
-    target.write_text(text, encoding="utf-8")
+    target.write_text(text, encoding="utf-8", newline="\n")
     for n in notes:
         print(f"  · {n}")
 

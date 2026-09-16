@@ -221,14 +221,26 @@ jobs:
       # ------------------------------------------------------------------
       # 本地检查（因为无法在本地跑 flutter，这些静态校验就放在 CI 里）
       # ------------------------------------------------------------------
-      - name: Static checks (dart / assets / classes / image format)
+      - name: Static checks (dart / assets / classes / gates schema / music order / images)
         run: |
           set -e
           # 先按磁盘现状重建资源列表，再校验（避免「加了图但忘了声明」漏过）
           python3 tools/gen_asset_list.py
+          # python 工具脚本自己的语法。这类错误（引号转义写错等）本地没有别的入口能发现，
+          # 而它会让**后续所有检查一起崩**，所以放在最前面 —— 早点报出真正的错因。
+          python3 tools/check_python_syntax.py
           python3 tools/check_dart.py
           python3 tools/check_assets.py
           python3 tools/check_classes.py
+          # 门的结构约束。这些错**都不会报错**，只会静默判定错：
+          #   * itemKey 不在 meta.json 里 -> 卡片不显示但 total 算上它，进度永远差一个；
+          #   * itemsInSteps 的 steps 为空 -> total==0，门永远判未解锁；
+          #   * 两步的 itemKey 重复       -> 一次勾选影响两处，两步退化成一步。
+          # STAR 门原来就是「只判角色卡、不判 RANK 15」，属于同一类错。
+          python3 tools/check_gates_schema.py
+          # 曲目顺序是否还符合游戏内 MusicSort 顺序。顺序错了肉眼几乎看不出来
+          # （一个门 30 首，看起来「差不多有序」不代表真的对），只能靠脚本比。
+          python3 tools/check_music_order.py
           # 图片格式：确认 Pillow 支持目标格式，且仓库里的图扩展名与实际格式一致。
           # 这两种问题的共同点是编译期发现不了，只有装到手机才满屏「图片丢失」。
           python3 tools/check_image_format.py

@@ -265,7 +265,7 @@ def main() -> int:
 
     DATA.mkdir(parents=True, exist_ok=True)
     (DATA / "classes.json").write_text(
-        json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8")
+        json.dumps(doc, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
 
     # ---------------------------------------------------------------- 汇总
     print(f"段位课程：{len(classes)} 个 CLASS")

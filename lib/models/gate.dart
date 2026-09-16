@@ -5,8 +5,12 @@ import 'entry.dart';
 /// `gates.json` 里 `requirement.type` 的取值：
 /// - `playAll`         所有 `songKeys` 各打一次（ORIGIN / AMAZON / SUN / VERSE / RE:VERSE）
 /// - `playAnyOfEach`   每个 `groups` 里任打一首（PARADISE）
-/// - `items`           所有 `itemKeys` 都达成（STAR / NEW / LUMINOUS）
-/// - `anyClassAllCourses`  段位课程（AIR）—— M5 才实现，先只显示条件
+/// - `items`           所有 `itemKeys` 都达成（NEW / LUMINOUS）
+/// - `itemsInSteps`    **依次做完多个步骤**（STAR）—— 每个 `steps` 里的条目都要完成。
+///                     和 `items` 的区别：`items` 是一组并列条目，`itemsInSteps` 是
+///                     「先获得角色、再升到 RANK 15」这种有先后的多步条件，
+///                     界面上分区显示、各自带进度。
+/// - `anyClassAllCourses`  段位课程（AIR）
 /// - `clearAllPrev`    前置门全通关（X-VERSE / 奖励乐曲）
 /// - `manualConfirm`   手动确认（CRYSTAL，条件未知）
 /// - `remainingHp`     剩余血量（UNIVERSE）
@@ -16,12 +20,24 @@ class GateRequirement {
     this.songKeys = const [],
     this.itemKeys = const [],
     this.groups = const [],
+    this.steps = const [],
   });
 
   final String type;
   final List<String> songKeys;
   final List<String> itemKeys;
   final List<RequirementGroup> groups;
+
+  /// `itemsInSteps` 专用：有先后的多个步骤（STAR）
+  final List<RequirementStep> steps;
+
+  /// 把 `steps` 里所有步骤的条目前后拼起来（去重前的原始顺序）。
+  ///
+  /// 判定和进度都用它，这样 `itemsInSteps` 和 `items` 的勾选逻辑可以共用一套：
+  /// 两者都是「这些条目全部完成」，只是**显示方式**不同（分区 vs 平铺）。
+  List<String> get allStepItemKeys => [
+        for (final s in steps) ...s.itemKeys,
+      ];
 
   static GateRequirement fromJson(Map<String, dynamic>? json) {
     if (json == null) return const GateRequirement(type: 'unknown');
@@ -32,6 +48,7 @@ class GateRequirement {
     }
 
     final rawGroups = json['groups'];
+    final rawSteps = json['steps'];
     return GateRequirement(
       type: (json['type'] as String?) ?? 'unknown',
       songKeys: keys('songKeys'),
@@ -40,6 +57,12 @@ class GateRequirement {
           ? rawGroups
               .whereType<Map>()
               .map((g) => RequirementGroup.fromJson(g.cast<String, dynamic>()))
+              .toList()
+          : const [],
+      steps: rawSteps is List
+          ? rawSteps
+              .whereType<Map>()
+              .map((s) => RequirementStep.fromJson(s.cast<String, dynamic>()))
               .toList()
           : const [],
     );
@@ -169,6 +192,7 @@ class Gate {
         if (requirement.type == 'playAnyOfEach') return requirement.groups.length;
         return requirement.songKeys.length;
       case TrackingKind.items:
+        if (requirement.type == 'itemsInSteps') return requirement.allStepItemKeys.length;
         return requirement.itemKeys.length;
       default:
         return 0;

@@ -155,7 +155,7 @@ def main() -> int:
 
     version = current_version()
     text = render_pubspec(assets, version)
-    PUBSPEC.write_text(text, encoding="utf-8")
+    PUBSPEC.write_text(text, encoding="utf-8", newline="\n")
 
     n_data = sum(1 for a in assets if a.startswith("data/"))
     n_img = sum(1 for a in assets if a.endswith(f".{IMG_EXT}"))

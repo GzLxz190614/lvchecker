@@ -178,3 +178,50 @@ class RequirementGroup {
     );
   }
 }
+
+/// 需要**依次做完的多个步骤**中的一步。
+///
+/// 为什么需要这个：STAR 门的条件是
+/// 「获得角色 X，**并**升到 RANK 15」—— 这是两件事，缺一不可。
+/// 而 `itemKeys` 是「这些条目都要完成」，表达不了「步骤」。
+/// 之前 STAR 只列了角色卡，勾上就算门通，RANK 15 完全没被表达
+/// （只写在 [Entry.subtitle] 的文案里），判定是错的。
+///
+/// 所以 STAR 这类门改用 `steps`：每一步有自己的标题、说明和条目，
+/// 界面上分区显示、各自带进度，门的达成条件是**所有步骤都完成**。
+///
+/// ⚠️ 各步的 `itemKeys` 必须**全局唯一**（进度是按 `itemKey` 存在 `SharedPreferences`
+///    里的）。同一步内和跨步都不能重复，否则一个勾会影响另一处。
+///    这个约束由 `tools/check_gates_schema.py` 校验。
+class RequirementStep {
+  const RequirementStep({
+    required this.key,
+    required this.label,
+    this.note,
+    this.itemKeys = const [],
+  });
+
+  /// 步骤短键（`obtain` / `rank`），用作稳定标识，不显示给用户
+  final String key;
+
+  /// 步骤标题，例如「获得角色」
+  final String label;
+
+  /// 这一步的补充说明，例如「升到 RANK 15」
+  final String? note;
+
+  /// 这一步要完成的条目（linkId）
+  final List<String> itemKeys;
+
+  bool get isEmpty => itemKeys.isEmpty;
+
+  static RequirementStep fromJson(Map<String, dynamic> json) {
+    final raw = json['itemKeys'];
+    return RequirementStep(
+      key: (json['key'] as String?) ?? '',
+      label: (json['label'] as String?) ?? '',
+      note: json['note'] as String?,
+      itemKeys: raw is List ? raw.map((e) => e.toString()).toList() : const [],
+    );
+  }
+}

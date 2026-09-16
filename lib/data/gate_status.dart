@@ -16,6 +16,27 @@ class GateStatus {
   String get progressLabel => totalCount == 0 ? '' : '$doneCount / $totalCount';
 }
 
+/// 条目型条件的判定，**不依赖 ProgressStore**（只看「哪些条目已勾选」）。
+///
+/// 抽成独立函数是为了能**纯函数式地测**：STAR 门的「两步都要完成」这条规则
+/// 之前是错的（只判了角色卡），需要一个不碰 SharedPreferences 的入口来钉住它。
+/// [evaluateGate] 内部从 store 取出勾选集合后调用这里。
+///
+/// 两种条件的条目来源不同：
+///   - `itemsInSteps`（STAR）：把所有 step 的 itemKeys 拼起来 —— 两步都要完成；
+///   - `items`（NEW / LUMINOUS）：直接用 itemKeys。
+///
+/// ⚠️ `total > 0` 这个前提不能去掉：条目全为空时（例如 steps 写错了）
+/// 若只判 `done == total`，会得到 `0 == 0` → **门被判定为已解锁**。
+GateStatus itemsStatus(Gate gate, Set<String> ticked) {
+  final itemKeys = gate.requirement.type == 'itemsInSteps'
+      ? gate.requirement.allStepItemKeys
+      : gate.requirement.itemKeys;
+  final total = itemKeys.length;
+  final done = itemKeys.where(ticked.contains).length;
+  return GateStatus(unlocked: total > 0 && done == total, doneCount: done, totalCount: total);
+}
+
 /// 计算某个门的解锁状态。
 ///
 /// [statusOf] 用于递归解析前置门（X-VERSE / 奖励乐曲依赖「前面所有门」）。
@@ -47,9 +68,14 @@ GateStatus evaluateGate(
 
     case TrackingKind.items:
       final ticked = store.tickedOf(gate.id);
-      final total = gate.requirement.itemKeys.length;
-      final done = gate.requirement.itemKeys.where(ticked.contains).length;
-      return GateStatus(unlocked: total > 0 && done == total, doneCount: done, totalCount: total);
+      // STAR 是「先获得角色，再升到 RANK 15」两步条件，两步都要完成门才通。
+      // 判定上它和普通 items 一样是「这些条目全部完成」——
+      // 区别只在**显示**（分区、各自带进度），所以这里共用同一段逻辑，
+      // 只是条目来源从 itemKeys 换成把各步的 itemKeys 拼起来。
+      //
+      // 为什么不能只判 itemKeys：那样 STAR 会退化成「勾上角色卡 = 门通」，
+      // 角色只有 RANK 1 也算过 —— 这正是之前的问题。
+      return itemsStatus(gate, ticked);
 
     case TrackingKind.classes:
       // AIR 门的解锁条件是「拿到一个缎带」= **任一** CLASS 内所有组曲通关。

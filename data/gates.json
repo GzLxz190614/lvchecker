@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-4",
+  "dataVersion": "2026.09.11-6",
   "region": "cn",
   "gameVersion": "中二节奏 2027 (CN1.40)",
   "updatedAt": "2026-09-11",
@@ -122,9 +122,28 @@
       "prerequisites": [],
       "tracking": "items",
       "requirement": {
-        "type": "items",
+        "type": "itemsInSteps",
         "itemKeys": [
-          "chara:24320"
+          "chara:24320",
+          "chara:24320.rank15"
+        ],
+        "steps": [
+          {
+            "key": "obtain",
+            "label": "获得角色 観音寺 にこる／Mermaid♡Moment",
+            "note": "从地图 VERSE ep.STAR 获得",
+            "itemKeys": [
+              "chara:24320"
+            ]
+          },
+          {
+            "key": "rank",
+            "label": "升到 RANK 15",
+            "note": "角色练到 RANK 15 即达成",
+            "itemKeys": [
+              "chara:24320.rank15"
+            ]
+          }
         ]
       }
     },

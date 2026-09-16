@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "dataVersion": "2026.09.11-3",
+  "dataVersion": "2026.09.11-6",
   "region": "cn",
   "note": "全局条目元数据。gates.json / classes.json 通过 linkId 引用这里。",
   "entries": {
@@ -1501,6 +1501,13 @@
       "genre": "ORIGINAL",
       "works": "Invalid",
       "image": "assets/img/music/8282/jacket.webp"
+    },
+    "chara:24320.rank15": {
+      "type": "chara",
+      "id": 24320,
+      "title": "観音寺 にこる／Mermaid♡Moment",
+      "subtitle": "练级进度 · 升到 RANK 15 后勾选",
+      "image": "assets/img/chara/24320/image.webp"
     }
   }
 }

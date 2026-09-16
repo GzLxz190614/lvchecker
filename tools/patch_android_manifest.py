@@ -135,7 +135,7 @@ def patch(manifest: Path, label: str) -> list[str]:
         )
         done.append("INTERNET 权限已声明")
 
-    manifest.write_text(text, encoding="utf-8")
+    manifest.write_text(text, encoding="utf-8", newline="\n")
     return done
 
 
@@ -216,7 +216,7 @@ def _self_test(label: str) -> int:
     try:
         tmp.mkdir(parents=True, exist_ok=True)
         m = tmp / "AndroidManifest.xml"
-        m.write_text(SAMPLE_TEMPLATE, encoding="utf-8")
+        m.write_text(SAMPLE_TEMPLATE, encoding="utf-8", newline="\n")
 
         # 1) 首次打补丁：应改 label 并插入权限
         patch(m, label)
@@ -246,7 +246,7 @@ def _self_test(label: str) -> int:
 
         # 4) 失败路径：模板没有 label 时必须非零退出，而不是静默出一个坏 manifest
         bad = tmp / "bad.xml"
-        bad.write_text("<manifest><foo/></manifest>\n", encoding="utf-8")
+        bad.write_text("<manifest><foo/></manifest>\n", encoding="utf-8", newline="\n")
         try:
             patch(bad, label)
             failures.append("模板里没有 android:label 时居然没报错（会静默产出坏 APK）")
@@ -256,7 +256,7 @@ def _self_test(label: str) -> int:
 
         # 5) 失败路径：没有 <application> 也必须报错
         bad2 = tmp / "bad2.xml"
-        bad2.write_text('<manifest>\n<foo android:label="x"/>\n</manifest>\n', encoding="utf-8")
+        bad2.write_text('<manifest>\n<foo android:label="x"/>\n</manifest>\n', encoding="utf-8", newline="\n")
         try:
             patch(bad2, label)
             failures.append("没有 <application> 时居然没报错")

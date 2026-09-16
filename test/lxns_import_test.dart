@@ -305,6 +305,49 @@ void main() {
       );
       expect(v, isEmpty, reason: '角色/服装/地图不是打歌，落雪成绩帮不上忙');
     });
+
+    // STAR 门是两步条件（①获得角色 ②升到 RANK 15），type 是 itemsInSteps。
+    // 这里钉住「新类型同样不会产生条目」：
+    // evaluateGate 只读 songKeys 和 groups，**不读 steps**。
+    // 如果哪天有人改成遍历 allStepItemKeys 去匹配成绩，
+    // 就会拿 "chara:24320.rank15" 当 songId 解析（得到 null），
+    // 要么静默跳过要么产生假的「无法确认」条目 —— 这个测试会挡住。
+    test('itemsInSteps（STAR 两步）也不产生任何条目', () {
+      final stepGate = Gate.fromJson({
+        'id': 'star',
+        'order': 3,
+        'stage': 1,
+        'name': 'STAR',
+        'releaseStatus': 'notYetOpen',
+        'tracking': 'items',
+        'conditionText': '测试',
+        'requirement': {
+          'type': 'itemsInSteps',
+          'itemKeys': ['chara:24320', 'chara:24320.rank15'],
+          'steps': [
+            {
+              'key': 'obtain',
+              'label': '获得角色',
+              'itemKeys': ['chara:24320'],
+            },
+            {
+              'key': 'rank',
+              'label': '升到 RANK 15',
+              'itemKeys': ['chara:24320.rank15'],
+            },
+          ],
+        },
+      });
+
+      // 顺带确认模型解析对了（steps 没被丢掉）
+      expect(stepGate.requirement.steps.length, 2);
+      expect(stepGate.requirement.allStepItemKeys,
+          ['chara:24320', 'chara:24320.rank15']);
+      expect(stepGate.requiredCount, 2, reason: '两步共 2 个条目，不是 1 个');
+
+      final v = _run(gate: stepGate, cutoff: cutoff, scores: const []);
+      expect(v, isEmpty, reason: '获得角色 / 练级都不是打歌，落雪成绩帮不上忙');
+    });
   });
 
   group('last_played_time 优先于 play_time（这是实测踩出来的关键）', () {

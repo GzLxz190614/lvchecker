@@ -258,6 +258,9 @@ class _Body extends StatelessWidget {
         if (gate.requirement.type == 'playAnyOfEach') return _buildGrouped(context);
         return _buildFlat(context);
       case TrackingKind.items:
+        // STAR 是两步条件（获得角色 → 升到 RANK 15），分区显示、各自带进度。
+        // 其它门（NEW / LUMINOUS）仍是一组并列条目的平铺网格。
+        if (gate.requirement.type == 'itemsInSteps') return _buildSteps(context);
         return _buildFlat(context);
       case TrackingKind.classes:
         return _buildClasses(context);
@@ -326,7 +329,75 @@ class _Body extends StatelessWidget {
     return list;
   }
 
+  /// 多步骤条件：STAR 门（①获得角色 ②升到 RANK 15）。
+  ///
+  /// 每个步骤一个区块，标题是 [RequirementStep.label]，右上角是该步自己的进度
+  /// （「0 / 1」「1 / 1」），标题下方可选一行 [RequirementStep.note] 说明。
+  /// 顶部还有一个 `n / 总步数完成` 的汇总，免得两个区块都完成才知道门通了。
+  ///
+  /// 判定本身不在这里 —— 见 `gate_status.dart` 的 `TrackingKind.items` 分支，
+  /// 那里把各步条目拼起来判「全部完成」。
+  Widget _buildSteps(BuildContext context) {
+    final steps = gate.requirement.steps;
+    final ticked = store.tickedOf(gate.id);
+
+    final blocks = <Widget>[];
+    var doneSteps = 0;
+
+    for (var i = 0; i < steps.length; i++) {
+      final step = steps[i];
+      final entries = _resolve(step.itemKeys);
+      final doneCount = entries.where((e) => ticked.contains(e.key)).length;
+      final stepDone = entries.isNotEmpty && doneCount == entries.length;
+      if (stepDone) doneSteps++;
+
+      blocks.add(
+        SectionHeader(
+          // 步骤序号直接写进标题：这些步骤是**有先后**的，
+          // 光看「获得角色」「升到 RANK 15」两个标题看不出顺序。
+          title: '${i + 1}. ${step.label}',
+          note: step.note,
+          trailing: entries.isEmpty ? null : '$doneCount / ${entries.length}',
+          trailingColor: stepDone ? AppTheme.accent : AppTheme.textDim,
+        ),
+      );
+
+      if (entries.isEmpty) {
+        blocks.add(const _PlaceholderBody(text: '这一步没有需要勾选的条目。'));
+      } else {
+        blocks.add(
+          ItemGrid(
+            entries: entries,
+            isDone: (e) => ticked.contains(e.key),
+            onTap: (e) => store.toggle(gate.id, e.key),
+            onLongPress: (e) => showEntryDetail(context, e),
+          ),
+        );
+      }
+      blocks.add(const SizedBox(height: 20));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: '需要完成的条件',
+          // 汇总进度用「完成的步骤数」，而不是条目数 ——
+          // STAR 两个步骤各 1 个条目，条目数看不出「两步还是一步」。
+          trailing: '$doneSteps / ${steps.length} 步',
+          trailingColor: status.unlocked ? AppTheme.accent : AppTheme.textDim,
+        ),
+        ...blocks,
+      ],
+    );
+  }
+
   /// 单组卡片：playAll / items
+  ///
+  /// ⚠️ 只在 [GateRequirement.type] **不是** `itemsInSteps` 时被调用 ——
+  /// 那种情况在 `build()` 里已经分流到 [_buildSteps] 了。
+  /// 如果这里收到 `itemsInSteps`，`gate.requirement.itemKeys` 会是平铺的
+  /// （脚本写入时保持了冗余同步，所以不会漏条目），但会**丢掉步骤分区**。
   Widget _buildFlat(BuildContext context) {
     final keys =
         gate.tracking == TrackingKind.items ? gate.requirement.itemKeys : gate.requirement.songKeys;

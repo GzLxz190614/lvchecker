@@ -34,6 +34,12 @@ CONDITION = ROOT / "condition"
 DATA = ROOT / "data"
 IMG = ROOT / "assets" / "img"
 
+# 同目录的模块。显式插 sys.path 是为了 `python tools/build.py` 和
+# `python -m tools.build` 两种调用方式都能 import 到
+# （前者 sys.path[0] 是 tools/，后者是仓库根）。
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import star_steps  # noqa: E402  （必须在 sys.path 调整之后）
+
 # Windows 控制台默认 GBK，中文/日文会炸。强制 UTF-8 输出。
 try:
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -45,7 +51,7 @@ SCHEMA_VERSION = 1
 # 数据版本号。meta/gates/linklevels/classes 四个 json 共用同一个值
 # （gen_classes.py 会从这里 import，免得两边写不一致）。
 # 改数据后把它 +1，App 的「检查更新」就是靠比对这个字符串来判断有没有新数据的。
-DATA_VERSION = "2026.09.11-3"
+DATA_VERSION = "2026.09.11-6"
 
 # ---------------------------------------------------------------------------
 # 输出图片格式：WebP。
@@ -637,11 +643,34 @@ def build_gates(boss_map: dict[str, dict]) -> list[dict]:
                 if not has_img:
                     warn(f"角色 {ctitle} 没有图片资源（{sub.name} 只有 Chara.xml）")
                 k = add_manual_item(f"chara:{cid}", "chara", cid, ctitle,
-                                    "角色 · 需升到 RANK 15",
+                                    # 副标题统一走 star_steps，避免和两步改造脚本漂移
+                                    star_steps.CHAR_SUBTITLE,
                                     f"assets/img/chara/{cid}/icon.{IMG_EXT}" if has_img else None,
                                     works=works)
                 items.append(k)
-            gate["requirement"] = {"type": "items", "itemKeys": items}
+
+                # STAR 的第 2 步「升到 RANK 15」需要一个独立条目：
+                # 进度是按 itemKey 存的，两处共用一个 key 的话，
+                # 勾「获得角色」会连带把「升到 RANK 15」也算上，两步就退化成一步了。
+                #
+                # 这里不用 add_manual_item：它的 key 是 f"{itype}:{iid}" 拼的，
+                # 做不出 `chara:24320.rank15` 这种带后缀的 key。
+                rank_key = star_steps.rank_item_key(k)
+                if rank_key not in meta:
+                    meta[rank_key] = star_steps.rank_meta_entry({
+                        "id": cid,
+                        "title": ctitle,
+                        # build.py 生成时图片是 icon 不是 image（搬运阶段会补 image）
+                        "image": f"assets/img/chara/{cid}/icon.{IMG_EXT}" if has_img else None,
+                    })
+
+            # 两步条件：① 获得角色 ② 升到 RANK 15。两者都完成门才算通。
+            # 定义见 tools/star_steps.py（和 make_star_two_steps.py 共用同一份）。
+            gate["requirement"] = star_steps.build_requirement(
+                items,
+                # 第 1 步标题里带角色名，从 meta 里取（items 是 key 列表）
+                char_title=str(meta.get(items[0], {}).get("title", "")) if items else "",
+            )
 
         elif gid == "new":
             gate["tracking"] = "items"
@@ -987,8 +1016,7 @@ def write_meta_sidecars() -> None:
     for d, files in by_dir.items():
         d.mkdir(parents=True, exist_ok=True)
         (d / "meta.json").write_text(
-            json.dumps(files, ensure_ascii=False, indent=2), encoding="utf-8"
-        )
+            json.dumps(files, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
 
     # 没有图片的条目也要有 meta.json（例如缺图的角色）
     for key, entry in meta.items():
@@ -998,8 +1026,7 @@ def write_meta_sidecars() -> None:
             (d / "meta.json").write_text(
                 json.dumps({k: v for k, v in entry.items() if k not in ("image", "subtitle")},
                            ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
+                encoding="utf-8", newline="\n")
 
 
 # ---------------------------------------------------------------- main
@@ -1053,11 +1080,11 @@ def main() -> int:
         "gates": gates,
     }
     (DATA / "gates.json").write_text(
-        json.dumps(gates_doc, ensure_ascii=False, indent=2), encoding="utf-8")
+        json.dumps(gates_doc, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
     (DATA / "meta.json").write_text(
-        json.dumps(meta_doc, ensure_ascii=False, indent=2), encoding="utf-8")
+        json.dumps(meta_doc, ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
     (DATA / "linklevels.json").write_text(
-        json.dumps(build_linklevels(), ensure_ascii=False, indent=2), encoding="utf-8")
+        json.dumps(build_linklevels(), ensure_ascii=False, indent=2), encoding="utf-8", newline="\n")
     # ---- 段位课程（classes.json）----
     #
     # 段位数据在 condition/class/ 下，格式和门不同（Course.xml），

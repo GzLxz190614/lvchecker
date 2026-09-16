@@ -117,7 +117,7 @@ def main() -> int:
         return 0
 
     GATES.write_text(
-        json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        json.dumps(doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     print()
     print(f"已写入 {GATES}")
     return 0
