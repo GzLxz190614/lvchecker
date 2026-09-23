@@ -79,7 +79,15 @@ GateStatus evaluateGate(
 
     case TrackingKind.classes:
       // AIR 门的解锁条件是「拿到一个缎带」= **任一** CLASS 内所有组曲通关。
-      // 按段位组曲的勾选自动判定（不再用手动确认开关）。
+      //
+      // 有两个独立来源能证明「有缎带」，取并集：
+      //   ① 落雪查分器同步来的 class_emblem.base > 0 —— 机台的真实状态；
+      //   ② 用户在本机逐个勾选组曲，勾满某个 CLASS。
+      //
+      // 为什么要两个都要：①是权威的，但需要配置密钥并同步过；
+      // ②在没同步时仍然可用（也是这次改造之前唯一的办法）。
+      // 只用①会让没配密钥的人完全没法标记；只用②就会出现
+      // 「机台上明明通关了、App 里还得手动勾 5 个组曲」。
       if (classData == null || classData.tiers.isEmpty) {
         return const GateStatus(unlocked: false, doneCount: 0, totalCount: 0);
       }
@@ -95,9 +103,12 @@ GateStatus evaluateGate(
         }
       }
       final total = best?.courses.length ?? 0;
+      // 落雪确认有缎带时，进度也显示成「满」：
+      // 否则会出现「已解锁但有缎带 0/5」这种自相矛盾的界面。
+      final synced = store.hasSyncedRibbon;
       return GateStatus(
-        unlocked: classData.ribbonAchieved(doneCourses),
-        doneCount: bestDone < 0 ? 0 : bestDone,
+        unlocked: synced || classData.ribbonAchieved(doneCourses),
+        doneCount: synced ? total : (bestDone < 0 ? 0 : bestDone),
         totalCount: total,
       );
 

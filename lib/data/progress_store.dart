@@ -26,6 +26,13 @@ class ProgressStore extends ChangeNotifier {
   static const _prefixCourse = 'c:';
   static const _keySchema = 'schemaVersion';
 
+  // 段位缎带（落雪同步来的）。**独立的键，不复用 `m:` 前缀** ——
+  // `m:` 是 `m:<gateId>` 形式的「手动确认门达成」，语义不同，
+  // 混用会让 `isManualDone('')` 这类调用读到缎带数据。
+  static const _keyRibbonBase = 'lxns.ribbon.base';
+  static const _keyRibbonMedal = 'lxns.ribbon.medal';
+  static const _keyRibbonAt = 'lxns.ribbon.fetchedAt';
+
   static const _currentSchema = 1;
 
   static Future<ProgressStore> load() async {
@@ -103,9 +110,50 @@ class ProgressStore extends ChangeNotifier {
     notifyListeners();
   }
 
+  // ------------------------------------------------------- 段位缎带（落雪同步）
+
+  /// 保存从落雪查分器读到的段位缎带值。
+  ///
+  /// 为什么要存**原始数值**而不是一个布尔值：
+  ///   * `base` 是段位序号（实测通 CLASS Ⅲ 得 3）。存下来以后如果要做
+  ///     「你的缎带是哪个段位」这种显示，数据就已经在了，不用重新拉；
+  ///   * 存布尔值会丢掉「有没有缎带」和「是哪个缎带」的区别，
+  ///     而后者以后很可能要用。
+  ///
+  /// AIR 门的判定只读 [ribbonBase] > 0（见 [hasSyncedRibbon]）。
+  Future<void> setRibbon({required int base, required int medal, String? fetchedAt}) async {
+    await _prefs.setInt(_keyRibbonBase, base);
+    await _prefs.setInt(_keyRibbonMedal, medal);
+    await _prefs.setString(_keyRibbonAt, fetchedAt ?? _now());
+    notifyListeners();
+  }
+
+  /// 清掉本机保存的缎带数据（换账号 / 密钥失效时用）。
+  Future<void> clearRibbon() async {
+    await _prefs.remove(_keyRibbonBase);
+    await _prefs.remove(_keyRibbonMedal);
+    await _prefs.remove(_keyRibbonAt);
+    notifyListeners();
+  }
+
+  /// 落雪记录的缎带段位序号。**没同步过返回 null**（不是 0）。
+  ///
+  /// 「没同步过」和「同步过但值为 0（确认没缎带）」必须区分：
+  /// 前者不能拿去判定，后者可以。混为一谈会让 AIR 门在没同步时
+  /// 静默显示成「未解锁」，而用户其实可能已经拿到了。
+  int? get ribbonBase => _prefs.getInt(_keyRibbonBase);
+
+  /// 落雪记录的勋章值（通关任意一组），同样是 null = 没同步过。
+  int? get ribbonMedal => _prefs.getInt(_keyRibbonMedal);
+
+  /// 落雪上次同步缎带的时间。
+  String? get ribbonFetchedAt => _prefs.getString(_keyRibbonAt);
+
+  /// 是否**确认**已获得缎带（必须同步过，且 base > 0）。
+  bool get hasSyncedRibbon => (ribbonBase ?? 0) > 0;
+
   /// 段位：切换某个组曲的完成状态
-  Future<void> toggleCourse(String gateId, String courseKey) async {
-    final raw = _prefs.getString('$_prefixCourse$gateId');
+  Future<void> toggleCourse(String gateId, String courseKey) async {    final raw = _prefs.getString('$_prefixCourse$gateId');
     Map<String, dynamic> map = <String, dynamic>{};
     if (raw != null) {
       try {

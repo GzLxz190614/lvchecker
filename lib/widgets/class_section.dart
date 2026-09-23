@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../data/progress_store.dart';
+import '../import/lxns_client.dart';
+import '../import/lxns_credentials.dart';
 import '../models/class_course.dart';
 import '../models/entry.dart';
 import '../theme.dart';
@@ -33,16 +35,78 @@ class ClassSection extends StatefulWidget {
 }
 
 class _ClassSectionState extends State<ClassSection> {
+  /// 正在从落雪拉缎带
+  bool _fetching = false;
+
+  /// 从落雪查分器读 class_emblem，存进 ProgressStore。
+  ///
+  /// 只打 `/user/chunithm/player`（581 字节），**不**拉全部成绩 ——
+  /// AIR 门只需要「有没有缎带」这一个信息。
+  Future<void> _fetchRibbon() async {
+    if (_fetching) return;
+    setState(() => _fetching = true);
+
+    String message;
+    var ok = false;
+    try {
+      final token = await LxnsCredentials.readToken();
+      if (token == null || token.isEmpty) {
+        message = '还没配置落雪密钥。去「设置」页填一个个人 API 密钥再试。';
+      } else {
+        final player = await const LxnsClient().fetchPlayer(token);
+        final emb = player.classEmblem;
+        if (emb == null) {
+          // 不要在这里写 0 —— 那等于「确认没有缎带」，会把可能已解锁的门
+          // 判成未解锁。读不到就如实说读不到。
+          message = '查分器没有返回 class_emblem 字段 —— 可能是接口变了，暂时无法自动判定';
+        } else {
+          await widget.store.setRibbon(base: emb.base, medal: emb.medal);
+          ok = true;
+          message = emb.hasRibbon
+              ? '已获得缎带（段位序号 ${emb.base}）'
+              : '还没有缎带（查分器里 base = 0）';
+        }
+      }
+    } on LxnsApiException catch (e) {
+      message = e.message;
+    } catch (e) {
+      message = '$e';
+    }
+
+    if (!mounted) return;
+    setState(() => _fetching = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: Duration(seconds: ok ? 3 : 6),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final doneCourses = widget.store.courseDoneOf(widget.gateId);
-    final ribbon = widget.data.ribbonAchieved(doneCourses);
+    final ribbonByTicks = widget.data.ribbonAchieved(doneCourses);
+    // 落雪同步来的缎带是权威的（机台真实状态）；本机勾选是没同步时的兜底
+    final syncedRibbon = widget.store.hasSyncedRibbon;
+    final ribbon = syncedRibbon || ribbonByTicks;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        _RibbonSyncRow(
+          fetching: _fetching,
+          base: widget.store.ribbonBase,
+          fetchedAt: widget.store.ribbonFetchedAt,
+          onFetch: _fetchRibbon,
+        ),
         if (widget.data.placeholder) const _PlaceholderBanner(),
-        if (ribbon) const _RibbonBanner(),
+        if (ribbon)
+          _RibbonBanner(
+            fromLxns: syncedRibbon,
+            // 落了缎带但本机没勾满时，告诉用户两者为什么不一致
+            ticksIncomplete: syncedRibbon && !ribbonByTicks,
+          ),
         for (final tier in widget.data.tiers) _tierBlock(tier, doneCourses),
         const SizedBox(height: 4),
         const Text(
@@ -438,11 +502,122 @@ class _PlaceholderBanner extends StatelessWidget {
   }
 }
 
-class _RibbonBanner extends StatelessWidget {
-  const _RibbonBanner();
+/// 从落雪查分器同步「段位缎带」的那一行。
+///
+/// 放在段位区最上面：它决定了整块内容的判定基础，先看到它再往下看组曲。
+class _RibbonSyncRow extends StatelessWidget {
+  const _RibbonSyncRow({
+    required this.fetching,
+    required this.base,
+    required this.fetchedAt,
+    required this.onFetch,
+  });
+
+  final bool fetching;
+
+  /// 落雪同步来的缎带段位序号。null = 从没同步过。
+  final int? base;
+  final String? fetchedAt;
+  final VoidCallback onFetch;
 
   @override
   Widget build(BuildContext context) {
+    final String status;
+    final Color color;
+    if (base == null) {
+      status = '还没有从落雪查分器读取过段位数据';
+      color = AppTheme.textDim;
+    } else if (base! > 0) {
+      status = '落雪：已获得缎带（段位序号 $base）';
+      color = AppTheme.accent;
+    } else {
+      status = '落雪：暂无缎带';
+      color = AppTheme.textDim;
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(11, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: AppTheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppTheme.border.withValues(alpha: 0.6)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.cloud_sync_outlined, size: 15, color: color),
+              const SizedBox(width: 7),
+              Expanded(
+                child: Text(
+                  status,
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color),
+                ),
+              ),
+            ],
+          ),
+          if (fetchedAt != null && fetchedAt!.isNotEmpty) ...[
+            const SizedBox(height: 3),
+            Text(
+              '上次同步：${fetchedAt!.replaceFirst('T', ' ').split('.').first}',
+              style: const TextStyle(fontSize: 10.5, color: AppTheme.textFaint),
+            ),
+          ],
+          const SizedBox(height: 8),
+          // 用 Flexible 包住按钮，不要 Expanded ——
+          // 「删除密钥」按钮被挤成一条白线那次，根因就是无界宽度的子项
+          // 拿不到宽度。这里只有一个按钮 + 固定宽度，但仍然给出明确约束。
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: fetching ? null : onFetch,
+              icon: fetching
+                  ? const SizedBox(
+                      width: 13,
+                      height: 13,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.download_outlined, size: 15),
+              label: Text(
+                fetching ? '正在读取…' : '从落雪获取段位信息',
+                style: const TextStyle(fontSize: 12),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.accent,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                minimumSize: const Size(0, 32),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RibbonBanner extends StatelessWidget {
+  const _RibbonBanner({required this.fromLxns, required this.ticksIncomplete});
+
+  /// true = 依据是落雪同步的数据；false = 依据是本机逐组曲的勾选
+  final bool fromLxns;
+
+  /// 落雪说有缎带，但本机组曲没勾满
+  final bool ticksIncomplete;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = fromLxns
+        ? (ticksIncomplete
+            // 这个情况很容易让人以为出错了，所以直接解释清楚
+            ? '已获得缎带（来自落雪查分器）。下面的组曲勾选只记录你**在 App 里**的进度，'
+                '和缎带无关 —— 缎带以机台实际通关为准。'
+            : '已获得缎带（来自落雪查分器）。')
+        : '已有一个 CLASS 的组曲全部完成，即已获得缎带。';
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 10),
@@ -452,14 +627,20 @@ class _RibbonBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppTheme.accent.withValues(alpha: 0.35)),
       ),
-      child: const Row(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.workspace_premium, size: 16, color: AppTheme.accent),
-          SizedBox(width: 8),
+          const Icon(Icons.workspace_premium, size: 16, color: AppTheme.accent),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
-              '已有一个 CLASS 的组曲全部完成，即已获得缎带。',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.accent),
+              text,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.accent,
+                height: 1.5,
+              ),
             ),
           ),
         ],

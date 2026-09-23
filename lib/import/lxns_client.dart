@@ -20,6 +20,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'lxns_models.dart';
+import 'lxns_player.dart';
 
 /// 拉取失败时抛这个，message 是给用户看的一句话。
 class LxnsApiException implements Exception {
@@ -89,8 +90,56 @@ class LxnsClient {
     }
   }
 
-  static Map<String, dynamic> _decode(List<int> bytes) {
-    final text = utf8.decode(bytes);
+  /// 拉取玩家信息（段位缎带 `class_emblem` + 当前角色）。
+  ///
+  /// 为什么单独一个方法而不是塞进 [fetchPlayerScores]：这个接口小得多
+  /// （581 字节 vs 全部成绩），而 AIR 门的缎带判定只需要它。
+  /// 不想为了拿一个缎带就把几千条成绩拉下来。
+  ///
+  /// 用个人 API 的 `/user/chunithm/player`（和成绩同一个前缀）。
+  /// ⚠️ 公开的 `/chunithm/player/{好友码}` 需要对方开
+  /// `allow_third_party_fetch_player` 权限，实测（2026-09）返回 raw 404，
+  /// 所以不用它。
+  Future<LxnsPlayer> fetchPlayer(String token) async {
+    final uri = Uri.parse('$_base/user/chunithm/player');
+    final client = http.Client();
+    try {
+      final resp = await client.get(uri, headers: {
+        'X-User-Token': token,
+        'Accept': 'application/json',
+      }).timeout(timeout);
+
+      if (resp.statusCode == 429) {
+        throw const LxnsApiException('请求过于频繁，触发了查分器限流（HTTP 429），等几分钟再试');
+      }
+
+      final body = _decode(resp.bodyBytes);
+      final env = LxnsEnvelope.fromJson(body);
+
+      if (resp.statusCode != 200 || !env.success) {
+        if (resp.statusCode == 401 || env.code == 401) {
+          throw const LxnsApiException(
+            '密钥无效或已过期（HTTP 401）。去查分器「账号详情」重新生成一个，再填进来',
+          );
+        }
+        throw LxnsApiException(env.errorText);
+      }
+
+      final data = env.data;
+      if (data is! Map) {
+        throw const LxnsApiException('查分器返回的玩家信息不是对象 —— 接口可能变了');
+      }
+      return LxnsPlayer.fromJson(data.cast<String, dynamic>());
+    } on LxnsApiException {
+      rethrow;
+    } catch (e) {
+      throw LxnsApiException(_shortError(e));
+    } finally {
+      client.close();
+    }
+  }
+
+  static Map<String, dynamic> _decode(List<int> bytes) {    final text = utf8.decode(bytes);
     final decoded = jsonDecode(text);
     if (decoded is! Map) {
       throw const LxnsApiException('查分器返回的不是 JSON 对象');

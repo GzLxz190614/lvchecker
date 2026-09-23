@@ -31,13 +31,26 @@ if (-not (Get-Command python -ErrorAction SilentlyContinue)) {
 
 # 从第一轮的响应里捡好友码，省得你再输（也能顺带验证它还在不在）
 $friendCode = $null
-foreach ($f in @('.probe\01_player.json', '.probe2\01_player.json')) {
+foreach ($f in @('.probe\01_player.json', '.probe2\01_player.json', '.probe3\01_player.json')) {
     $p = Join-Path $root $f
-    if (Test-Path $p) {
-        try {
-            $j = Get-Content $p -Raw | ConvertFrom-Json
-            if ($j.data.friend_code) { $friendCode = [int]$j.data.friend_code; break }
-        } catch { }
+    if (-not (Test-Path $p)) { continue }
+    try {
+        $j = Get-Content $p -Raw | ConvertFrom-Json
+        $fc = $j.data.friend_code
+        if ($null -eq $fc) {
+            Write-Host "（$f 里没有 friend_code 字段）" -ForegroundColor DarkYellow
+            continue
+        }
+        # 必须用 [long]：好友码是 15 位数字（例如 100888340152545），
+        # 超出 Int32 上限 2147483647。用 [int] 会抛异常，
+        # 而上一版把异常吞掉了，于是只报「没找到好友码」——
+        # 文件明明在、也能解析，讯息却误导。
+        $friendCode = [long]$fc
+        Write-Host "(已从 $f 读到好友码，$($fc.ToString().Length) 位)" -ForegroundColor DarkGray
+        break
+    } catch {
+        # 不能静默吞掉：这个 bug 就是被吞掉才没发现的
+        Write-Host "（读 $f 失败：$($_.Exception.Message)）" -ForegroundColor DarkYellow
     }
 }
 
