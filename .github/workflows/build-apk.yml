@@ -251,6 +251,11 @@ jobs:
           # 实际根因在 evaluateAllGates 没跳过未开放的门，但那属于 Dart 侧；
           # 数据侧也要保证没有真的重复条目）。
           python3 tools/check_duplicate_songs.py
+          # 测试自身的陷阱：`evaluateAllGates` 默认跳过没有 releaseDate 的门，
+          # 所以用它的测试必须给门 releaseDate —— 否则会以「什么都没扫描到」
+          # 失败，而报错（Expected: true / Actual: <false>）和被测逻辑毫不相干。
+          # 这个坑真实踩过，CI 挂了一次。只警告不失败（有些测试就是测跳过的）。
+          python3 tools/check_tests_release_date.py
           # 图片格式：确认 Pillow 支持目标格式，且仓库里的图扩展名与实际格式一致。
           # 这两种问题的共同点是编译期发现不了，只有装到手机才满屏「图片丢失」。
           python3 tools/check_image_format.py

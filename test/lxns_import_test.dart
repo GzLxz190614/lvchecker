@@ -14,7 +14,19 @@ import 'package:lvchecker/import/lxns_models.dart';
 import 'package:lvchecker/models/gate.dart';
 
 /// 造一个「打固定几首歌」的门
-Gate _songsGate({required List<String> songKeys, String id = 'origin'}) =>
+///
+/// ⚠️ `releaseDate` 默认**不传**（= 国服没公布日期）。
+/// 这对用 [_run] 的单门测试没有影响 —— 那条路径直接调 `evaluateGate`，
+/// 不经过 `skipNotYetOpen` 过滤。
+///
+/// 但**用 `evaluateAllGates` 的测试必须显式传 `releaseDate`**，
+/// 否则门会被默认的 `skipNotYetOpen` 跳过，测试会因为「什么都没扫描到」
+/// 而失败，且失败原因看起来和被测逻辑无关。
+Gate _songsGate({
+  required List<String> songKeys,
+  String id = 'origin',
+  String? releaseDate,
+}) =>
     Gate.fromJson({
       'id': id,
       'order': 1,
@@ -23,6 +35,7 @@ Gate _songsGate({required List<String> songKeys, String id = 'origin'}) =>
       'releaseStatus': 'open',
       'tracking': 'songs',
       'conditionText': '测试',
+      if (releaseDate != null) 'releaseDate': releaseDate,
       'requirement': {'type': 'playAll', 'songKeys': songKeys},
     });
 
@@ -243,10 +256,12 @@ void main() {
     });
 
     test('report.cutoff 取所有门基准里最早的那个', () {
+      // ⚠️ 必须给门 releaseDate：没有开放日期的门会被 skipNotYetOpen 跳过，
+      //    于是根本产生不了基准 —— 那样测的就不是「取最早」而是「被跳过」了。
       final report = evaluateAllGates(
         gates: [
-          _songsGate(songKeys: ['music:51'], id: 'a'),
-          _songsGate(songKeys: ['music:53'], id: 'b'),
+          _songsGate(songKeys: ['music:51'], id: 'a', releaseDate: '2026-09-20T10:00'),
+          _songsGate(songKeys: ['music:53'], id: 'b', releaseDate: '2026-09-10T10:00'),
         ],
         cutoffOf: (g) => g.id == 'a'
             ? DateTime.parse('2026-09-20T10:00')
@@ -256,8 +271,27 @@ void main() {
         titleOf: (k) => k,
         songIdOf: (k) => k.split(':').last,
       );
+      expect(report.skippedNotOpen, 0);
+      expect(report.scannedGates, 2, reason: '两个门都已开放，都该被扫描');
       expect(report.didCompare, isTrue);
       expect(report.cutoff, DateTime.parse('2026-09-10T10:00'));
+    });
+
+    test('没有开放日期的门不产生基准（会被 skipNotYetOpen 跳过）', () {
+      // 这条是上一条的反面，说明「旧测试为什么曾经失败」——
+      // 它同时钉住了「跳过」这个行为本身。
+      final report = evaluateAllGates(
+        gates: [_songsGate(songKeys: ['music:51'], id: 'a')],
+        cutoffOf: (_) => DateTime.parse('2026-09-20T10:00'),
+        scores: const [],
+        isTicked: (_, __) => false,
+        titleOf: (k) => k,
+        songIdOf: (k) => k.split(':').last,
+      );
+      expect(report.skippedNotOpen, 1);
+      expect(report.scannedGates, 0);
+      expect(report.cutoff, isNull, reason: '被跳过的门不该贡献基准');
+      expect(report.didCompare, isFalse);
     });
 
     test('score 里的 songId 对不上时不算命中', () {
