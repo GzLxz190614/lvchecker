@@ -43,6 +43,8 @@ lxns_origin.txt
 .probe_selftest/
 .probe2/
 .probe2_selftest/
+.probe3/
+.probe3_selftest/
 
 # ============================================================
 # Python —— 工具脚本的运行产物
