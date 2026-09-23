@@ -1,7 +1,7 @@
 name: lvchecker
 description: "中二节奏 2027 连章（Linked VERSE）门解锁进度记录工具"
 publish_to: "none"
-version: 0.4.0+4
+version: 0.4.1+5
 
 environment:
   sdk: ">=3.4.0 <4.0.0"

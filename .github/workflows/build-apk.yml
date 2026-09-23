@@ -256,6 +256,10 @@ jobs:
           # 失败，而报错（Expected: true / Actual: <false>）和被测逻辑毫不相干。
           # 这个坑真实踩过，CI 挂了一次。只警告不失败（有些测试就是测跳过的）。
           python3 tools/check_tests_release_date.py
+          # 版本次数提醒：Android 装不上同 versionCode 的包，所以每次出 APK
+          # 前都要先 `python tools/bump_app_version.py`。只提醒不失败
+          # （有些构建是故意重跑同一版本）。
+          python3 tools/check_version_bumped.py
           # 图片格式：确认 Pillow 支持目标格式，且仓库里的图扩展名与实际格式一致。
           # 这两种问题的共同点是编译期发现不了，只有装到手机才满屏「图片丢失」。
           python3 tools/check_image_format.py
