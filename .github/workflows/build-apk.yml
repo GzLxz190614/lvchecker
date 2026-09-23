@@ -241,6 +241,16 @@ jobs:
           #   * 两步的 itemKey 重复       -> 一次勾选影响两处，两步退化成一步。
           # STAR 门原来就是「只判角色卡、不判 RANK 15」，属于同一类错。
           python3 tools/check_gates_schema.py
+          # 段位序号的映射。`base=3` 必须映射到 CLASS III —— 但 tiers 是
+          # **显示顺序** [∞,Ⅴ,Ⅳ,Ⅲ,Ⅱ,Ⅰ]，用 tiers[n-1] 会 6/6 全错、
+          # 静默勾错段位（界面上看起来一切正常）。这个脚本从
+          # class_course.dart 里抠出映射表来核对，不手抄一份 ——
+          # 手抄的话源码改了检查不会跟着变，检查就失去意义。
+          python3 tools/check_tier_order.py
+          # 各门里有没有同一首歌出现两次（用户报过「同步时出现两个怒槌」，
+          # 实际根因在 evaluateAllGates 没跳过未开放的门，但那属于 Dart 侧；
+          # 数据侧也要保证没有真的重复条目）。
+          python3 tools/check_duplicate_songs.py
           # 图片格式：确认 Pillow 支持目标格式，且仓库里的图扩展名与实际格式一致。
           # 这两种问题的共同点是编译期发现不了，只有装到手机才满屏「图片丢失」。
           python3 tools/check_image_format.py

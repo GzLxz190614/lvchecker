@@ -6,6 +6,9 @@ import '../data/progress_store.dart';
 import '../import/lxns_client.dart';
 import '../import/lxns_credentials.dart';
 import '../import/lxns_import.dart';
+import '../import/lxns_models.dart';
+import '../import/lxns_player.dart';
+import '../models/class_course.dart';
 import '../models/entry.dart';
 import '../models/gate.dart';
 import '../theme.dart';
@@ -20,6 +23,7 @@ class SettingsPage extends StatefulWidget {
     required this.gates,
     required this.meta,
     required this.store,
+    required this.classData,
     required this.dataVersion,
     required this.gameVersion,
     required this.sync,
@@ -33,6 +37,10 @@ class SettingsPage extends StatefulWidget {
   final MetaTable meta;
 
   final ProgressStore store;
+
+  /// 段位数据。用它在同步到缎带时**自动勾上对应段位的全部组曲**。
+  final ClassData classData;
+
   final String dataVersion;
   final String gameVersion;
   final DataSync? sync;
@@ -731,8 +739,43 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _lxnsBusy = true);
     LxnsImportReport? lxReport;
     String? error;
+
+    // 缎带同步的结果，稍后拼进弹窗
+    LxnsClassEmblem? emblem;
+    ClassTier? ribbonTier;
+    var ribbonTicked = 0;
+
     try {
-      final scores = await const LxnsClient().fetchPlayerScores(token);
+      // 两个接口一起拉：player 很小（约 580 字节），
+      // 但既然都要发请求，串行等两轮网络没必要。
+      final results = await Future.wait([
+        const LxnsClient().fetchPlayerScores(token),
+        const LxnsClient().fetchPlayer(token),
+      ]);
+      final scores = results[0] as List<LxnsScore>;
+      final player = results[1] as LxnsPlayer;
+
+      // ---- 缎带：先存起来（AIR 门的判定要读它）----
+      emblem = player.classEmblem;
+      if (emblem != null) {
+        await widget.store.setRibbon(base: emblem.base, medal: emblem.medal);
+        // 自动把对应段位的组曲全部勾上。
+        //
+        // 为什么按**序号下标**取段位：base 是 1-based 序号
+        // （Ⅰ=1 … Ⅴ=5、∞=6），而 tiers 正好按这个顺序排。
+        // 详见 ClassData.tierByOrdinal 的说明。
+        if (emblem.hasRibbon) {
+          ribbonTier = widget.classData.tierByOrdinal(emblem.base);
+          if (ribbonTier != null) {
+            await widget.store.tickAllCourses(
+              'air',
+              ribbonTier.courses.map((c) => c.key),
+            );
+            ribbonTicked = ribbonTier.courses.length;
+          }
+        }
+      }
+
       lxReport = evaluateAllGates(
         gates: widget.gates,
         cutoffOf: _cutoffFor,
@@ -758,11 +801,23 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
     if (!context.mounted || lxReport == null) return;
-    await _showImportResult(context, lxReport);
+    await _showImportResult(
+      context,
+      lxReport,
+      emblem: emblem,
+      ribbonTier: ribbonTier,
+      ribbonTicked: ribbonTicked,
+    );
   }
 
   /// 结果弹窗：列出「建议勾上」和「已勾选但没找到证据」，让用户决定。
-  Future<void> _showImportResult(BuildContext context, LxnsImportReport report) async {
+  Future<void> _showImportResult(
+    BuildContext context,
+    LxnsImportReport report, {
+    LxnsClassEmblem? emblem,
+    ClassTier? ribbonTier,
+    int ribbonTicked = 0,
+  }) async {
     final toTick = report.of(LxnsVerdict.confirmed);
     final contradicted = report.of(LxnsVerdict.contradicted);
     final unknown = report.of(LxnsVerdict.unknown);
@@ -783,7 +838,44 @@ class _SettingsPageState extends State<SettingsPage> {
                   '读到你 ${report.scoreCount} 个谱面的成绩，扫描了 ${report.scannedGates} 个门。',
                   style: const TextStyle(fontSize: 12, color: AppTheme.textDim),
                 ),
+                if (report.skippedNotOpen > 0) ...[
+                  const SizedBox(height: 3),
+                  // 一定要说，否则用户会以为某个门被漏掉了
+                  Text(
+                    '（跳过 ${report.skippedNotOpen} 个还没开放的门 —— '
+                    '给没开的门提打歌建议没有意义）',
+                    style: const TextStyle(fontSize: 11, color: AppTheme.textFaint),
+                  ),
+                ],
                 const SizedBox(height: 4),
+
+                // ---- 段位缎带 ----
+                if (emblem != null) ...[
+                  const SizedBox(height: 10),
+                  _resultHeader(
+                    emblem.hasRibbon
+                        ? '🎖 已获得缎带（段位序号 ${emblem.base}）'
+                        : '🎖 还没有获得缎带',
+                    emblem.hasRibbon ? AppTheme.accent : AppTheme.textDim,
+                  ),
+                  if (emblem.hasRibbon && ribbonTier != null) ...[
+                    Text(
+                      '已自动勾上 CLASS ${ribbonTier.label} 的全部 '
+                      '$ribbonTicked 个组曲（AIR 门已达成）。',
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppTheme.textDim, height: 1.4),
+                    ),
+                  ] else if (emblem.hasRibbon) ...[
+                    // 拿到了缎带但段位序号超出了已知段位表 —— 不能瞎勾
+                    Text(
+                      '但段位序号 ${emblem.base} 超出已知的段位表，没有自动勾选。'
+                      '请到 AIR 门手动确认。',
+                      style: const TextStyle(
+                          fontSize: 11.5, color: AppTheme.warning, height: 1.4),
+                    ),
+                  ],
+                  const SizedBox(height: 12),
+                ],
                 Text(
                   report.didCompare
                       ? _cutoffNote()

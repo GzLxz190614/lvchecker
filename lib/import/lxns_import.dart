@@ -24,6 +24,7 @@
 library;
 
 import '../models/gate.dart';
+import '../util/time_util.dart';
 import 'lxns_models.dart';
 
 /// 单首歌的判定结果。
@@ -94,6 +95,7 @@ class LxnsImportReport {
     required this.scoreCount,
     this.fetchedAt,
     this.cutoff,
+    this.skippedNotOpen = 0,
   });
 
   final List<LxnsSongResult> results;
@@ -110,6 +112,12 @@ class LxnsImportReport {
   /// 否则用户看到「没有需要处理的曲目」会误以为「查过了，都没问题」，
   /// 而实际上是「没法查」。这两件事完全不同。
   final DateTime? cutoff;
+
+  /// 因为「还没开放」而被跳过的门数。
+  ///
+  /// 体现在界面上是为了解释「为什么某个门没出现在结果里」——
+  /// 否则用户会以为漏了。见 [evaluateAllGates] 关于「两个怒槌」的说明。
+  final int skippedNotOpen;
 
   /// 是否真的做过比较
   bool get didCompare => cutoff != null;
@@ -257,6 +265,22 @@ LxnsImportReport evaluateGate({
 ///    于是「更新日之后打过」不等于「开门之后打过」，可能把一些
 ///    其实已经达标的歌标成「无法确认」。这是有意为之 ——
 ///    宁可让你多点几下手动确认，也不要漏报「还没打」。
+///
+/// ## [skipNotYetOpen]：跳过还没开放的门
+///
+/// 踩过的坑（用户报告「同步时出现两个怒槌」）：
+///    `怒槌` 同时属于 ORIGIN 和 PARADISE，而 `isTicked` 是**按门分开存**的
+///    （`p:origin` / `p:paradise`）。用户在 ORIGIN 里勾了怒槌，报告里
+///    PARADISE 的那条仍然是「未勾」，于是弹窗里出现**第二个怒槌**，
+///    提示「这个没勾」—— 看起来像 App 的 bug，其实是**给一个还没开的门
+///    提打歌建议**，而这件事本身没有意义。
+///
+/// 所以默认跳过「还没开放」的门。「还没开放」= 没有 `releaseDate`
+/// （国服没公布）或日期还没到，判定用 [isReleasedNow]，和门页显示的
+/// 「未更新」口径一致。
+///
+/// 注意这里过滤的依据是**门是否开放**，而不是硬编码门 id ——
+/// PARADISE 以后开放了就会自动重新参与判定。
 LxnsImportReport evaluateAllGates({
   required List<Gate> gates,
   required DateTime? Function(Gate gate) cutoffOf,
@@ -265,10 +289,12 @@ LxnsImportReport evaluateAllGates({
   required String Function(String entryKey) titleOf,
   required String Function(String entryKey) songIdOf,
   DateTime? fetchedAt,
+  bool skipNotYetOpen = true,
 }) {
   final idx = indexScores(scores);
   final all = <LxnsSongResult>[];
   var scanned = 0;
+  var skippedNotOpen = 0;
 
   // 报告里带一份「这次用的基准」，界面要据此区分
   // 「查过了没问题」和「没法查」。取所有门基准里最早的那个。
@@ -276,6 +302,10 @@ LxnsImportReport evaluateAllGates({
 
   for (final gate in gates) {
     if (gate.isReward) continue;
+    if (skipNotYetOpen && !isReleasedNow(gate.releaseDate)) {
+      skippedNotOpen++;
+      continue;
+    }
     final cutoff = cutoffOf(gate);
     if (cutoff != null && (reportCutoff == null || cutoff.isBefore(reportCutoff))) {
       reportCutoff = cutoff;
@@ -300,5 +330,6 @@ LxnsImportReport evaluateAllGates({
     scoreCount: idx.length,
     fetchedAt: fetchedAt,
     cutoff: reportCutoff,
+    skippedNotOpen: skippedNotOpen,
   );
 }

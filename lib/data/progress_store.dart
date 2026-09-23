@@ -152,16 +152,43 @@ class ProgressStore extends ChangeNotifier {
   /// 是否**确认**已获得缎带（必须同步过，且 base > 0）。
   bool get hasSyncedRibbon => (ribbonBase ?? 0) > 0;
 
-  /// 段位：切换某个组曲的完成状态
-  Future<void> toggleCourse(String gateId, String courseKey) async {    final raw = _prefs.getString('$_prefixCourse$gateId');
-    Map<String, dynamic> map = <String, dynamic>{};
-    if (raw != null) {
-      try {
-        map = Map<String, dynamic>.from(jsonDecode(raw) as Map);
-      } catch (_) {
-        map = <String, dynamic>{};
-      }
+  /// 段位：一次把**多个组曲**标记为已完成。
+  ///
+  /// 为什么单独一个方法而不是复用 [tickAll]：段位组曲存在 `c:` 命名空间下
+  /// （[courseDoneOf] 读的就是它），而复用 `p:` 的 [tickAll] 会写到另一个地方，
+  /// 表现出「勾了但界面没反应」。两者的存储结构确实一样，但**语义不同**，
+  /// 分开写能避免以后有人把其中一个的存储格式改了却忘了另一个。
+  ///
+  /// 只在**缺**的键上加时间戳，已有的保留原时间 —— 免得重复同步时
+  /// 把「什么时候勾的」这个信息刷成现在。
+  Future<void> tickAllCourses(String gateId, Iterable<String> courseKeys) async {
+    final existing = courseDoneOf(gateId);
+    final map = _rawCourse(gateId);
+    var changed = false;
+    for (final k in courseKeys) {
+      if (existing.contains(k)) continue;
+      map[k] = _now();
+      changed = true;
     }
+    if (!changed) return; // 没有变化就不要写、不要 notify，避免无谓重建
+    await _prefs.setString('$_prefixCourse$gateId', jsonEncode(map));
+    notifyListeners();
+  }
+
+  /// 读某个门的段位组曲原始 map（`{courseKey: 时间}`）
+  Map<String, dynamic> _rawCourse(String gateId) {
+    final raw = _prefs.getString('$_prefixCourse$gateId');
+    if (raw == null) return <String, dynamic>{};
+    try {
+      return Map<String, dynamic>.from(jsonDecode(raw) as Map);
+    } catch (_) {
+      return <String, dynamic>{};
+    }
+  }
+
+  /// 段位：切换某个组曲的完成状态
+  Future<void> toggleCourse(String gateId, String courseKey) async {
+    final map = _rawCourse(gateId);
     if (map.containsKey(courseKey)) {
       map.remove(courseKey);
     } else {

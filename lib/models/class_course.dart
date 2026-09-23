@@ -225,6 +225,49 @@ class ClassData {
   bool ribbonAchieved(Set<String> doneCourseKeys) =>
       tiers.any((t) => tierComplete(t, doneCourseKeys));
 
+  /// 按**落雪的段位序号**取段位（`class_emblem.base`）。
+  ///
+  /// `base` 是 1-based 序号：Ⅰ=1、Ⅱ=2、Ⅲ=3、Ⅳ=4、Ⅴ=5、∞=6。
+  /// 这个对应关系是实测出来的 —— 用户通关 CLASS Ⅲ 的全部组曲后
+  /// `base` 变成 3；同时从 `condition/class/course/*/Course.xml` 抽出的
+  /// 游戏内部编号是 Ⅰ=10 Ⅱ=11 Ⅲ=12 Ⅳ=13 Ⅴ=14 ∞=20，**没有** id 是 3 的段位，
+  /// 所以 `base` 不可能是内部 id，只能是序号。
+  ///
+  /// ## ⚠️ 不能用 `tiers[ordinal - 1]`
+  ///
+  /// [tiers] 是**显示顺序**，被 [ClassData.fromJson] 末尾的排序改成了
+  /// `[∞, Ⅴ, Ⅳ, Ⅲ, Ⅱ, Ⅰ]`（∞ 排最前，然后 V..I）——
+  /// 和序号顺序**完全相反**。按下标取会 6/6 全错：
+  /// `base = 3` 会取到 **Ⅳ** 而不是 **Ⅲ**，于是自动勾错段位，
+  /// 而界面上看起来一切正常（这就是最难查的那种 bug）。
+  ///
+  /// 所以这里用**显式映射**，不依赖任何顺序。由 `tools/check_tier_order.py`
+  /// 和 `test/air_ribbon_test.dart` 一起钉住。
+  ///
+  /// 匹配用 [ClassTier.key] / [ClassTier.label]，它们是**半角** ASCII
+  /// （`I` / `II` / `III` / `IV` / `V`）+ `∞`(U+221E)。
+  /// 注意 `classRawName` 里用的是**全角**罗马数字（`Ⅲ` 是 U+2162），
+  /// 所以不能拿它匹配。
+  ///
+  /// 超出范围（0 或 >6）返回 null —— 调用方应当据此**不勾任何东西**，
+  /// 而不是猜一个段位出来。
+  ClassTier? tierByOrdinal(int ordinal) {
+    const byOrdinal = <int, String>{
+      1: 'I',
+      2: 'II',
+      3: 'III',
+      4: 'IV',
+      5: 'V',
+      6: '∞',
+    };
+    final want = byOrdinal[ordinal];
+    if (want == null) return null;
+    for (final t in tiers) {
+      if (t.key == want || t.label == want) return t;
+    }
+    return null;
+  }
+
   static Future<ClassData> loadFromAssets() async {
     final raw = await rootBundle.loadString('data/classes.json');
     return fromJson((jsonDecode(raw) as Map).cast<String, dynamic>());

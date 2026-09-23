@@ -176,6 +176,7 @@ class _HomeState extends State<_Home> {
           gates: _r.data.gateData.gates,
           meta: _r.data.meta,
           store: _r.store,
+          classData: _r.data.classData,
           dataVersion: _r.data.gateData.dataVersion,
           gameVersion: _r.data.gateData.gameVersion,
           sync: _r.sync,
